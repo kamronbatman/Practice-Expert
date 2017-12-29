@@ -1,0 +1,78 @@
+﻿<html>
+	<head>
+        <link rel="stylesheet" type="text/css" href="../../public/bootstrap/css/bootstrap.min.css">
+        <link href="../../public/stylesheets/calmed.css" rel="stylesheet" />
+				<script type="text/javascript">
+						//Jquer-Bootsrap
+                        var remote = require('electron').remote;
+                        var nodeModulesPath = remote.getGlobal('nodeModulesPath');
+						var $ = jQuery = require("jquery");
+						require(nodeModulesPath + "bootstrap");
+						var bootbox = require(nodeModulesPath + "bootbox");
+
+				</script>
+        <script type="text/javascript" src="../../public/javascripts/validator.min.js"></script>
+        <script type="text/javascript" src="../scripts/rooms.js"></script>
+
+				<meta charset="utf-8" />
+				<title>Appointment Rooms</title>
+				<script type="text/javascript">
+
+        </script>
+
+</head>
+	<body>
+        <div class="btn-group">
+            <a href="javascript:loadApp_Rooms_Current()" class="btn btn-default"><span class="glyphicon glyphicon-refresh"></span>Refresh</a>
+            <a class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                <span class="badge" id="refreshrate_Span">30</span>
+                <span class="caret"></span>
+            </a>
+            <ul class="dropdown-menu">
+                <li><a href="javascript:setRefreshTimer(10)">Every 10 seconds</a></li>
+                <li><a href="javascript:setRefreshTimer(30)">Every 30 seconds</a></li>
+                <li><a href="javascript:setRefreshTimer(60)">Every 60 seconds</a></li>
+            </ul>
+        </div>
+
+        <div class="panel panel-primary">
+              <div class="panel-heading">
+                <h3 class="panel-title">
+                    <a class="btn btn-info" data-toggle="collapse" href="#roomList" aria-expanded="false" aria-controls="roomList">
+                        <strong>Rooms</strong>
+                    </a>
+                    <a id="btnAddRoom" class="btn btn-info" onclick="showRoomEditModal('')">
+                        <span class="glyphicon glyphicon-plus"></span><span class="default">Add New</span>
+                    </a>
+                    <a class="btn btn-info" id="btnRoomFilter" onclick="setRoomFilter()" >
+                        Hide vacant
+                    </a>
+                </h3>
+              </div>
+              <div class="container-fluid panel-body" id="roomList">
+              </div>
+        </div>
+
+        <div class="panel panel-success" >
+              <div class="panel-heading" style="background-color: #459836;">
+                <h3 class="panel-title">
+                    <button class="btn btn-success" data-toggle="collapse" href="#waitingRoomList" aria-expanded="false" aria-controls="waitingRoomList">
+                        <strong>Waiting List</strong>
+                    </button>
+                </h3>
+              </div>
+              <div id = 'waitingRoomList' class="container-fluid panel-body">
+              </div>
+        </div>
+
+        <!-- <div class="panel panel-danger" style="display: none;"> -->
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h3 class="panel-title">Message</h3>
+          </div>
+          <div class="panel-body" id="errorMessage">
+          </div>
+        </div>
+
+    </body>
+</html>

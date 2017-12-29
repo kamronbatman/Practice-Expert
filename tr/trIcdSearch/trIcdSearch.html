@@ -1,0 +1,333 @@
+<html>
+<head>
+	<title>ICD Search(web version)</title>
+	<link rel="stylesheet" type="text/css" href="../../public/bootstrap/css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../../public/font-awesome-4.5.0/css/font-awesome.min.css">
+	<link rel="stylesheet" type="text/css" href="../../public/stylesheets/calmed.css">
+	<script src="../../public/javascripts/JSXTransformer.js"></script>
+
+	<!--Components -->
+	<script type="text/jsx" src="../../common/user_controls/lbl.jsx"></script>
+	<script type="text/jsx" src="../../ehr/ehrIcdEdit/IcdSearch.jsx"></script>
+	<script type="text/javascript">
+		//Jquer-Bootsrap
+        var remote = require('electron').remote;
+        var nodeModulesPath = remote.getGlobal('nodeModulesPath');
+		var $ = jQuery = require(nodeModulesPath + "jquery");
+	</script>
+	<script src="../../public/bootstrap/js/bootstrap.min.js"></script>
+	<script type="text/javascript">
+		var bootbox = require(nodeModulesPath + "bootbox");
+		//React
+		var React = require(nodeModulesPath + 'react');
+		var ReactDOM = require(nodeModulesPath + "react-dom");
+		//Other
+		var moment = require(nodeModulesPath + 'moment');
+		//Electron
+		var cmGlb = remote.getGlobal('cmGlb');
+		var appPath = remote.getGlobal('appPath');
+		//Sql
+		//var sql = require("./sql.js");
+		var sqlTrIcd = require(appPath + "/tr/trIcdSearch/sqlTrIcd.js");
+
+		var _patId = cmGlb.patId;
+		var _patName = cmGlb.patName;
+		var _dateOfVisit = cmGlb.dateOfVisit;
+		var _dctId = cmGlb.dctId;
+		var _fclId = cmGlb.fclId;
+		var _isNew = false;
+
+	</script>
+	<script type="text/jsx">
+
+			function getInitialData(callback) {
+					sqlTrIcd.getTrnILL(_patId,  _dateOfVisit, function (err_message, record) {
+
+                            if (err_message)
+                            {
+                                alert(err_message);
+                            }
+                            else
+                            {
+
+                                if(record)
+                                {
+                                    if(record.length>0)
+                                    {
+                                       callback(record);
+
+                                    }
+                                    else
+                                    {
+                                        _isNew = true;
+                                        callback(record);
+
+                                    }
+                                }
+                                else
+                                {
+                                    _isNew = true;
+                                    callback(record);
+
+                                }
+
+                            }
+						});
+      }
+
+      getInitialData(function(record) {
+
+                     var TrIcd = React.createClass({
+
+                            getInitialState: function() {
+
+                                if(record && record.length > 0)
+                                {
+
+                                    return  {
+
+                                        ICDA: record[0].ICDA.value,
+                                        ICDB: record[0].ICDB.value,
+                                        ICDC: record[0].ICDC.value,
+                                        ICDD: record[0].ICDD.value,
+                                        ICDE: record[0].ICDE.value,
+                                        ICDF: record[0].ICDF.value,
+                                        ICDG: record[0].ICDG.value,
+                                        ICDH: record[0].ICDH.value,
+                                        ICDI: record[0].ICDI.value,
+                                        ICDJ: record[0].ICDJ.value,
+                                        ICDK: record[0].ICDK.value,
+                                        ICDL: record[0].ICDL.value
+
+                                    }
+                                }
+                                else
+                                {
+                                    return {
+
+                                            ICDA: '',
+                                            ICDB: '',
+                                            ICDC: '',
+                                            ICDD: '',
+                                            ICDE: '',
+                                            ICDF: '',
+                                            ICDG: '',
+                                            ICDH: '',
+                                            ICDI: '',
+                                            ICDJ: '',
+                                            ICDK: '',
+                                            ICDL: ''
+                                    }
+                                }
+                            },
+
+                            getDefaultProps : function(){
+
+                                return {};
+                            },
+                            _save: function(){
+
+                                var icds = {
+
+                                        illIcd1: ((this.refs.icda.state.isValidIcd) ? this.refs.icda.state.chgCode : ''),
+                                        illIcd2: ((this.refs.icdb.state.isValidIcd) ? this.refs.icdb.state.chgCode : ''),
+                                        illIcd3: ((this.refs.icdc.state.isValidIcd) ? this.refs.icdc.state.chgCode : ''),
+                                        illIcd4: ((this.refs.icdd.state.isValidIcd) ? this.refs.icdd.state.chgCode : ''),
+                                        illIcd5: ((this.refs.icde.state.isValidIcd) ? this.refs.icde.state.chgCode : ''),
+                                        illIcd6: ((this.refs.icdf.state.isValidIcd) ? this.refs.icdf.state.chgCode : ''),
+                                        illIcd7: ((this.refs.icdg.state.isValidIcd) ? this.refs.icdg.state.chgCode : ''),
+                                        illIcd8: ((this.refs.icdh.state.isValidIcd) ? this.refs.icdh.state.chgCode : ''),
+                                        illIcd9: ((this.refs.icdi.state.isValidIcd) ? this.refs.icdi.state.chgCode : ''),
+                                        illIcd10: ((this.refs.icdj.state.isValidIcd) ? this.refs.icdj.state.chgCode : ''),
+                                        illIcd11: ((this.refs.icdk.state.isValidIcd) ? this.refs.icdk.state.chgCode : ''),
+                                        illIcd12: ((this.refs.icdl.state.isValidIcd) ? this.refs.icdl.state.chgCode : '')
+                                };
+
+
+
+
+                                for(var i=1; i<=12; i++)
+                                {
+                                    var $divNode = $(this.refs["divillIcd"+i]);
+                                    $divNode.removeClass( "has-error" );
+                                }
+
+
+
+                                for(var i=1; i<12; i++)
+                                {
+                                    for(var j=i+1; j<=12; j++)
+                                    {
+                                        if((icds["illIcd"+i]) != '')
+                                        {
+                                            if((icds["illIcd"+i]).toLowerCase() == (icds["illIcd"+j]).toLowerCase())
+                                            {
+                                                var $divNodei = $(this.refs["divillIcd"+i]);
+                                                $divNodei.addClass( "has-error" );
+
+                                                var $divNodej = $(this.refs["divillIcd"+j]);
+                                                $divNodej.addClass( "has-error" );
+
+                                                alert('Duplicate entry.');
+
+                                                return;
+                                            }
+                                        }
+
+                                    }
+                                }
+
+
+                                sqlTrIcd.saveTrnILL(_isNew, _patId, _patName, _dctId, _fclId,  _dateOfVisit, icds, function(err , isDataSaved){
+
+                                    if (isDataSaved && !err) {
+
+                                       window.close();
+
+                                    }
+                                    else {
+
+                                        alert(err);
+                                    }
+                                })
+                            },
+                            _close : function(){
+
+                                     window.close();
+                            },
+														_keyDown: function(e) {
+
+															var F10 = 121;
+						                  var ESC = 27;
+
+						                  if(e.keyCode == F10)
+															{
+						                      this._save();
+						                  }
+						                  else if(e.keyCode == ESC)
+															{
+
+																var allModals = document.getElementsByClassName("modal");
+									              if(allModals && allModals.length > 0)
+									              {
+									                var isModalsHide = false;
+									                for (var i=0, max = allModals.length; i < max; i++)
+									                {
+									                  	if($(allModals[i]).hasClass('in'))
+									                    {
+									                      isModalsHide = true;
+									                    	$(allModals[i]).modal('hide');
+									                    }
+
+									                }
+
+									                if(isModalsHide)
+									                {
+									                  return;
+									                }
+									                else
+									                {
+									                  this._close();
+									                }
+									              }
+									              else
+									              {
+									                  this._close();
+									              }
+															}
+
+
+							              },
+														render: function(){
+
+
+                                return (
+
+																				<div>
+																						<div className="top-menu-bar">
+																							<ul>
+																							 <li onClick={this._save} style={{color : '#5cb85c'}}><i className="fa fa-floppy-o"></i> Save</li>
+																							 <li onClick={this._close} style={{color : '#f0ad4e'}}><i className="fa fa-times"></i> Close</li>
+																							</ul>
+																						</div>
+																						<div className="main-body">
+																							<div style={{marginTop : '30px'}}>
+                                                <div ref="divillIcd1">
+																										<Lbl labelFor="icdSearch" width="100px" text="A :&nbsp;" />
+                                                    <IcdSearch  width="120px" descWidth="400px" ref="icda" initChgCode={this.state.ICDA} />
+                                                </div>
+                                                <div ref="divillIcd2">
+																										<Lbl labelFor="icdSearch" width="100px" text="B :&nbsp;" />
+                                                    <IcdSearch width="120px" descWidth="400px" ref="icdb" initChgCode={this.state.ICDB} />
+                                                </div>
+                                                <div ref="divillIcd3">
+																										<Lbl labelFor="icdSearch" width="100px" text="C :&nbsp;" />
+                                                    <IcdSearch width="120px" descWidth="400px" ref="icdc" initChgCode={this.state.ICDC} />
+                                                </div>
+                                                <div ref="divillIcd4">
+																										<Lbl labelFor="icdSearch" width="100px" text="D :&nbsp;" />
+                                                    <IcdSearch width="120px" descWidth="400px" ref="icdd" initChgCode={this.state.ICDD} />
+                                                </div>
+                                                <div ref="divillIcd5">
+																										<Lbl labelFor="icdSearch" width="100px" text="E :&nbsp;" />
+                                                    <IcdSearch width="120px" descWidth="400px" ref="icde" initChgCode={this.state.ICDE} />
+                                                </div>
+                                                <div ref="divillIcd6">
+																										<Lbl labelFor="icdSearch" width="100px" text="F :&nbsp;" />
+                                                    <IcdSearch width="120px" descWidth="400px" ref="icdf" initChgCode={this.state.ICDF} />
+                                                </div>
+                                                <div ref="divillIcd7">
+																										<Lbl labelFor="icdSearch" width="100px" text="G :&nbsp;" />
+                                                    <IcdSearch width="120px" descWidth="400px" ref="icdg" initChgCode={this.state.ICDG} />
+                                                </div>
+                                                <div ref="divillIcd8">
+																										<Lbl labelFor="icdSearch" width="100px" text="H :&nbsp;" />
+                                                    <IcdSearch width="120px" descWidth="400px" ref="icdh" initChgCode={this.state.ICDH} />
+                                                </div>
+                                                <div ref="divillIcd9">
+																										<Lbl labelFor="icdSearch" width="100px" text="I :&nbsp;" />
+                                                    <IcdSearch width="120px" descWidth="400px" ref="icdi" initChgCode={this.state.ICDI} />
+                                                </div>
+                                                <div ref="divillIcd10">
+																										<Lbl labelFor="icdSearch" width="100px" text="J :&nbsp;" />
+                                                    <IcdSearch width="120px" descWidth="400px" ref="icdj" initChgCode={this.state.ICDJ} />
+                                                </div>
+                                                <div ref="divillIcd11">
+																										<Lbl labelFor="icdSearch" width="100px" text="K :&nbsp;" />
+                                                    <IcdSearch width="120px" descWidth="400px" ref="icdk" initChgCode={this.state.ICDK} />
+                                                </div>
+                                                <div ref="divillIcd12">
+																										<Lbl labelFor="icdSearch" width="100px" text="L :&nbsp;" />
+                                                    <IcdSearch width="120px" descWidth="400px" ref="icdl" initChgCode={this.state.ICDL} />
+                                                </div>
+																							</div>
+																						</div>
+                                        </div>
+                                )
+
+
+                            },
+														componentDidMount: function()
+ 														{
+ 																$(document.body).on('keydown', this._keyDown);
+ 														}
+                     });
+
+
+										 ReactDOM.render(
+                            <TrIcd  />,
+                            document.getElementById('divIcds')
+                     );
+  	 });
+
+    </script>
+
+</head>
+<body>
+
+	<div id="divIcds" >
+    </div>
+
+
+</body>
+</html>

@@ -1,0 +1,89 @@
+<table class="table table-bordered table-condensed">
+<thead>
+	<tr>
+    <th style="{{roomhelper_isOfficeManager}}">Edit</th>
+	<th>Room</th>
+	<th>App Time</th>
+	<th>Checked-In Time</th>
+    <th>Patient</th>
+    <th>Provider</th>
+    <th>Status</th>
+	</tr>
+</thead>
+<tbody>
+	{{#each currentlist}}
+	<tr bgcolor="{{roomhelper_color APPCOLOR}}" style="display:{{roomhelper_visibility PATID}};">
+    	<td style="{{roomhelper_isOfficeManager}}">
+	      <div >
+	          <a id="btnEditRoom" class="btn btn-info" onclick="showRoomEditModal('{{ RECNO.value }}')">
+	              <span class="glyphicon glyphicon-edit"></span>
+	          </a>
+	        </div>
+	    </td>
+	    {{#if PATID.value}}
+    	<td>
+    		<div class="btn-group dropup">
+	            <a aria-expanded="false" class="btn btn-info dropdown-toggle" data-toggle="dropdown">
+	            	{{! ROOMID.value from currentlist }}
+	                {{ ROOMID.value }}
+	                <span class="caret"></span>
+	            </a>
+	            <ul class="dropdown-menu ">
+	            	{{! currently inside currentlist, ../ to go back to top level but if tag creates one more stack hence we use ../../ (in our case we have each if each == ../../) }}
+	            	{{#each ../rooms}}
+            			<li>
+            				{{! current data is rooms, ../../RECNO.value = currentlist.RECNO.value , RECNO.value = rooms.RECNO.value }}
+	                  		<a id="{{ roomhelper_changeRoomButtonId ../RECNO.value RECNO.value }}" onclick="swapRoom(this.id)" class="btn btn-info"
+	                  		style="display:{{roomhelper_hideRoomOption ../PATID.value PATID.value}};">
+	                    	{{ ROOMID.value }}
+	                  		</a>
+                	</li>
+	            	{{/each}}
+	                <!-- <li class="divider"></li> -->
+	                <li>
+	                  <a id="{{ roomhelper_checkOutButtonId RECNO.value }}" onclick="changeRoomToWaiting(this.id)" class="btn btn-success">Waiting Room</a>
+	                </li>
+	                <!-- <li class="divider"></li> -->
+	                <li>
+	                  <a id="{{ roomhelper_checkOutButtonId RECNO.value }}" onclick="checkoutRoom(this.id)" class="btn btn-danger">Checkout</a>
+	                </li>
+	            </ul>
+	        </div>
+    	</td>
+    	<td>
+    		{{roomhelper_datetimeFormat APPTIME.value }}
+	    </td>
+	    <td>
+	    	{{roomhelper_datetimeFormat CHECKEDINTIME.value }}
+	    </td>
+	    <td>
+	      {{ PATNAME.value }}
+	     </td>
+	    <td>
+	      {{ DCTID.value }}
+	     </td>
+    	<td>
+	      <select id="{{ RECNO.value }}" class="dropdown input-sm" onchange="changeStatus(this)">
+	            <option value="Doctor" {{roomhelper_selectedStatus STATUS.value "Doctor"}}>Doctor</option>
+	            <option value="Audiologist" {{roomhelper_selectedStatus STATUS.value "Audiologist"}}>Audiologist</option>
+	            <option value="Nurse" {{roomhelper_selectedStatus STATUS.value "Nurse"}}>Nurse</option>
+	            <option value="PA" {{roomhelper_selectedStatus STATUS.value "Phys. asst."}}>Phys. asst.</option>
+	            <option value="Staff" {{roomhelper_selectedStatus STATUS.value "Staff"}}>Staff</option>
+	            <option value="Technician" {{roomhelper_selectedStatus STATUS.value "Technician"}}>Technician</option>
+	      </select>
+	    </td>
+    	{{else}}
+    	<td>
+	      <div class="btn-group">
+	            <a aria-expanded="false" class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="javascript:alert('This room is currently unoccupied.');" disabled>
+	                {{ ROOMID.value }}
+	            </a>
+	      </div>
+
+	    </td>
+	    <td></td><td></td><td></td><td></td><td></td>
+	    {{/if}}
+    </tr>
+    {{/each}}
+</tbody>
+</table>

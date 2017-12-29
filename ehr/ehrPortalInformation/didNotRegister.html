@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Did Not Register</title>
+
+    <link rel="stylesheet" type="text/css" href="../../public/bootstrap/css/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../public/font-awesome-4.5.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" type="text/css" href="./portalInformation.css">
+
+  </head>
+  <body>
+
+      <div id="wrapper">
+            <div id="top-bar">
+              <div>
+                <button id="btnRefresh" onclick="getDidNotRegisters()" class="btn btn-primary" style="margin-left: 10px; margin-top: 5px;"><i class="fa fa-refresh"></i> Display</button>
+                <button id="btnPrint" onclick="printPageData()"  class="btn btn-default" style="margin-left: 2px; margin-top: 5px;"><i class="fa fa-print"></i> Print</button>
+                <button id="btnClose" onclick="closeWindow()"  class="btn btn-danger" style="margin-left: 2px; margin-top: 5px;"><i class="fa fa-times"></i> Close</button>
+              </div>
+              <div style="margin-left: 10px; margin-top: 5px;">
+                  <strong>Please Select Date Range and Click on Display.</strong>
+              </div>
+              <div style="margin-top: 10px;">
+                <span style="margin-left: 10px;">
+                  <label>From :</label>
+                  <input  type="date" id="fromDate" name="fromDate" />
+                  <label>To :</label>
+                  <input  type="date" id="toDate"  name="toDate" />
+                </span>
+                <span>
+                  <span style="margin-left: 20px; margin-top: 5px;">Count: </span>
+                  <span id="spanCount" class="badge badge-pill badge-primary"></span>
+                </span>
+                <span id="spanLoading" style="margin-left: 5px; font-size:12px; display: none;"><i class="fa fa-refresh fa-spin"></i> Loading...</span>
+              </div>
+            </div>
+            <div id="side-nav">
+            </div>
+            <div id="main">
+            </div>
+      </div>
+
+
+      <script type="text/x-handlebars-template" id="didNotRegisterTemplate">
+          <table style="width:100%; margin-top: 10px; margin-bottom: 10px;" class="css-serial">
+            <caption>
+              <p style="margin-left: 10px;">
+                <strong>Patients that received an invitation but did not register to Patient-Portal.</strong>
+              </p>
+            </caption>
+            <tr>
+              <th>#</th>
+              <th>Date</th>
+              <th>Patient Id</th>
+              <th>Patient Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+            </tr>
+            {{#each record}}
+              <tr>
+                <td></td>
+                <td>{{formatDate this.PORTALINVITEDATE.value}}</td>
+                <td>{{this.PATID.value}}</td>
+                <td>{{this.PATNAME.value}}</td>
+                <td>{{this.EMAIL.value}}</td>
+                <td width = "120px">{{this.PHONE.value}}</td>
+              </tr>
+            {{/each}}
+          </table>
+      </script>
+
+      <script>
+          var $ = jQuery = require("jquery");
+      </script>
+      <script src="../../public/bootstrap/js/bootstrap.min.js"></script>
+      <script>
+
+      var remote = require('electron').remote;
+      var cmGlb = remote.getGlobal('cmGlb');
+      var Handlebars = require('handlebars');
+      var bootbox = require("bootbox");
+      var unReadMessagesSql = require("./portalInformationSql.js");
+
+      var _fromDate = '';
+      var _toDate = '';
+
+
+        $(document).ready(function () {
+        });
+
+        function getDidNotRegisters() {
+
+            _fromDate = document.getElementById("fromDate").value;
+            _toDate = document.getElementById("toDate").value;
+
+            if(!_fromDate) {
+                bootbox.alert("Please select From Date.");
+                return;
+            }
+
+            if(!_toDate) {
+                bootbox.alert("Please select To Date.");
+                return;
+            }
+
+            // console.log(_fromDate);
+            // console.log(_toDate);
+            document.getElementById("spanCount").textContent = '';
+            $("#spanLoading").show();
+
+            unReadMessagesSql.getDidNotRegisters(_fromDate, _toDate, function (err, record) {
+
+              $("#spanLoading").hide();
+
+              if(err) {
+                console.error(err);
+                alert("Error: Retrieving unread message list.");
+              }
+              else {
+                //console.log(record);
+                var template = $("#didNotRegisterTemplate").html();
+                var renderer = Handlebars.compile(template);
+                var result = renderer({ "record": record})
+                var elem = document.getElementById('main');
+                elem.innerHTML = result;
+
+                document.getElementById("spanCount").textContent = record.length;
+              }
+
+          });
+        }
+
+        Handlebars.registerHelper( "formatDate", function ( datePara ){
+
+                if(datePara) {
+                    var date = new Date(datePara);
+
+                    var month = date.getMonth() + 1;
+                    var dateD = date.getDate();
+                    var year = date.getFullYear();
+
+                    return  month +"/"+ dateD +"/"+ year;
+
+                }
+                else {
+                  return "";
+                }
+        });
+
+        function stringDateTimeUniqueNumber() {
+
+            var date = new Date();
+
+            var month = date.getMonth() + 1;
+            var dateD = date.getDate();
+            var year = date.getFullYear();
+            var hours = date.getHours();
+            var minutes = date.getMinutes();
+            var seconds = date.getSeconds();
+            return  month +""+ dateD +""+ year +""+ hours +""+ minutes +""+ seconds;
+        }
+
+        function printPageData() {
+
+          var restorePage = document.body.innerHTML;
+          var printContent = document.getElementById("main").innerHTML;
+          document.body.innerHTML = printContent;
+
+          //directly print to printer
+          //window.print();
+
+          //Print to pdf
+          const fs = require('fs');
+          const os = require('os');
+          const path = require('path');
+          const electron = require('electron');
+          const BrowserWindow = electron.remote.BrowserWindow;
+          const shell = electron.shell;
+          const win = BrowserWindow.getFocusedWindow();
+
+          var dateTimeSecUid = stringDateTimeUniqueNumber();
+
+          const pdfPath = path.join(os.tmpdir(), 'printUnReadMessages_'+ dateTimeSecUid +'.pdf');
+
+          //console.log(pdfPath);
+
+          // Use default printing options
+          win.webContents.printToPDF({marginsType: 0}, function (error, data) {
+
+                if (error) {
+                  console.error(error);
+                  document.body.innerHTML = restorePage;
+                  alert("Error: While printing document (Print to PDF.)");
+                }
+                else {
+                  fs.writeFile(pdfPath, data, function (error) {
+
+                    if (error) {
+                      alert("Error: While printing document (Print to PDF Creating File.)");
+                      console.error(error);
+                    }
+                    else {
+                      shell.openItem(pdfPath);
+                    }
+
+                    document.body.innerHTML = restorePage;
+
+                  });
+                }
+
+          });
+
+        }
+
+        function closeWindow(){
+          window.close();
+        }
+
+
+      </script>
+
+  </body>
+</html>

@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Billing Provider Form(web version)</title>
+    <link rel="stylesheet" type="text/css" href="../../../public/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="../../../public/font-awesome-4.5.0/css/font-awesome.min.css">
+    <link rel="stylesheet" type="text/css" href="../../../node_modules/fixed-data-table/dist/fixed-data-table-base.min.css">
+    <link rel="stylesheet" type="text/css" href="../../../node_modules/fixed-data-table/dist/fixed-data-table-style.min.css">
+    <link rel="stylesheet" type="text/css" href="../../../node_modules/fixed-data-table/dist/fixed-data-table.min.css">
+    <link rel="stylesheet" type="text/css" href="../../../public/stylesheets/calmed.css">
+
+    <script type="text/javascript">
+          var $ = jQuery = require(nodeModulesPath + "jquery");
+          //React
+          var React = require(nodeModulesPath + "react");
+          var ReactDOM = require(nodeModulesPath + "react-dom");
+          //Other
+          var remote = require('electron').remote;
+          var ipcRenderer = require('electron').ipcRenderer;
+          var cmGlb = remote.getGlobal('cmGlb');
+          var appPath = remote.getGlobal('appPath');
+          var moment = require(nodeModulesPath + 'moment');
+          var bootbox = require(nodeModulesPath + 'bootbox');
+          //other
+          var errorMessages = require(appPath + '/common/global/error-messages.js');
+          var sqlBllprv = require(appPath + "/2/sql/sql.js").sqlBllprv;
+
+    </script>
+    <script src="../../../public/bootstrap/js/bootstrap.min.js"></script>
+    <script src="../../../public/javascripts/JSXTransformer.js"></script>
+    <!--Components -->
+	  <script type="text/jsx" src="../../common/user_controls/txtInput.jsx"></script>
+    <script type="text/jsx" src="../../common/user_controls/dropdownPlugin.jsx"></script>
+    <script type="text/jsx" src="../../common/user_controls/SearchSelectButton.jsx"></script>
+    <script type="text/jsx" src="../../common/user_controls/checkboxInput.jsx"></script>
+
+    <script type="text/jsx" src="../../common/search_controls/ZipSearch.jsx"></script>
+    <script type="text/jsx" src="../../common/search_controls/ClsSearch/ClsSearch.jsx"></script>
+
+    <script type="text/jsx">
+
+      var _xrxBllPrvErrorMessages = {
+        Required: 'Required',
+        Invalid: 'Is Invalid',
+        Internal: 'Internal error',
+        Exists: 'Already exists'
+      };
+
+      var _optionsxrxBllPrvQualifierType = [
+        {value:"1", text:'1 - Person'},
+        {value:"2", text:'2 - Non-Person Entity'}
+      ];
+
+      var _optionsxrxBllPrvPrimaryIdQualifierType = [
+        {value:"24", text:'24 - Employers Id No.'},
+        {value:"34", text:'34 - Social Security No.'},
+        {value:"XX", text:'XX - HCFA National Provider Id'}
+      ];
+
+      var BllprvEdit = React.createClass({
+          getInitialState: function() {
+          return {
+            //recno: "",
+            //dirty: false,
+            data:   {
+                      RECNO: {value:""},
+                      BLLPRVID: {value:""}, NM102_BP_ENTITY_TYPE_QUAL: {value:"2"}, NM103_BP_NAME: {value:""}, NM104_BP_FIRST_NAME: {value:""}, NM105_BP_MI: {value:""}, TITLE: {value:""},
+                      N301_BP_ADDR1: {value:""}, N302_BP_ADDR2: {value:""}, N403_BP_ZIP: {value:""}, N401_BP_CITY: {value:""}, N402_BP_STATE: {value:""},
+                      PER02_BP_CONTACT: {value:""}, PER04_BP_COMMUNICATION_PHONE: {value:""}, PER04_BP_COMMUNICATION_EMAIL: {value:""}, PER04_BP_COMMUNICATION_FAX: {value:""}, FULLNAME: {value:""},
+                      EMPLOYERIDNO: {value:""}, SOCSECNO: {value:""}, NM108_BP_ID_CODE_QUAL: {value:"24"}, NM109_BP_ID_CODE: {value:""},
+                      NPI:{value:""}, TAXONOMYCODE: {value:""}, COMMERCIALNO: {value:""}, LOCATIONNO: {value:""}, UPINNO: {value:""}, STATELICENSENO: {value:""},
+                      MEDICAIDNO: {value:""}, BLUECROSSNO: {value:""}, BLUESHIELDNO: {value:""}, MEDICARENO: {value:""}, MEDICAREDMERCNO: {value:""}, MEDICARERAILROADNO: {value:""},
+                      UNIQUESUPPLIERIDNO: {value:""}, CLINICNO: {value:""}, CHAMPUSIDNO: {value:""},
+                      FACILITYIDNO: {value:""}, PPONO: {value:""}, HMONO: {value:""}, INDUSTRIALACCIDENTNO: {value:""}, PROVIDERSITENO: {value:""},
+                      ISPAYTOPROVEQUALBILLPROV: {value:true},
+                      NM102_PP_ENTITY_TYPE_QUAL: {value:"2"},
+                      NM103_PP_NAME: {value:""}, NM104_PP_FIRST_NAME: {value:""}, NM105_PP_MI: {value:""},
+                      N301_PP_ADDR1: {value:""}, N302_PP_ADDR2: {value:""}, N401_PP_CITY: {value:""}, N402_PP_STATE: {value:""}, N403_PP_ZIP: {value:""},
+                      PAYTOPHONE: {value:""}, NM109_PP_ID_CODE: {value:""}, NM108_PP_ID_CODE_QUAL: {value:"24"},
+                      PPSTATELICENSENO: {value:""}, PPBLUECROSSNO: {value:""}, PPBLUESHIELDNO: {value:""}, PPMEDICARENO: {value:""}, PPMEDICAIDNO: {value:""}, PPUPINNO: {value:""},
+                      PPCHAMPUSIDNO: {value:""}, PPFACILITYIDNO: {value:""}, PPPPONO: {value:""}, PPHMONO: {value:""}, PPEMPLOYERIDNO: {value:""}, PPCLINICNO: {value:""},
+                      PPCOMMERCIALNO: {value:""}, PPPROVIDERSITENO: {value:""}, PPLOCATIONNO: {value:""}, PPSOCSECNO: {value:""}, PPUNIQUESUPPLIERIDNO: {value:""}, PPINDUSTRIALACCIDENTNO: {value:""},
+                      PPNPI: {value:""}, PPMEDICAREDMERCNO: {value:""}, PPMEDICARERAILROADNO: {value:""},
+                      ENTRYDATE: {value: moment().format('L')}, USERID: {value: cmGlb.userId}
+                    },
+            errMsg: {
+                      BLLPRVID: _xrxBllPrvErrorMessages.Required, NM103_BP_NAME: _xrxBllPrvErrorMessages.Required,
+                      N301_BP_ADDR1: _xrxBllPrvErrorMessages.Required, N403_BP_ZIP: _xrxBllPrvErrorMessages.Required, N401_BP_CITY: _xrxBllPrvErrorMessages.Required, N402_BP_STATE: _xrxBllPrvErrorMessages.Required,
+                      PER02_BP_CONTACT: _xrxBllPrvErrorMessages.Required, PER04_BP_COMMUNICATION_PHONE: "", PER04_BP_COMMUNICATION_EMAIL: "", PER04_BP_COMMUNICATION_FAX: "", FULLNAME: _xrxBllPrvErrorMessages.Required,
+                      SOCSECNO: "", NM109_BP_ID_CODE: _xrxBllPrvErrorMessages.Required
+                    },
+            deleteButtonStyle:  {
+                                  display: "none"
+                                },
+            inputBoxUpperCase:  {
+                                  textTransform: "uppercase"
+                                },
+
+            parentWindowID : null,
+            isComponent : false
+
+          };
+        },
+        componentWillMount: function(){
+
+        },
+        componentDidMount: function(){
+          $(document.body).on('keydown', this._keyDown);
+
+          var self = this;
+          ipcRenderer.on('get-data', function (event, parentWindowID, data, colName) {
+            console.log(data);
+            console.log(colName);
+            self.setState({parentWindowID : parentWindowID, colName: colName});
+
+            if(data.recNo)
+            {
+              sqlBllprv.bllprvRowRecNo(data.recNo, function(err, record){
+                    if(err)
+                    {
+                        alert("Error while getting Data.")
+                    }
+                    else{
+                        if(record){
+                          console.log(record);
+
+                          if(record.ENTRYDATE.value){
+                              var entryDate = moment(record.ENTRYDATE.value);
+                              entryDate.utc();
+                              record.ENTRYDATE.value = entryDate.format('L');
+                          }
+                          self.setState({data : record, deleteButtonStyle: {display: "solid"}});
+                          self._validateUniqueId();
+                          self._validate();
+                        }
+                    }
+                });
+
+              }
+
+              if(data.searchType){
+
+                console.log(data);
+                //console.log(colName);
+                self.setState({isComponent : data.isComponent});
+                if(data.searchText){
+                  sqlBllprv.bllprvExistsId(data.searchText.trim(), null, function(err, record){
+                      if(err){
+                          alert("Error while getting Data.")
+                      }
+                      else{
+                          if(record && record.length>0){
+                            //console.log(record);
+                            if(record[0].ENTRYDATE.value){
+
+                                var entryDate = moment(record[0].ENTRYDATE.value);
+                                entryDate.utc();
+                                record[0].ENTRYDATE.value = entryDate.format('L');
+                              }
+                            self.setState({data: record[0]});
+                            self._validateUniqueId();
+                            self._validate();
+                          }
+                          else{
+                            self.state.data.BLLPRVID.value = data.searchText.trim();
+                            self.setState({data : self.state.data})
+                          }
+                      }
+                  });
+                }
+              }
+
+          });
+
+          ipcRenderer.on('get-components-data', function (event, data){
+
+            console.log(data);
+            if(data.zipData && data.colName){//Coming from Zip component
+              if(data.colName === "N403_BP_ZIP"){
+                self.state.data.N403_BP_ZIP.value = data.zipData.ZIPCODE.value;
+                self.state.data.N401_BP_CITY.value = data.zipData.CITY.value;
+                self.state.data.N402_BP_STATE.value = data.zipData.STATE.value;
+                self.setState({data : self.state.data});
+              }
+              else if(data.colName === "N403_PP_ZIP"){
+                self.state.data.N403_PP_ZIP.value = data.zipData.ZIPCODE.value;
+                self.state.data.N401_PP_CITY.value = data.zipData.CITY.value;
+                self.state.data.N402_PP_STATE.value = data.zipData.STATE.value;
+                self.setState({data : self.state.data});
+              }
+            }
+
+
+          });
+        },
+        componentWillUnmount: function() {
+            $(document.body).off('keydown', this._keyDown);
+        },
+        _keyDown: function(e) {
+            var F10 = 121;
+            var ESC = 27;
+            var ENTER = 13;
+            if(e.keyCode == F10) {
+                this._save();
+            }
+            else if(e.keyCode == ESC) {
+                this._back();
+            }
+            else if(e.keyCode == ENTER) {
+                // Set self as the current item in focus
+                var self = $(':focus'),
+                // Set the form by the current item in focus
+                form = self.parents('form:eq(0)'),
+                focusable;
+
+                // Array of Indexable/Tab-able items
+                focusable = form.find('input,a,select,button,textarea,div[contenteditable=true]').filter(':visible');
+
+                function enterKey(){
+                  if (e.which === 13 && !self.is('textarea')) { // [Enter] key
+
+                    // If not a regular hyperlink/button/textarea
+                    if ($.inArray(self, focusable) && (!self.is('a,button'))){
+                      // Then prevent the default [Enter] key behaviour from submitting the form
+                      e.preventDefault();
+                    } // Otherwise follow the link/button as by design, or put new line in textarea
+
+                    // Focus on the next item (either previous or next depending on shift)
+                    focusable.eq(focusable.index(self) + (e.shiftKey ? -1 : 1)).focus();
+
+                    return false;
+                  }
+                }
+                // We need to capture the [Shift] key and check the [Enter] key either way.
+                if (e.shiftKey) { enterKey() } else { enterKey() }
+            }
+        },
+        _setDataState: function(event){
+          //this.state.dirty = true;
+          var field = event.target.name;
+          var value = "";
+          if(event.target.type === "checkbox"){
+            value = event.target.checked;
+          }
+          else{
+            value = event.target.value;
+            if(value){
+              value = value.toUpperCase();
+            }
+          }
+          var key = field.toUpperCase();
+          console.log(key);
+          console.log(value);
+          this.state.data[key].value = value;
+          if(this.state.errMsg[key]){
+            this.state.errMsg[key] = "";
+          }
+
+          if(key === "PER04_BP_COMMUNICATION_PHONE" && this.state.data.PER04_BP_COMMUNICATION_PHONE.value){
+            var phone = this.state.data.PER04_BP_COMMUNICATION_PHONE.value.replace(/\D/g, '');
+            if(phone && phone.length === 10){
+              this.state.data.PER04_BP_COMMUNICATION_PHONE.value = phone.substring(0, 3) + '-' + phone.substring(3, 6) + '-' + phone.substring(6, 10);
+            }
+          }
+          if(key === "PER04_BP_COMMUNICATION_FAX" && this.state.data.PER04_BP_COMMUNICATION_FAX.value){
+            var phone = this.state.data.PER04_BP_COMMUNICATION_FAX.value.replace(/\D/g, '');
+            if(phone && phone.length === 10){
+              this.state.data.PER04_BP_COMMUNICATION_FAX.value = phone.substring(0, 3) + '-' + phone.substring(3, 6) + '-' + phone.substring(6, 10);
+            }
+          }
+          if(key === "SOCSECNO" && this.state.data.SOCSECNO.value){
+            var ssn = this.state.data.SOCSECNO.value.replace(/\D/g, '');
+            if(ssn && ssn.length === 9){
+              this.state.data.SOCSECNO.value = ssn.substring(0, 3) + '-' + ssn.substring(3, 5) + '-' + ssn.substring(5, 9);
+            }
+          }
+
+          this.setState({data :this.state.data, errMsg: this.state.errMsg});
+        },
+        _close: function(){
+
+            window.close();
+        },
+        _promiseSave: function(){
+
+          var validateUniqueId = this._validateUniqueId();
+          var validateFields = this._validate()
+          var self = this;
+
+          Promise.all([
+            validateUniqueId,
+            validateFields
+          ]).then(function(values){
+              console.log(values);
+              self._save();
+          }).catch(function(err){
+            console.error('Promise ERR : ', err);
+          });
+        },
+        _save: function(){
+            //this._validateUniqueId();
+            //this._validate();
+            var recordnumber = this.state.data.RECNO.value;
+            var self = this;
+            if(this.state.errMsg.BLLPRVID ||  this.state.errMsg.NM103_BP_NAME || this.state.errMsg.N301_BP_ADDR1 || this.state.errMsg.N403_BP_ZIP || this.state.errMsg.N401_BP_CITY
+                  || this.state.errMsg.N402_BP_STATE || this.state.errMsg.PER02_BP_CONTACT || this.state.errMsg.PER04_BP_COMMUNICATION_PHONE|| this.state.errMsg.PER04_BP_COMMUNICATION_EMAIL
+                  || this.state.errMsg.PER04_BP_COMMUNICATION_FAX || this.state.errMsg.FULLNAME || this.state.errMsg.SOCSECNO || this.state.errMsg.NM109_BP_ID_CODE){
+                bootbox.alert("Please fix the errors.", function () {
+                });
+            }
+            else{
+
+              this.state.data.ENTRYDATE.value = moment().format('L');
+              this.state.data.USERID.value = cmGlb.userId;
+
+              var data =  this.state.data;
+              sqlBllprv.bllprvSave(data, function(err, record){
+
+                  if(err){
+                      bootbox.alert("Error while saving data.", function () {
+                      });
+                  }
+                  else
+                  {
+                    var parentWindowID = self.state.parentWindowID
+                    if(parentWindowID)
+                    {
+                      console.log(parentWindowID)
+
+                      const BrowserWindow = require('electron').remote.BrowserWindow;
+                      const fromWindow = BrowserWindow.fromId(parentWindowID);
+
+                      if(self.state.isComponent)
+                      {
+                        var data = {bllprvData : self.state.data, colName: self.state.colName};
+                        fromWindow.webContents.send('get-components-data', data);
+                      }
+                      else
+                      {
+                        var data = self.state.data;
+                        if(self.state.data.RECNO.value)
+                        {
+                          fromWindow.webContents.send('get-edit-data', data);
+                        }
+                        else
+                        {
+                          fromWindow.webContents.send('refresh-data');
+                        }
+
+                      }
+
+                      window.close();
+                    }
+
+
+                  }
+              });
+            }
+        },
+        _delete: function(){
+            var recordnumber = this.state.data.RECNO.value;
+            var self = this;
+            if(recordnumber){
+              bootbox.confirm("This record will be permanently deleted and cannot be recovered. Are you sure?", function (result) {
+                if(result){
+                  sqlBllprv.bllprvDelete(recordnumber, function(err, record){
+
+                      if(err){
+                          bootbox.alert("Error while deleting record.", function () {
+                          });
+                      }
+                      else{
+
+                        var parentWindowID = self.state.parentWindowID;
+                        const BrowserWindow = require('electron').remote.BrowserWindow;
+                        const fromWindow = BrowserWindow.fromId(parentWindowID);
+                        fromWindow.webContents.send('refresh-data');
+
+
+                        window.close();
+                      }
+                  });
+                }
+              });
+            }
+        },
+        _validateUniqueId: function(){
+            var recordnumber = this.state.data.RECNO.value;
+            this.state.errMsg.BLLPRVID = "";
+            if(!this.state.data.BLLPRVID.value){
+              this.state.errMsg.BLLPRVID = _xrxBllPrvErrorMessages.Required;
+              this.setState({errMsg: this.state.errMsg});
+            }
+            else{
+              var self = this;
+              sqlBllprv.bllprvExistsId(this.state.data.BLLPRVID.value, recordnumber, function(err, record){
+
+                  if(err){
+                      console.log(err);
+                      self.state.errMsg.BLLPRVID = _xrxBllPrvErrorMessages.Internal;
+                  }
+                  else{
+                    if (record && record.length > 0){
+                      self.state.errMsg.BLLPRVID = _xrxBllPrvErrorMessages.Exists;
+                    }
+                    else{
+                      self.state.errMsg.BLLPRVID = "";
+                    }
+                  }
+                  self.setState({errMsg: self.state.errMsg});
+              });
+            }
+        },
+        _validate: function(event){
+
+            //Tab 1
+            if(!this.state.data.NM103_BP_NAME.value)
+              this.state.errMsg.NM103_BP_NAME = _xrxBllPrvErrorMessages.Required;
+            else
+              this.state.errMsg.NM103_BP_NAME = "";
+
+            if(!this.state.data.NM104_BP_FIRST_NAME.value && (this.state.data.NM102_BP_ENTITY_TYPE_QUAL.value === "1"))
+              this.state.errMsg.NM104_BP_FIRST_NAME = _xrxBllPrvErrorMessages.Required;
+            else
+              this.state.errMsg.NM104_BP_FIRST_NAME = "";
+
+            if(!this.state.data.N301_BP_ADDR1.value)
+              this.state.errMsg.N301_BP_ADDR1 = _xrxBllPrvErrorMessages.Required;
+            else
+              this.state.errMsg.N301_BP_ADDR1 = "";
+
+            if(!this.state.data.N403_BP_ZIP.value)
+              this.state.errMsg.N403_BP_ZIP = _xrxBllPrvErrorMessages.Required;
+            else
+              this.state.errMsg.N403_BP_ZIP = "";
+
+            if(!this.state.data.N401_BP_CITY.value)
+              this.state.errMsg.N401_BP_CITY = _xrxBllPrvErrorMessages.Required;
+            else
+              this.state.errMsg.N401_BP_CITY = "";
+
+            if(!this.state.data.N402_BP_STATE.value)
+              this.state.errMsg.N402_BP_STATE = _xrxBllPrvErrorMessages.Required;
+            else
+              this.state.errMsg.N402_BP_STATE = "";
+
+            if(!this.state.data.PER02_BP_CONTACT.value)
+              this.state.errMsg.PER02_BP_CONTACT = _xrxBllPrvErrorMessages.Required;
+            else
+              this.state.errMsg.PER02_BP_CONTACT = "";
+
+            if(!this.state.data.FULLNAME.value)
+              this.state.errMsg.FULLNAME = _xrxBllPrvErrorMessages.Required;
+            else
+              this.state.errMsg.FULLNAME = "";
+
+            if(!this.state.data.NM109_BP_ID_CODE.value)
+              this.state.errMsg.NM109_BP_ID_CODE = _xrxBllPrvErrorMessages.Required;
+            else
+              this.state.errMsg.NM109_BP_ID_CODE = "";
+
+            var phonePattern = /^\(?(\d{3})\)?[-]?(\d{3})[-]?(\d{4})$/;
+            var emailPattern = /^([\w-]+(?:\.[\w-]+)*)@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$/i;
+            var ssnPattern = /^\d{3}-?\d{2}-?\d{4}$/;
+            if(this.state.data.PER04_BP_COMMUNICATION_PHONE.value && !phonePattern.test(this.state.data.PER04_BP_COMMUNICATION_PHONE.value))
+              this.state.errMsg.PER04_BP_COMMUNICATION_PHONE = _xrxBllPrvErrorMessages.Invalid;
+            else
+              this.state.errMsg.PER04_BP_COMMUNICATION_PHONE = "";
+
+            if(this.state.data.PER04_BP_COMMUNICATION_EMAIL.value && !emailPattern.test(this.state.data.PER04_BP_COMMUNICATION_EMAIL.value))
+              this.state.errMsg.PER04_BP_COMMUNICATION_EMAIL = _xrxBllPrvErrorMessages.Invalid;
+            else
+              this.state.errMsg.PER04_BP_COMMUNICATION_EMAIL = "";
+
+            if(this.state.data.PER04_BP_COMMUNICATION_FAX.value && !phonePattern.test(this.state.data.PER04_BP_COMMUNICATION_FAX.value))
+              this.state.errMsg.PER04_BP_COMMUNICATION_FAX = _xrxBllPrvErrorMessages.Invalid;
+            else
+              this.state.errMsg.PER04_BP_COMMUNICATION_FAX = "";
+
+            if(this.state.data.SOCSECNO.value && !ssnPattern.test(this.state.data.SOCSECNO.value))
+              this.state.errMsg.SOCSECNO = _xrxBllPrvErrorMessages.Invalid;
+            else
+              this.state.errMsg.SOCSECNO = "";
+
+              //Tab 2
+              //Not implemented
+
+              this.setState({errMsg: this.state.errMsg});
+        },
+        _updateZipData_BP: function(selectedZipData, isValid){
+            if(selectedZipData && isValid){
+              this.state.data.N403_BP_ZIP.value = selectedZipData.zipCode;
+              if(selectedZipData.city)
+                this.state.data.N401_BP_CITY.value = selectedZipData.city;
+              if(selectedZipData.state)
+                this.state.data.N402_BP_STATE.value = selectedZipData.state;
+            }
+            else{
+              this.state.data.N403_BP_ZIP.value = "";
+            }
+            this.setState({data : this.state.data});
+            this._validate();
+        },
+        _updateZipData_PP: function(selectedZipData, isValid){
+            if(selectedZipData && isValid){
+              this.state.data.N403_PP_ZIP.value = selectedZipData.zipCode;
+              if(selectedZipData.state)
+                this.state.data.N401_PP_CITY.value = selectedZipData.city;
+              if(selectedZipData.state)
+                this.state.data.N402_PP_STATE.value = selectedZipData.state;
+            }
+            else{
+              this.state.data.N403_PP_ZIP.value = "";
+            }
+            this.setState({data : this.state.data});
+            this._validate();
+        },
+        render: function(){
+
+          var zipData_BP = { recNo:'', zipCode:this.state.data.N403_BP_ZIP.value, city:'', state:'', shortCode:''};
+          var zipData_PP = { recNo:'', zipCode:this.state.data.N403_PP_ZIP.value, city:'', state:'', shortCode:''};
+
+          var deleteButtonStyle = { display: "none" };
+          if(this.state.data.RECNO.value &&  !this.state.isComponent){
+              deleteButtonStyle =  { display: "" };
+          }
+
+          var payToFormStyle = { display: "" };
+          if(this.state.data.ISPAYTOPROVEQUALBILLPROV.value){
+            payToFormStyle = { display: "none" };
+          }
+
+          return(
+            <form autoComplete="off">
+              <div className="row form-group btn-group">
+                  <button type="button" id="btnSave" className="btn btn-success btn-sm" onClick={this._promiseSave}>
+                    <span className="fa fa-floppy-o"></span> Save
+                  </button>
+                  <button type="button" id="btnDelete" className="btn btn-danger btn-sm" onClick={this._delete} style={deleteButtonStyle} >
+                    <span className="fa fa-minus-circle"></span> Delete
+                  </button>
+                  <button onClick={this._close} className="btn btn-warning btn-sm"><i className="fa fa-times"></i> Close</button>
+              </div>
+              <br/>
+
+              <ul className="nav nav-tabs">
+                <li className="active"><a href="#tab-billingprovider" data-toggle="tab"><strong>Billing Provider(Loop 2010AA)</strong></a></li>
+                <li><a href="#tab-paytoprovider" data-toggle="tab"><strong>Pay-To Provider (Loop 2010AB)</strong></a></li>
+              </ul>
+
+              <div id="myTabContent" className="tab-content">
+
+              <div className="tab-pane fade active in" id="tab-billingprovider">
+                <div className="panel panel-default">
+                  <div className="panel-heading">
+                    <a data-toggle="collapse" data-target="#info1" data-parent="#tab-billingprovider"><strong>Basic Information</strong></a>
+                  </div>
+                  <div id="info1" className="collapse in">
+
+                    <div className="row form-group">
+                        <label className="col-xs-3 text-right small control-label">Provider Id:</label>
+                        <div className="col-xs-7">
+                            <TxtInput id="BLLPRVID" name="BLLPRVID" value={this.state.data.BLLPRVID.value} error={this.state.errMsg.BLLPRVID}
+                            onChange={this._setDataState} onBlur={this._validateUniqueId} maxLength="11" />
+                        </div>
+                        <label className="col-xs-3 text-right small control-label">Type Qual.:</label>
+                        <div className="col-xs-11">
+                          <DropdownPlugin name="NM102_BP_ENTITY_TYPE_QUAL" label="Type:" onChange={this._setDataState} onBlur={this._validate} value={this.state.data.NM102_BP_ENTITY_TYPE_QUAL.value}
+                            dropdownOptions={_optionsxrxBllPrvQualifierType} labelClass={"col-xs-4 text-right small"} textBoxClass={"col-xs-20"}/>
+                        </div>
+                    </div>
+                    <div className="row form-group">
+                        <label className="col-xs-3 text-right small control-label">Org./Last Name:</label>
+                        <div className="col-xs-7">
+                            <TxtInput id="NM103_BP_NAME" name="NM103_BP_NAME" value={this.state.data.NM103_BP_NAME.value} error={this.state.errMsg.NM103_BP_NAME}
+                            onChange={this._setDataState} onBlur={this._validate} maxLength="60" />
+                        </div>
+                        <label className="col-xs-3 text-right small control-label">First Name:</label>
+                        <div className="col-xs-5">
+                            <TxtInput id="NM104_BP_FIRST_NAME" name="NM104_BP_FIRST_NAME" value={this.state.data.NM104_BP_FIRST_NAME.value} error={this.state.errMsg.NM104_BP_FIRST_NAME}
+                            onChange={this._setDataState} onBlur={this._validate} maxLength="35" />
+                        </div>
+                        <label className="col-xs-1 text-right small control-label">MI:</label>
+                        <div className="col-xs-2">
+                            <TxtInput id="NM105_BP_MI" name="NM105_BP_MI" value={this.state.data.NM105_BP_MI.value}
+                            onChange={this._setDataState} maxLength="1" />
+                        </div>
+                        <label className="col-xs-1 text-right small control-label">Title:</label>
+                        <div className="col-xs-2">
+                            <TxtInput id="TITLE" name="TITLE" value={this.state.data.TITLE.value}
+                            onChange={this._setDataState}  maxLength="5" />
+                        </div>
+                    </div>
+                    <div className="row form-group">
+                        <label className="col-xs-3 text-right small control-label">Addr 1:</label>
+                        <div className="col-xs-7">
+                            <TxtInput id="N301_BP_ADDR1" name="N301_BP_ADDR1" value={this.state.data.N301_BP_ADDR1.value} error={this.state.errMsg.N301_BP_ADDR1}
+                            onChange={this._setDataState} onBlur={this._validate} maxLength="55" />
+                        </div>
+                        <label className="col-xs-3 text-right small control-label">Addr2:</label>
+                        <div className="col-xs-11">
+                          <TxtInput id="N302_BP_ADDR2" name="N302_BP_ADDR2" value={this.state.data.N302_BP_ADDR2.value}
+                          onChange={this._setDataState} maxLength="55" />
+                        </div>
+                    </div>
+                    <div className="row form-group">
+                        <label className="col-xs-3 text-right small control-label">Zip:</label>
+                        <div className="col-xs-7">
+                            <ZipSearch isRequired={true} zipData={zipData_BP} colName={"N403_BP_ZIP"} onSelect={this._updateZipData_BP} showSelectedInfoBox={false} tabIndexSearch="-1" tabIndexButton="-1" tabIndexSearchType="-1" />
+                        </div>
+                        <label htmlFor="city" className="col-xs-3 text-right small control-label">City: </label>
+                        <div className="col-xs-8">
+                            <TxtInput id="N401_BP_CITY" name="N401_BP_CITY" value={this.state.data.N401_BP_CITY.value}
+                            onChange={this._setDataState} onBlur={this._validate} maxLength="25" />
+                        </div>
+                        <label htmlFor="state" className="col-xs-1 text-right small control-label">State:</label>
+                        <div className="col-xs-2">
+                            <TxtInput id="N402_BP_STATE" name="N402_BP_STATE" value={this.state.data.N402_BP_STATE.value}
+                            onChange={this._setDataState} onBlur={this._validate} maxLength="2" />
+                        </div>
+                    </div>
+                    <div className="row form-group">
+                        <label className="col-xs-3 text-right small control-label">Contact:</label>
+                        <div className="col-xs-7">
+                            <TxtInput id="PER02_BP_CONTACT" name="PER02_BP_CONTACT" value={this.state.data.PER02_BP_CONTACT.value} error={this.state.errMsg.PER02_BP_CONTACT}
+                            onChange={this._setDataState} onBlur={this._validate} maxLength="60" />
+                        </div>
+                        <label className="col-xs-3 text-right small control-label">Phone:</label>
+                        <div className="col-xs-11">
+                          <TxtInput id="PER04_BP_COMMUNICATION_PHONE" name="PER04_BP_COMMUNICATION_PHONE" value={this.state.data.PER04_BP_COMMUNICATION_PHONE.value} error={this.state.errMsg.PER04_BP_COMMUNICATION_PHONE}
+                          onChange={this._setDataState} onBlur={this._validate} maxLength="20" placeholder="xxx-xxx-xxxx"/>
+                        </div>
+                    </div>
+                    <div className="row form-group">
+                        <label className="col-xs-3 text-right small control-label">Email:</label>
+                        <div className="col-xs-7">
+                            <TxtInput id="PER04_BP_COMMUNICATION_EMAIL" name="PER04_BP_COMMUNICATION_EMAIL" value={this.state.data.PER04_BP_COMMUNICATION_EMAIL.value} error={this.state.errMsg.PER04_BP_COMMUNICATION_EMAIL}
+                            onChange={this._setDataState} onBlur={this._validate} maxLength="60" />
+                        </div>
+                        <label className="col-xs-3 text-right small control-label">Fax:</label>
+                        <div className="col-xs-11">
+                          <TxtInput id="PER04_BP_COMMUNICATION_FAX" name="PER04_BP_COMMUNICATION_FAX" value={this.state.data.PER04_BP_COMMUNICATION_FAX.value} error={this.state.errMsg.PER04_BP_COMMUNICATION_FAX}
+                          onChange={this._setDataState} onBlur={this._validate} maxLength="20" placeholder="xxx-xxx-xxxx"/>
+                        </div>
+                    </div>
+                    <br/>
+                    <div className="row form-group">
+                        <label className="col-xs-6 text-right small control-label">Billing Provider Name (appears on Pat. Statement,Reports etc)</label>
+                        <label className="col-xs-4 text-right small control-label">Full Name & Title:</label>
+                        <div className="col-xs-14">
+                          <TxtInput id="FULLNAME" name="FULLNAME" value={this.state.data.FULLNAME.value} error={this.state.errMsg.FULLNAME}
+                          onChange={this._setDataState} onBlur={this._validate} maxLength="50"/>
+                        </div>
+                    </div>
+                    <div className="row form-group">
+                        <label className="col-xs-6 text-right small control-label">Primary Id - Pre 5010</label>
+                        <label className="col-xs-4 text-right small control-label">Primary Id: </label>
+                        <div className="col-xs-5">
+                            <TxtInput id="NM109_BP_ID_CODE" name="NM109_BP_ID_CODE" value={this.state.data.NM109_BP_ID_CODE.value} error={this.state.errMsg.NM109_BP_ID_CODE}
+                            onChange={this._setDataState} onBlur={this._validate} maxLength="30" />
+                        </div>
+                        <label className="col-xs-3 text-right small control-label">Primary Id: </label>
+                        <div className="col-xs-6">
+                          <DropdownPlugin name="NM108_BP_ID_CODE_QUAL" label="Type:" onChange={this._setDataState} value={this.state.data.NM108_BP_ID_CODE_QUAL.value}
+                          dropdownOptions={_optionsxrxBllPrvPrimaryIdQualifierType}/>
+                        </div>
+                    </div>
+                    <div className="row form-group">
+                        <label className="col-xs-6 text-right small control-label">Tax Identification</label>
+                        <label className="col-xs-4 text-right small control-label">Employer Id: </label>
+                        <div className="col-xs-5">
+                            <TxtInput id="EMPLOYERIDNO" name="EMPLOYERIDNO" value={this.state.data.EMPLOYERIDNO.value}
+                            onChange={this._setDataState} maxLength="30" />
+                        </div>
+                        <label className="col-xs-3 text-right small control-label">SSN: </label>
+                        <div className="col-xs-6">
+                          <TxtInput id="SOCSECNO" name="SOCSECNO" value={this.state.data.SOCSECNO.value} error={this.state.errMsg.SOCSECNO}
+                          onChange={this._setDataState} onBlur={this._validate} maxLength="30" placeholder="xxx-xx-xxxx"/>
+                        </div>
+                    </div>
+
+                  </div>
+                </div>
+
+                <div className="panel panel-default">
+                    <div className="panel-heading">
+                      <a data-toggle="collapse" data-target="#info2" data-parent="#tab-billingprovider"><strong>Identification Information</strong></a>
+                    </div>
+                    <div id="info2" className="collapse in">
+
+                        <div className="row form-group">
+                            <label className="col-xs-6 text-right small control-label">Basic</label>
+                            <label className="col-xs-4 text-right small control-label">NPI: </label>
+                            <div className="col-xs-5">
+                                <TxtInput id="NPI" name="NPI" value={this.state.data.NPI.value}
+                                onChange={this._setDataState} maxLength="20" />
+                            </div>
+                            <label className="col-xs-3 text-right small control-label">Taxonomy Code: </label>
+                            <div className="col-xs-6">
+                              <TxtInput id="TAXONOMYCODE" name="TAXONOMYCODE" value={this.state.data.TAXONOMYCODE.value}
+                              onChange={this._setDataState} maxLength="50" />
+                            </div>
+                        </div>
+                        <div className="row form-group">
+                            <label className="col-xs-6 text-right small control-label">Secondary</label>
+                            <label className="col-xs-4 text-right small control-label">Commercial No-G2: </label>
+                            <div className="col-xs-5">
+                                <TxtInput id="COMMERCIALNO" name="COMMERCIALNO" value={this.state.data.COMMERCIALNO.value}
+                                onChange={this._setDataState} maxLength="30" />
+                            </div>
+                            <label className="col-xs-3 text-right small control-label">Location No-LU: </label>
+                            <div className="col-xs-6">
+                              <TxtInput id="LOCATIONNO" name="LOCATIONNO" value={this.state.data.LOCATIONNO.value}
+                              onChange={this._setDataState} maxLength="30" />
+                            </div>
+                        </div>
+                        <div className="row form-group">
+                            <label className="col-xs-6 text-right small control-label">UPIN/License</label>
+                            <label className="col-xs-4 text-right small control-label">UPIN No-1G: </label>
+                            <div className="col-xs-5">
+                                <TxtInput id="UPINNO" name="UPINNO" value={this.state.data.UPINNO.value}
+                                onChange={this._setDataState} maxLength="30" />
+                            </div>
+                            <label className="col-xs-3 text-right small control-label">State License No-0B: </label>
+                            <div className="col-xs-6">
+                              <TxtInput id="STATELICENSENO" name="STATELICENSENO" value={this.state.data.STATELICENSENO.value}
+                              onChange={this._setDataState} maxLength="30" />
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div className="panel panel-default">
+                      <div className="panel-heading">
+                        <a data-toggle="collapse" data-target="#info3" data-parent="#tab-billingprovider"><strong>Legacy Numbers - Pre 5010</strong></a>
+                      </div>
+                      <div id="info3" className="collapse in">
+
+                        <div className="row form-group">
+                            <label className="col-xs-4 text-right small control-label">Medicaid PIN 1D: </label>
+                            <div className="col-xs-4">
+                                <TxtInput id="MEDICAIDNO" name="MEDICAIDNO" value={this.state.data.MEDICAIDNO.value}
+                                onChange={this._setDataState} maxLength="30" />
+                            </div>
+                            <label className="col-xs-4 text-right small control-label">BlueCross/StateLic-1A: </label>
+                            <div className="col-xs-4">
+                              <TxtInput id="BLUECROSSNO" name="BLUECROSSNO" value={this.state.data.BLUECROSSNO.value}
+                              onChange={this._setDataState} maxLength="30" />
+                            </div>
+                            <label className="col-xs-4 text-right small control-label">Blue Shield/State Lic-1B: </label>
+                            <div className="col-xs-4">
+                              <TxtInput id="BLUESHIELDNO" name="BLUESHIELDNO" value={this.state.data.BLUESHIELDNO.value}
+                              onChange={this._setDataState} maxLength="30" />
+                            </div>
+                        </div>
+                        <div className="row form-group">
+                            <label className="col-xs-4 text-right small control-label">Medicare Group No-1C: </label>
+                            <div className="col-xs-4">
+                                <TxtInput id="MEDICARENO" name="MEDICARENO" value={this.state.data.MEDICARENO.value}
+                                onChange={this._setDataState} maxLength="30" />
+                            </div>
+                            <label className="col-xs-4 text-right small control-label">DMERC Medicare-1C: </label>
+                            <div className="col-xs-4">
+                              <TxtInput id="MEDICAREDMERCNO" name="MEDICAREDMERCNO" value={this.state.data.MEDICAREDMERCNO.value}
+                              onChange={this._setDataState} maxLength="30" />
+                            </div>
+                            <label className="col-xs-4 text-right small control-label">RailRoad Medicare-1C: </label>
+                            <div className="col-xs-4">
+                              <TxtInput id="MEDICARERAILROADNO" name="MEDICARERAILROADNO" value={this.state.data.MEDICARERAILROADNO.value}
+                              onChange={this._setDataState} maxLength="30" />
+                            </div>
+                        </div>
+                        <div className="row form-group">
+                            <label className="col-xs-4 text-right small control-label">Unique Supplier Id-U3: </label>
+                            <div className="col-xs-4">
+                                <TxtInput id="UNIQUESUPPLIERIDNO" name="UNIQUESUPPLIERIDNO" value={this.state.data.UNIQUESUPPLIERIDNO.value}
+                                onChange={this._setDataState} maxLength="30" />
+                            </div>
+                            <label className="col-xs-4 text-right small control-label">Clinic No-FH: </label>
+                            <div className="col-xs-4">
+                              <TxtInput id="CLINICNO" name="CLINICNO" value={this.state.data.CLINICNO.value}
+                              onChange={this._setDataState} maxLength="30" />
+                            </div>
+                            <label className="col-xs-4 text-right small control-label">CHAMPUS Id No-1H: </label>
+                            <div className="col-xs-4">
+                              <TxtInput id="CHAMPUSIDNO" name="CHAMPUSIDNO" value={this.state.data.CHAMPUSIDNO.value}
+                              onChange={this._setDataState} maxLength="30" />
+                            </div>
+                        </div>
+                        <div className="row form-group">
+                            <label className="col-xs-4 text-right small control-label">Facility Id No-1J: </label>
+                            <div className="col-xs-4">
+                                <TxtInput id="FACILITYIDNO" name="FACILITYIDNO" value={this.state.data.FACILITYIDNO.value}
+                                onChange={this._setDataState} maxLength="30" />
+                            </div>
+                            <label className="col-xs-4 text-right small control-label">PPO No-B3: </label>
+                            <div className="col-xs-4">
+                              <TxtInput id="PPONO" name="PPONO" value={this.state.data.PPONO.value}
+                              onChange={this._setDataState} maxLength="30" />
+                            </div>
+                            <label className="col-xs-4 text-right small control-label">HMO No-BQ: </label>
+                            <div className="col-xs-4">
+                              <TxtInput id="HMONO" name="HMONO" value={this.state.data.HMONO.value}
+                              onChange={this._setDataState} maxLength="30" />
+                            </div>
+                        </div>
+                        <div className="row form-group">
+                            <label className="col-xs-4 text-right small control-label">Ind Accident No-X5: </label>
+                            <div className="col-xs-4">
+                                <TxtInput id="INDUSTRIALACCIDENTNO" name="INDUSTRIALACCIDENTNO" value={this.state.data.INDUSTRIALACCIDENTNO.value}
+                                onChange={this._setDataState} maxLength="30" />
+                            </div>
+                            <label className="col-xs-4 text-right small control-label">Provider Site No-G5: </label>
+                            <div className="col-xs-4">
+                              <TxtInput id="PROVIDERSITENO" name="PROVIDERSITENO" value={this.state.data.PROVIDERSITENO.value}
+                              onChange={this._setDataState} maxLength="30" />
+                            </div>
+                            <label className="col-xs-4 text-right small control-label"></label>
+                            <div className="col-xs-4">
+                            </div>
+                        </div>
+
+                      </div>
+                </div>
+
+              </div>
+
+              <div className="tab-pane fade" id="tab-paytoprovider">
+                <br/>
+                <div className="panel panel-default">
+                    <CheckboxInput name="ISPAYTOPROVEQUALBILLPROV" labelName= "The Pay-To Provider is the same as Billing Provider"
+                    onChange={this._setDataState} checked={this.state.data.ISPAYTOPROVEQUALBILLPROV.value}  />
+                </div>
+
+                <div className="panel panel-default" style={payToFormStyle}>
+                      <div className="panel-heading">
+                        <a data-toggle="collapse" data-target="#info11" data-parent="#tab-paytoprovider"><strong>Basic Information</strong></a>
+                      </div>
+                      <div id="info11" className="collapse in">
+
+                        <div className="row form-group">
+                            <label className="col-xs-3 text-right small control-label">Provider Id:</label>
+                            <div className="col-xs-7">
+                                <input type="text" className="form-control small" maxLength="11" value={this.state.data.BLLPRVID.value} disabled></input>
+                            </div>
+                            <label className="col-xs-3 text-right small control-label">Type Qual.:</label>
+                            <div className="col-xs-11">
+                              <DropdownPlugin name="NM102_PP_ENTITY_TYPE_QUAL" label="Type:" onChange={this._setDataState} onBlur={this._validate} value={this.state.data.NM102_PP_ENTITY_TYPE_QUAL.value}
+                                dropdownOptions={_optionsxrxBllPrvQualifierType} labelClass={"col-xs-4 text-right small"} textBoxClass={"col-xs-20"}/>
+                            </div>
+                        </div>
+                        <div className="row form-group">
+                            <label className="col-xs-3 text-right small control-label">Org./Last Name:</label>
+                            <div className="col-xs-7">
+                                <TxtInput id="NM103_PP_NAME" name="NM103_PP_NAME" value={this.state.data.NM103_PP_NAME.value}
+                                onChange={this._setDataState} onBlur={this._validate} maxLength="60" />
+                            </div>
+                            <label className="col-xs-3 text-right small control-label">First Name:</label>
+                            <div className="col-xs-8">
+                                <TxtInput id="NM104_PP_FIRST_NAME" name="NM104_PP_FIRST_NAME" value={this.state.data.NM104_PP_FIRST_NAME.value}
+                                onChange={this._setDataState} onBlur={this._validate} maxLength="35" />
+                            </div>
+                            <label className="col-xs-1 text-right small control-label">MI:</label>
+                            <div className="col-xs-2">
+                                <TxtInput id="NM105_PP_MI" name="NM105_PP_MI" value={this.state.data.NM105_BP_MI.value}
+                                onChange={this._setDataState} maxLength="1" />
+                            </div>
+                        </div>
+                        <div className="row form-group">
+                            <label className="col-xs-3 text-right small control-label">Addr 1:</label>
+                            <div className="col-xs-7">
+                                <TxtInput id="N301_PP_ADDR1" name="N301_PP_ADDR1" value={this.state.data.N301_PP_ADDR1.value}
+                                onChange={this._setDataState} maxLength="55" />
+                            </div>
+                            <label className="col-xs-3 text-right small control-label">Addr2:</label>
+                            <div className="col-xs-11">
+                              <TxtInput id="N301_PP_ADDR1" name="N301_PP_ADDR1" value={this.state.data.N301_PP_ADDR1.value}
+                              onChange={this._setDataState} maxLength="55" />
+                            </div>
+                        </div>
+                        <div className="row form-group">
+                            <label className="col-xs-3 text-right small control-label">Zip:</label>
+                            <div className="col-xs-7">
+                                <ZipSearch zipData={zipData_PP} colName={"N403_PP_ZIP"} onSelect={this._updateZipData_PP} isRequired={false}
+                                showSelectedInfoBox={false} tabIndexSearch="-1" tabIndexButton="-1" tabIndexSearchType="-1" />
+                            </div>
+                            <label htmlFor="city" className="col-xs-3 text-right small control-label">City: </label>
+                            <div className="col-xs-8">
+                                <TxtInput id="N401_PP_CITY" name="N401_PP_CITY" value={this.state.data.N401_PP_CITY.value}
+                                onChange={this._setDataState}  maxLength="25" />
+                            </div>
+                            <label htmlFor="state" className="col-xs-1 text-right small control-label">State:</label>
+                            <div className="col-xs-2">
+                                <TxtInput id="N402_PP_STATE" name="N402_PP_STATE" value={this.state.data.N402_PP_STATE.value}
+                                onChange={this._setDataState} maxLength="2" />
+                            </div>
+                        </div>
+                        <div className="row form-group">
+                            <label className="col-xs-3 text-right small control-label">Phone:</label>
+                            <div className="col-xs-7">
+                                <TxtInput id="PAYTOPHONE" name="PAYTOPHONE" value={this.state.data.PAYTOPHONE.value}
+                                onChange={this._setDataState} onBlur={this._validate} placeholder="xxx-xxx-xxxx" maxLength="20" />
+                            </div>
+                            <label className="col-xs-3 text-right small control-label"></label>
+                            <div className="col-xs-11">
+                            </div>
+                        </div>
+                        <hr/>
+                        <div className="row form-group">
+                            <label className="col-xs-6 text-right small control-label">Primary Id - Pre 5010</label>
+                            <label className="col-xs-4 text-right small control-label">Primary Id: </label>
+                            <div className="col-xs-5">
+                                <TxtInput id="NM109_PP_ID_CODE" name="NM109_PP_ID_CODE" value={this.state.data.NM109_PP_ID_CODE.value}
+                                onChange={this._setDataState} maxLength="30" />
+                            </div>
+                            <label className="col-xs-3 text-right small control-label">Primary Id: </label>
+                            <div className="col-xs-6">
+                              <DropdownPlugin name="NM108_PP_ID_CODE_QUAL" label="Type:" onChange={this._setDataState} value={this.state.data.NM108_PP_ID_CODE_QUAL.value}
+                              dropdownOptions={_optionsxrxBllPrvPrimaryIdQualifierType}/>
+                            </div>
+                        </div>
+
+                      </div>
+                </div>
+
+                <div className="panel panel-default" style={payToFormStyle}>
+                      <div className="panel-heading">
+                        <a data-toggle="collapse" data-target="#info12" data-parent="#tab-paytoprovider"><strong>Legacy Numbers - Pre 5010</strong></a>
+                      </div>
+                      <div id="info12" className="collapse in">
+
+                        <div className="row form-group">
+                            <label className="col-xs-4 text-right small control-label">State License No-0B: </label>
+                            <div className="col-xs-4">
+                                <TxtInput id="PPSTATELICENSENO" name="PPSTATELICENSENO" value={this.state.data.PPSTATELICENSENO.value}
+                                onChange={this._setDataState} maxLength="30" />
+                            </div>
+                            <label className="col-xs-4 text-right small control-label">BlueCross/State Lic-1A: </label>
+                            <div className="col-xs-4">
+                              <TxtInput id="PPBLUECROSSNO" name="PPBLUECROSSNO" value={this.state.data.PPBLUECROSSNO.value}
+                              onChange={this._setDataState} maxLength="30" />
+                            </div>
+                            <label className="col-xs-4 text-right small control-label">Blue Shield/State Lic-1B: </label>
+                            <div className="col-xs-4">
+                              <TxtInput id="PPBLUESHIELDNO" name="PPBLUESHIELDNO" value={this.state.data.PPBLUESHIELDNO.value}
+                              onChange={this._setDataState} maxLength="30" />
+                            </div>
+                        </div>
+                        <div className="row form-group">
+                            <label className="col-xs-4 text-right small control-label">Medicare Group No-1C: </label>
+                            <div className="col-xs-4">
+                                <TxtInput id="PPMEDICARENO" name="PPMEDICARENO" value={this.state.data.PPMEDICARENO.value}
+                                onChange={this._setDataState} maxLength="30" />
+                            </div>
+                            <label className="col-xs-4 text-right small control-label">DMERC Medicare-1C: </label>
+                            <div className="col-xs-4">
+                              <TxtInput id="PPMEDICAREDMERCNO" name="PPMEDICAREDMERCNO" value={this.state.data.PPMEDICAREDMERCNO.value}
+                              onChange={this._setDataState} maxLength="30" />
+                            </div>
+                            <label className="col-xs-4 text-right small control-label">RailRoad Medicare-1C: </label>
+                            <div className="col-xs-4">
+                              <TxtInput id="PPMEDICARERAILROADNO" name="PPMEDICARERAILROADNO" value={this.state.data.PPMEDICARERAILROADNO.value}
+                              onChange={this._setDataState} maxLength="30" />
+                            </div>
+                        </div>
+                        <div className="row form-group">
+                            <label className="col-xs-4 text-right small control-label">Medicaid PIN-1D: </label>
+                            <div className="col-xs-4">
+                                <TxtInput id="PPMEDICAIDNO" name="PPMEDICAIDNO" value={this.state.data.PPMEDICAIDNO.value}
+                                onChange={this._setDataState} maxLength="30" />
+                            </div>
+                            <label className="col-xs-4 text-right small control-label">UPIN No-1G: </label>
+                            <div className="col-xs-4">
+                              <TxtInput id="PPUPINNO" name="PPUPINNO" value={this.state.data.PPUPINNO.value}
+                              onChange={this._setDataState} maxLength="30" />
+                            </div>
+                            <label className="col-xs-4 text-right small control-label">CHAMPUS Id No-1H: </label>
+                            <div className="col-xs-4">
+                              <TxtInput id="PPCHAMPUSIDNO" name="PPCHAMPUSIDNO" value={this.state.data.PPCHAMPUSIDNO.value}
+                              onChange={this._setDataState} maxLength="30" />
+                            </div>
+                        </div>
+                        <div className="row form-group">
+                            <label className="col-xs-4 text-right small control-label">Facility Id No-1J: </label>
+                            <div className="col-xs-4">
+                                <TxtInput id="PPFACILITYIDNO" name="PPFACILITYIDNO" value={this.state.data.PPFACILITYIDNO.value}
+                                onChange={this._setDataState} maxLength="30" />
+                            </div>
+                            <label className="col-xs-4 text-right small control-label">PPO No-B3: </label>
+                            <div className="col-xs-4">
+                              <TxtInput id="PPPPONO" name="PPPPONO" value={this.state.data.PPPPONO.value}
+                              onChange={this._setDataState} maxLength="30" />
+                            </div>
+                            <label className="col-xs-4 text-right small control-label">HMO No-BQ: </label>
+                            <div className="col-xs-4">
+                              <TxtInput id="PPHMONO" name="PPHMONO" value={this.state.data.PPHMONO.value}
+                              onChange={this._setDataState} maxLength="30" />
+                            </div>
+                        </div>
+                        <div className="row form-group">
+                            <label className="col-xs-4 text-right small control-label">Employer Id No-EI: </label>
+                            <div className="col-xs-4">
+                                <TxtInput id="PPEMPLOYERIDNO" name="PPEMPLOYERIDNO" value={this.state.data.PPEMPLOYERIDNO.value}
+                                onChange={this._setDataState} maxLength="30" />
+                            </div>
+                            <label className="col-xs-4 text-right small control-label">Clinic No-FH: </label>
+                            <div className="col-xs-4">
+                              <TxtInput id="PPCLINICNO" name="PPCLINICNO" value={this.state.data.PPCLINICNO.value}
+                              onChange={this._setDataState} maxLength="30" />
+                            </div>
+                            <label className="col-xs-4 text-right small control-label">Commercial No-G2: </label>
+                            <div className="col-xs-4">
+                              <TxtInput id="PPCOMMERCIALNO" name="PPCOMMERCIALNO" value={this.state.data.PPCOMMERCIALNO.value}
+                              onChange={this._setDataState} maxLength="30" />
+                            </div>
+                        </div>
+                        <div className="row form-group">
+                            <label className="col-xs-4 text-right small control-label">Provider Site No-G5: </label>
+                            <div className="col-xs-4">
+                                <TxtInput id="PPPROVIDERSITENO" name="PPPROVIDERSITENO" value={this.state.data.PPPROVIDERSITENO.value}
+                                onChange={this._setDataState} maxLength="30" />
+                            </div>
+                            <label className="col-xs-4 text-right small control-label">Location No-LU: </label>
+                            <div className="col-xs-4">
+                              <TxtInput id="PPLOCATIONNO" name="PPLOCATIONNO" value={this.state.data.PPLOCATIONNO.value}
+                              onChange={this._setDataState} maxLength="30" />
+                            </div>
+                            <label className="col-xs-4 text-right small control-label">SSN: </label>
+                            <div className="col-xs-4">
+                              <TxtInput id="PPSOCSECNO" name="PPSOCSECNO" value={this.state.data.PPSOCSECNO.value}
+                              onChange={this._setDataState} maxLength="30" />
+                            </div>
+                        </div>
+                        <div className="row form-group">
+                            <label className="col-xs-4 text-right small control-label">Unique Supplier Id-U3: </label>
+                            <div className="col-xs-4">
+                                <TxtInput id="PPUNIQUESUPPLIERIDNO" name="PPUNIQUESUPPLIERIDNO" value={this.state.data.PPUNIQUESUPPLIERIDNO.value}
+                                onChange={this._setDataState} maxLength="30" />
+                            </div>
+                            <label className="col-xs-4 text-right small control-label">Ind Accident No-X5: </label>
+                            <div className="col-xs-4">
+                              <TxtInput id="PPINDUSTRIALACCIDENTNO" name="PPINDUSTRIALACCIDENTNO" value={this.state.data.PPINDUSTRIALACCIDENTNO.value}
+                              onChange={this._setDataState} maxLength="30" />
+                            </div>
+                            <label className="col-xs-4 text-right small control-label">NPI: </label>
+                            <div className="col-xs-4">
+                              <TxtInput id="PPNPI" name="PPNPI" value={this.state.data.PPNPI.value}
+                              onChange={this._setDataState} maxLength="30" />
+                            </div>
+                        </div>
+
+                      </div>
+                </div>
+
+              </div>
+
+              </div>
+
+              <hr/>
+              <div>
+                <label className="col-xs-6 control-label text-right text-muted">Date Entered : </label>
+                <label className="col-xs-6 control-label text-muted">{this.state.data.ENTRYDATE.value}</label>
+                <label className="col-xs-6 control-label text-right text-muted">By Whom : </label>
+                <label className="col-xs-6 control-label text-muted">{this.state.data.USERID.value}</label>
+              </div>
+              </form>
+          );
+        }
+      });
+
+      ReactDOM.render(
+             <BllprvEdit  />,
+             document.getElementById('divBllprvEdit')
+      );
+    </script>
+  </head>
+  <body>
+      <div id="divBllprvEdit">
+      </div>
+  </body>
+</html>

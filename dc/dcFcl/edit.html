@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Facility Form(web version)</title>
+    <link rel="stylesheet" type="text/css" href="../../../public/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="../../../public/font-awesome-4.5.0/css/font-awesome.min.css">
+    <link rel="stylesheet" type="text/css" href="../../../node_modules/fixed-data-table/dist/fixed-data-table-base.min.css">
+    <link rel="stylesheet" type="text/css" href="../../../node_modules/fixed-data-table/dist/fixed-data-table-style.min.css">
+    <link rel="stylesheet" type="text/css" href="../../../node_modules/fixed-data-table/dist/fixed-data-table.min.css">
+    <link rel="stylesheet" type="text/css" href="../../../public/stylesheets/calmed.css">
+
+    <script type="text/javascript">
+        var remote = require('electron').remote;
+        var nodeModulesPath = remote.getGlobal('nodeModulesPath');
+        var appPath = remote.getGlobal('appPath');
+          var $ = jQuery = require(nodeModulesPath + "jquery");
+          //React
+          var React = require(nodeModulesPath + "react");
+          var ReactDOM = require(nodeModulesPath + "react-dom");
+          //Other
+          var ipcRenderer = require('electron').ipcRenderer;
+          var cmGlb = remote.getGlobal('cmGlb');
+          var moment = require(nodeModulesPath + 'moment');
+          var bootbox = require(nodeModulesPath + 'bootbox');
+          //other
+          var errorMessages = require(appPath + '/common/global/error-messages.js');
+          var sqlFcl = require(appPath + "/2/sql/sql.js").sqlFcl;
+          var sqlTxt = require(appPath + "/2/sql/sql.js").sqlTxt;
+
+    </script>
+    <script src="../../../public/bootstrap/js/bootstrap.min.js"></script>
+    <script src="../../../public/javascripts/JSXTransformer.js"></script>
+    <!--Components -->
+	  <script type="text/jsx" src="../../common/user_controls/txtInput.jsx"></script>
+    <script type="text/jsx" src="../../common/user_controls/dropdownPlugin.jsx"></script>
+    <script type="text/jsx" src="../../common/user_controls/SearchSelectButton.jsx"></script>
+    <script type="text/jsx" src="../../common/user_controls/checkboxInput.jsx"></script>
+
+    <script type="text/jsx" src="../../common/search_controls/ZipSearch.jsx"></script>
+    <script type="text/jsx" src="../../common/search_controls/BllPrvSearch.jsx"></script>
+
+    <script type="text/jsx">
+
+    var _xrxFclErrorMessages = {
+      Required: 'Required',
+      Invalid: 'Is Invalid',
+      Internal: 'Internal error',
+      Exists: 'Already exists'
+    };
+
+    var _optionsxrxFclEntityCode = [
+    	{value:"", text:'None'},
+      	{value:"FA", text:'FA - Hospitals, Labs, Facility'},
+      	{value:"LI", text:'LI - Independent Lab'},
+      	{value:"TL", text:'TL - Testing Laborator'},
+      	{value:"77", text:'77 - Office, Home, Other'}
+    ];
+
+    var _optionsxrxFclPrimaryIdQualifierType = [
+    	{value:"", text:'None'},
+      	{value:"24", text:'24 - Employers Id No.'},
+      	{value:"34", text:'34 - Social Security No.'},
+      	{value:"XX", text:'XX - HCFA National Provider Id'}
+    ];
+
+    var _optionsxrxFclPOS = [
+    	{value:"", text:'None'},
+      	{value:"01", text:'01-Pharmacy'},
+      	{value:"03", text:'03-School'},
+      	{value:"04", text:'04-Homeless Shelter'},
+      	{value:"05", text:'05-Indian Health Service - Free'},
+      	{value:"06", text:'06-Indian Health Service - Provider'},
+      	{value:"07", text:'07-Tribal - Free'},
+      	{value:"08", text:'08-Tribal - Provider'},
+      	{value:"09", text:'09-Prinson Correctional'},
+      	{value:"11", text:'11-Office'},
+      	{value:"12", text:'12-Home'},
+      	{value:"13", text:'13-Assisted Living'},
+      	{value:"14", text:'14-Group Home'},
+      	{value:"15", text:'15-Mobile Unit'},
+      	{value:"20", text:'20-Urgent Care'},
+      	{value:"21", text:'21-Inpatient Hospital'},
+      	{value:"22", text:'22-Outpatient Hospital'},
+      	{value:"23", text:'23-Emergency Room Hospital'},
+      	{value:"24", text:'24-Ambulatory Surgical Center'},
+      	{value:"25", text:'25-Birthing Center'},
+      	{value:"26", text:'26-Military Treatment'},
+      	{value:"27", text:'27-Skilled Nursing - Subacute (Outpatient)'},
+      	{value:"31", text:'31-Skilled Nursing'},
+      	{value:"32", text:'32-Nursing'},
+      	{value:"33", text:'33-Custodial Care'},
+      	{value:"34", text:'34-Hospice'},
+      	{value:"41", text:'41-Ambulance - Land'},
+      	{value:"42", text:'42-Ambulance - Air or Water'},
+      	{value:"43", text:'43-Religion Non Medical (Outpatient)'},
+      	{value:"49", text:'49-Independent Clinic'},
+      	{value:"50", text:'50-Federally Qualified Health Center'},
+      	{value:"51", text:'51-Inpatient Psychiatric'},
+      	{value:"52", text:'52-Psychiatric Facility Partial Hospital'},
+      	{value:"53", text:'53-Community Mental Health Center'},
+      	{value:"54", text:'54-Intermediate Care/Mentally Retarded'},
+      	{value:"55", text:'55-Residential Substance Abuse Treatment'},
+      	{value:"56", text:'56-Psychiatric Residential Treatment Center'},
+      	{value:"57", text:'57-Non-Residential Substance Abuse Treatment'},
+      	{value:"60", text:'60-Mass Immunization Center'},
+      	{value:"61", text:'61-Comprehensive Inpatient Rehabilitation'},
+      	{value:"62", text:'62-Comprehensive Outpatient Rehabilitation'},
+      	{value:"64", text:'64-Intermediate Care - Other (Outpatient)'},
+      	{value:"65", text:'65-End Stage Renal Disease Treatment;'},
+      	{value:"71", text:'71-State or Local Public Health Clinic'},
+      	{value:"72", text:'72-Rural Health Clinic'},
+      	{value:"73", text:'73-Clinic - Free Standing (Outpatient)'},
+      	{value:"74", text:'74-Clinic - Outpatient Rehab (Outpatient)'},
+      	{value:"75", text:'75-Clinic - Comp Outpatient Rehab (Outpatient)'},
+      	{value:"76", text:'76-Clinic - Community Mental Health (Outpatient)'},
+      	{value:"77", text:'77-Clinic - Other (Outpatient)'},
+      	{value:"81", text:'81-Independent Laboratory'},
+      	{value:"83", text:'83-Clinic Ambulatory Surgery Center (Outpatient)'},
+      	{value:"86", text:'86-Residential Facility (Outpatient)'},
+      	{value:"89", text:'89-Special Facility - Other (Outpatient)'},
+      	{value:"99", text:'99-Other Unlisted'}
+    ];
+
+      var FclEdit = React.createClass({
+          getInitialState: function() {
+          return {
+            //recno: "",
+            //dirty: false,
+            data:   {
+      			        RECNO: {value:""},
+      			        FCLID: {value:""}, SHORTCODE: {value:""}, FCLDESC: {value:""}, BLLPRVID: {value:""}, NPI: {value:""}, OFFICE: {value:false},
+      			        APPSHOWINBOOK: {value:true}, APPCOLOR: {value:"#FFFFFF"}, POS: {value:""}, POS_81: {value: false}, //POS_81 only used to make POS = 81
+      			        INPAT: {value: false}, POSI: {value:""},
+      			        CLIANO: {value:""}, DIRECTADDR: {value:""}, ACTUALADDR: {value:""}, ACTUALADDR2: {value:""}, ACTUALZIP: {value:""},
+      			        ACTUALCITY: {value:""}, ACTUALSTATE: {value:""}, ACTUALPHONE: {value:""}, FAX: {value:""},
+      			        SPI:{value:""}, ADDR: {value:""}, ADDR2: {value:""}, ZIP: {value:""}, CITY: {value:""}, STATE: {value:""},
+      			        PHONE: {value:""}, CONTACT: {value:""},
+      			        STATELICENSENO: {value:""}, COMMERCIALNO: {value:""}, LOCATIONNO: {value:""},
+      			        NM109_ID_CODE: {value:""}, NM108_ID_CODE_QUAL: {value:""}, TAXONOMYCODE: {value:""}, ENTITYIDCODE: {value:""},
+      			        MEDICAIDNO: {value:""}, BLUECROSSNO: {value:""}, BLUESHIELDNO: {value:""},
+      			        MEDICARENO: {value:""}, MEDICAREDMERCNO: {value:""}, MEDICARERAILROADNO: {value:""}, FEDTAXIDNO: {value:""}, UPINNO: {value:""},
+      			        CHAMPUSIDNO: {value:""}, INDUSTRIALACCIDENTNO: {value:""}, MAMOGRAPHY: {value:""}, PLANNETWORKIDNO: {value:""},
+      			        ENTRYDATE: {value: moment().format('L')}, USERID: {value: cmGlb.userId},
+      			        NOTES: {value:""}
+      			      },
+      			errMsg: {
+      			        FCLID: _xrxFclErrorMessages.Required, FCLDESC: _xrxFclErrorMessages.Required, BLLPRVID: "", DIRECTADDR: "",
+                          ACTUALPHONE: "", FAX:"", SPI: "", PHONE:""
+      			      },
+            deleteButtonStyle:  {
+                                  display: "none"
+                                },
+            inputBoxUpperCase:  {
+                                  textTransform: "uppercase"
+                                },
+
+            parentWindowID : null,
+            isComponent : false,
+            note: ""
+
+          };
+        },
+        componentWillMount: function(){
+
+        },
+        componentDidMount: function(){
+          $(document.body).on('keydown', this._keyDown);
+
+          var self = this;
+          ipcRenderer.on('get-data', function (event, parentWindowID, data, colName) {
+            console.log(data);
+            console.log(colName);
+            self.setState({parentWindowID : parentWindowID, colName: colName});
+
+            if(data.recNo)
+            {
+              sqlFcl.fclRowRecNo(data.recNo, function(err, record){
+                    if(err)
+                    {
+                        alert("Error while getting Data.")
+                    }
+                    else{
+                        if(record){
+                          console.log(record);
+
+                          if(record.APPCOLOR.value){
+                    				var colorHexa = record.APPCOLOR.value.toString(16);
+
+                    				while (colorHexa.length < 6)
+                      					colorHexa = "0" + colorHexa;
+
+            			        	record.APPCOLOR.value = "#"+colorHexa;
+            			        }
+            			        else{
+            			        	record.APPCOLOR.value = "#FFFFFF";
+            			        }
+            			        record.POS_81 = self.state.data.POS_81;
+            			        if(record.POS.value && record.POS.value === "81"){
+            			        	record.POS_81.value = true;
+            			        }
+                          if(record.ENTRYDATE.value){
+                              var entryDate = moment(record.ENTRYDATE.value);
+                              entryDate.utc();
+                              record.ENTRYDATE.value = entryDate.format('L');
+                          }
+                          self.setState({data : record, deleteButtonStyle: {display: "solid"}});
+                          self._validateUniqueId();
+                          self._validate();
+                          self._loadNote(record.FCLID.value);
+                        }
+                    }
+                });
+
+              }
+
+              if(data.searchType){
+
+                console.log(data);
+                //console.log(colName);
+                self.setState({isComponent: data.isComponent});
+                if(data.searchText){
+                  sqlFcl.fclExistsId(data.searchText.trim(), null, function(err, record){
+                      if(err){
+                          alert("Error while getting Data.")
+                      }
+                      else{
+                          if(record && record.length>0){
+                            //console.log(record);
+                            if(record[0].APPCOLOR.value){
+                      				var colorHexa = record[0].APPCOLOR.value.toString(16);
+
+                      				while (colorHexa.length < 6)
+                        					colorHexa = "0" + colorHexa;
+
+              			        	record[0].APPCOLOR.value = "#"+colorHexa;
+              			        }
+              			        else{
+              			        	record[0].APPCOLOR.value = "#FFFFFF";
+              			        }
+              			        record[0].POS_81 = self.state.data.POS_81;
+              			        if(record[0].POS.value && record[0].POS.value === "81"){
+              			        	record[0].POS_81.value = true;
+              			        }
+                            if(record[0].ENTRYDATE.value){
+
+                              var entryDate = moment(record[0].ENTRYDATE.value);
+                              entryDate.utc();
+                              record[0].ENTRYDATE.value = entryDate.format('L');
+                            }
+
+                            self.setState({data: record[0]});
+                            self._validateUniqueId();
+                            self._validate();
+                            self._loadNote(record[0].FCLID.value);
+                          }
+                          else{
+                            self.state.data.FCLID.value = data.searchText.trim();
+                            self.setState({data : self.state.data})
+                          }
+                      }
+                  });
+                }
+              }
+
+          });
+
+          ipcRenderer.on('get-components-data', function (event, data){
+
+            console.log(data);
+            if(data.zipData && data.colName){//Coming from Zip component
+              if(data.colName === "ZIP"){
+                self.state.data.ZIP.value = data.zipData.ZIPCODE.value;
+                self.state.data.CITY.value = data.zipData.CITY.value;
+                self.state.data.STATE.value = data.zipData.STATE.value;
+                self.setState({data: self.state.data});
+              }
+              else if(data.colName === "ACTUALZIP"){
+                self.state.data.ACTUALZIP.value = data.zipData.ZIPCODE.value;
+                self.state.data.ACTUALCITY.value = data.zipData.CITY.value;
+                self.state.data.ACTUALSTATE.value = data.zipData.STATE.value;
+                self.setState({data: self.state.data});
+              }
+            }
+
+            if(data.bllprvData && data.colName && data.colName === "BLLPRVID"){//Coming from BllPrv component
+              self.state.data.BLLPRVID.value = data.bllprvData.BLLPRVID.value;
+              self.setState({data: self.state.data});
+            }
+
+          });
+
+          ipcRenderer.on('get-note-data', function (event, data){
+            if(data){
+              self.setState({ note: data});
+            }
+          });
+        },
+        _loadNote: function(id){
+          console.log("here");
+          var self = this;
+          if(id){
+            console.log("here");
+            sqlTxt.txtNote("FCL", id, function(err, record){
+                if(err){
+                    alert("Error while getting your note.")
+                }
+                else{
+                    if(record){
+                      self.setState({ note: record.TXTVALUE.value});
+                    }
+                }
+            });
+          }
+        },
+        componentWillUnmount: function() {
+            $(document.body).off('keydown', this._keyDown);
+        },
+        _keyDown: function(e) {
+            var F10 = 121;
+            var ESC = 27;
+            var ENTER = 13;
+            if(e.keyCode == F10) {
+                this._save();
+            }
+            else if(e.keyCode == ESC) {
+                this._back();
+            }
+            else if(e.keyCode == ENTER) {
+                // Set self as the current item in focus
+                var self = $(':focus'),
+                // Set the form by the current item in focus
+                form = self.parents('form:eq(0)'),
+                focusable;
+
+                // Array of Indexable/Tab-able items
+                focusable = form.find('input,a,select,button,textarea,div[contenteditable=true]').filter(':visible');
+
+                function enterKey(){
+                  if (e.which === 13 && !self.is('textarea')) { // [Enter] key
+
+                    // If not a regular hyperlink/button/textarea
+                    if ($.inArray(self, focusable) && (!self.is('a,button'))){
+                      // Then prevent the default [Enter] key behaviour from submitting the form
+                      e.preventDefault();
+                    } // Otherwise follow the link/button as by design, or put new line in textarea
+
+                    // Focus on the next item (either previous or next depending on shift)
+                    focusable.eq(focusable.index(self) + (e.shiftKey ? -1 : 1)).focus();
+
+                    return false;
+                  }
+                }
+                // We need to capture the [Shift] key and check the [Enter] key either way.
+                if (e.shiftKey) { enterKey() } else { enterKey() }
+            }
+        },
+        _setDataState: function(event){
+          //this.state.dirty = true;
+          var field = event.target.name;
+          var value = "";
+          if(event.target.type === "checkbox"){
+            value = event.target.checked;
+          }
+          else{
+            value = event.target.value;
+            if(value){
+              value = value.toUpperCase();
+            }
+          }
+          var key = field.toUpperCase();
+          console.log(key);
+          console.log(value);
+          this.state.data[key].value = value;
+
+          if(key === "POS_81"){
+    	    	this.state.data["POS"].value = "";
+    	    	if(value){
+    	    		this.state.data["POS"].value = "81";
+    	    	}
+    	    }
+          if(this.state.errMsg[key]){
+            this.state.errMsg[key] = "";
+          }
+
+          if(key === "ACTUALPHONE" && this.state.data.ACTUALPHONE.value){
+            var phone = this.state.data.ACTUALPHONE.value.replace(/\D/g, '');
+            if(phone && phone.length === 10){
+              this.state.data.ACTUALPHONE.value = phone.substring(0, 3) + '-' + phone.substring(3, 6) + '-' + phone.substring(6, 10);
+            }
+          }
+          if(key === "FAX" && this.state.data.FAX.value){
+            var phone = this.state.data.FAX.value.replace(/\D/g, '');
+            if(phone && phone.length === 10){
+              this.state.data.FAX.value = phone.substring(0, 3) + '-' + phone.substring(3, 6) + '-' + phone.substring(6, 10);
+            }
+          }
+          if(key === "PHONE" && this.state.data.PHONE.value){
+            var phone = this.state.data.PHONE.value.replace(/\D/g, '');
+            if(phone && phone.length === 10){
+              this.state.data.PHONE.value = phone.substring(0, 3) + '-' + phone.substring(3, 6) + '-' + phone.substring(6, 10);
+            }
+          }
+
+          this.setState({data :this.state.data, errMsg: this.state.errMsg});
+        },
+        _close: function(){
+
+            window.close();
+        },
+        _promiseSave: function(){
+
+          var validateUniqueId = this._validateUniqueId();
+          var validateFields = this._validate()
+          var self = this;
+
+          Promise.all([
+            validateUniqueId,
+            validateFields
+          ]).then(function(values){
+              console.log(values);
+              self._save();
+          }).catch(function(err){
+            console.error('Promise ERR : ', err);
+          });
+        },
+        _save: function(){
+            //this._validateUniqueId();
+            //this._validate();
+            var recordnumber = this.state.data.RECNO.value;
+            var self = this;
+
+            if(this.state.data.APPCOLOR.value){
+                this.state.data.APPCOLOR.value = this.state.data.APPCOLOR.value.replace("#", "");
+                this.state.data.APPCOLOR.value = parseInt(this.state.data.APPCOLOR.value, 16);
+                this.state.data.APPCOLOR.value = this.state.data.APPCOLOR.value + "";
+
+                while (this.state.data.APPCOLOR.value.length < 8)
+                  this.state.data.APPCOLOR.value = "0" + this.state.data.APPCOLOR.value;
+            }
+            else{
+              this.state.data.APPCOLOR.value = "16777215";
+            }
+
+            if(this.state.errMsg.FCLID ||  this.state.errMsg.FCLDESC || this.state.errMsg.BLLPRVID || this.state.errMsg.DIRECTADDR || this.state.errMsg.ACTUALPHONE
+                  || this.state.errMsg.FAX || this.state.errMsg.SPI || this.state.errMsg.PHONE){
+                bootbox.alert("Please fix the errors.", function () {
+                });
+            }
+            else{
+
+              this.state.data.ENTRYDATE.value = moment().format('L');
+              this.state.data.USERID.value = cmGlb.userId;
+
+              var data =  this.state.data;
+              sqlFcl.fclSave(data, self.state.note, function(err, data){
+
+                  if(err){
+                      bootbox.alert("Error while saving data.", function () {
+                      });
+                  }
+                  else
+                  {
+                    var parentWindowID = self.state.parentWindowID
+                    if(parentWindowID){
+                      console.log(parentWindowID)
+
+                      const BrowserWindow = require('electron').remote.BrowserWindow;
+                      const fromWindow = BrowserWindow.fromId(parentWindowID);
+
+                      if(self.state.isComponent){
+                        var data = {fclData : self.state.data, colName: self.state.colName};
+                        fromWindow.webContents.send('get-components-data', data);
+                      }
+                      else{
+                        var data = self.state.data;
+                        if(self.state.data.RECNO.value){
+                          fromWindow.webContents.send('get-edit-data', data);
+                        }
+                        else{
+                          fromWindow.webContents.send('refresh-data');
+                        }
+                      }
+
+                      window.close();
+                    }
+
+                  }
+              });
+            }
+        },
+        _delete: function(){
+            var recordnumber = this.state.data.RECNO.value;
+            var self = this;
+            if(recordnumber){
+              bootbox.confirm("This record will be permanently deleted and cannot be recovered. Are you sure?", function (result) {
+                if(result){
+                  sqlFcl.fclDelete(recordnumber, function(err, record){
+
+                      if(err){
+                          bootbox.alert("Error while deleting record.", function () {
+                          });
+                      }
+                      else{
+
+                        var parentWindowID = self.state.parentWindowID;
+                        const BrowserWindow = require('electron').remote.BrowserWindow;
+                        const fromWindow = BrowserWindow.fromId(parentWindowID);
+                        fromWindow.webContents.send('refresh-data');
+
+                        window.close();
+                      }
+                  });
+                }
+              });
+            }
+        },
+        _note: function(){
+
+          var self = this;
+          const ipcRenderer = require('electron').ipcRenderer;
+          const BrowserWindow = require('electron').remote.BrowserWindow;
+
+          const loadURL = appPath + "/2/common/pages/note.html";
+          console.log(loadURL);
+
+          const windowID = BrowserWindow.getFocusedWindow().id;
+          let win = new BrowserWindow({ width: 500, height: 450, center: true, parent : BrowserWindow.getFocusedWindow(), modal : true, show: false });
+
+          win.loadURL(loadURL);
+
+          win.webContents.on('did-finish-load', function () {
+            win.webContents.send('get-data', windowID, self.state.note);
+          });
+          win.on('closed', function () {
+            win = null
+          });
+
+          win.show();
+        },
+        _validateUniqueId: function(){
+            var recordnumber = this.state.data.RECNO.value;
+            this.state.errMsg.FCLID = "";
+            if(!this.state.data.FCLID.value){
+              this.state.errMsg.FCLID = _xrxFclErrorMessages.Required;
+              this.setState({errMsg: this.state.errMsg});
+            }
+            else{
+              var self = this;
+              sqlFcl.fclExistsId(this.state.data.FCLID.value, recordnumber, function(err, record){
+
+                  if(err){
+                      console.log(err);
+                      self.state.errMsg.FCLID = _xrxFclErrorMessages.Internal;
+                  }
+                  else{
+                    if (record && record.length > 0){
+                      self.state.errMsg.FCLID = _xrxFclErrorMessages.Exists;
+                    }
+                    else{
+                      self.state.errMsg.FCLID = "";
+                    }
+                  }
+                  self.setState({errMsg: self.state.errMsg});
+              });
+            }
+        },
+        _validate: function(event){
+
+          if(!this.state.data.FCLDESC.value)
+      			this.state.errMsg.FCLDESC = _xrxFclErrorMessages.Required;
+      		else
+      			this.state.errMsg.FCLDESC = "";
+
+      		var phonePattern = /^\(?(\d{3})\)?[-]?(\d{3})[-]?(\d{4})$/;
+      		var emailPattern = /^([\w-]+(?:\.[\w-]+)*)@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$/i;
+      		var ssnPattern = /^\d{3}-?\d{2}-?\d{4}$/;
+      		var digitsPattern = /^\d{3}$/;
+
+      		if(this.state.data.DIRECTADDR.value && !emailPattern.test(this.state.data.DIRECTADDR.value))
+      			this.state.errMsg.DIRECTADDR = _xrxFclErrorMessages.Invalid;
+      		else
+      			this.state.errMsg.DIRECTADDR = "";
+
+      		if(this.state.data.ACTUALPHONE.value && !phonePattern.test(this.state.data.ACTUALPHONE.value))
+      			this.state.errMsg.ACTUALPHONE = _xrxFclErrorMessages.Invalid;
+      		else
+      			this.state.errMsg.ACTUALPHONE = "";
+
+      		if(this.state.data.FAX.value && !phonePattern.test(this.state.data.FAX.value))
+      			this.state.errMsg.FAX = _xrxFclErrorMessages.Invalid;
+      		else
+      			this.state.errMsg.FAX = "";
+
+      		if(this.state.data.SPI.value && !digitsPattern.test(this.state.data.SPI.value))
+      			this.state.errMsg.SPI = _xrxFclErrorMessages.Invalid;
+      		else
+      			this.state.errMsg.SPI = "";
+
+      		if(this.state.data.PHONE.value && !phonePattern.test(this.state.data.PHONE.value))
+      			this.state.errMsg.PHONE = _xrxFclErrorMessages.Invalid;
+      		else
+      			this.state.errMsg.PHONE = "";
+
+      		this.setState({errMsg: this.state.errMsg});
+        },
+        _updateZipData_Actual: function(selectedZipData, isValid){
+            if(selectedZipData && isValid){
+              this.state.data.ACTUALZIP.value = selectedZipData.zipCode;
+              if(selectedZipData.city)
+                this.state.data.ACTUALCITY.value = selectedZipData.city;
+              if(selectedZipData.state)
+                this.state.data.ACTUALSTATE.value = selectedZipData.state;
+            }
+            else{
+              this.state.data.ACTUALZIP.value = "";
+            }
+            this.setState({data : this.state.data});
+            this._validate();
+        },
+        _updateZipData: function(selectedZipData, isValid){
+            if(selectedZipData && isValid){
+              this.state.data.ZIP.value = selectedZipData.zipCode;
+              if(selectedZipData.city)
+                this.state.data.CITY.value = selectedZipData.city;
+              if(selectedZipData.state)
+                this.state.data.STATE.value = selectedZipData.state;
+            }
+            else{
+              this.state.data.ZIP.value = "";
+            }
+            this.setState({data : this.state.data});
+            this._validate();
+        },
+        _updateBllprvData: function(selectedData, isValid){
+        		if(selectedData && isValid){
+        			this.state.data.BLLPRVID.value = selectedData.id;
+        		}
+        		else{
+        			this.state.data.BLLPRVID.value = "";
+        		}
+        		this.setState({data : this.state.data});
+        		//this._validate();
+        },
+        render: function(){
+
+          var zipData_Actual = { recNo:'', zipCode:this.state.data.ACTUALZIP.value, city:'', state:'', shortCode:''};
+          var zipData = { recNo:'', zipCode:this.state.data.ZIP.value, city:'', state:'', shortCode:''};
+          var bllprvData = {recno:'', id:this.state.data.BLLPRVID.value, name:''};
+
+          var deleteButtonStyle = { display: "none" };
+          if(this.state.data.RECNO.value &&  !this.state.isComponent){
+              deleteButtonStyle =  { display: "" };
+          }
+
+          return(
+            <form autoComplete="off">
+              <div className="row form-group btn-group">
+                  <button type="button" id="btnSave" className="btn btn-success btn-sm" onClick={this._promiseSave}>
+                    <span className="fa fa-floppy-o"></span> Save
+                  </button>
+                  <button type="button" id="btnDelete" className="btn btn-danger btn-sm" onClick={this._delete} style={deleteButtonStyle} >
+                    <span className="fa fa-minus-circle"></span> Delete
+                  </button>
+                  <button type="button" id="btnNote" className="btn btn-primary btn-sm" onClick={this._note} >
+                    <span className="fa fa-sticky-note"></span> Note
+                  </button>
+                  <button onClick={this._close} className="btn btn-warning btn-sm"><i className="fa fa-times"></i> Close</button>
+              </div>
+              <br/>
+
+              <div className="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+
+              <div className="panel panel-default">
+                <div className="panel-heading" role="tab" id="headingOne">
+                  <h4 className="panel-title">
+                    <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                      <strong>Service Facility Location - Loop 2310C NM1</strong>
+                    </a>
+                  </h4>
+                </div>
+                <div id="collapseOne" className="panel-collapse collapse in" role="tabpanel" aria-labelledby="headingOne">
+	               <div className="panel-body">
+                   <div className="row form-group">
+                       <label className="col-xs-2 text-right small control-label">Facility Id:</label>
+                       <div className="col-xs-4">
+                           <TxtInput id="FCLID" name="FCLID" value={this.state.data.FCLID.value} error={this.state.errMsg.FCLID}
+                            onChange={this._setDataState} onBlur={this._validateUniqueId} maxLength="11" />
+                       </div>
+                       <label className="col-xs-2 text-right small control-label">Name:</label>
+                       <div className="col-xs-10">
+                           <TxtInput id="FCLDESC" name="FCLDESC" value={this.state.data.FCLDESC.value} error={this.state.errMsg.FCLDESC}
+                            onChange={this._setDataState} onBlur={this._validate} maxLength="55" />
+                       </div>
+                       <label className="col-xs-2 text-right small control-label">Short Code:</label>
+                       <div className="col-xs-4">
+                           <TxtInput id="SHORTCODE" name="SHORTCODE" value={this.state.data.SHORTCODE.value}
+                            onChange={this._setDataState} maxLength="5" />
+                       </div>
+                   </div>
+                   <div className="row form-group">
+                       <label className="col-xs-2 text-right small control-label">NPI:</label>
+                       <div className="col-xs-4">
+                           <TxtInput id="NPI" name="NPI" value={this.state.data.NPI.value}
+                            onChange={this._setDataState} maxLength="20" />
+                       </div>
+                       <label className="col-xs-2 text-right small control-label">Name:</label>
+                       <div className="col-xs-10">
+                           <BllPrvSearch isRequired={false} bllprvData={bllprvData} colName={"N403_BP_ZIP"} onSelect={this._updateBllprvData} showSelectedInfoBox={false} tabIndexSearch="-1" tabIndexButton="-1" tabIndexSearchType="-1" />
+                       </div>
+                       <label className="col-xs-2 text-right small control-label">App color:</label>
+                       <div className="col-xs-4">
+                           <input name="APPCOLOR" ref="APPCOLOR" type="color" value={this.state.data.APPCOLOR.value} onChange={this._setDataState}></input>
+                       </div>
+                   </div>
+                   <hr/>
+                   <div className="row form-group">
+                       <div className="col-xs-16">
+                         <CheckboxInput name="OFFICE" labelName= "Print Facility addr. on box32 of CMS1500 form(Uncheck only when POS is 11(office) or 12(home)):"
+                            onChange={this._setDataState} checked={this.state.data.OFFICE.value}  />
+                       </div>
+                       <div className="col-xs-8">
+                         <CheckboxInput name="APPSHOWINBOOK" labelName= "Schedule any doctor in this facility:"
+                            onChange={this._setDataState} checked={this.state.data.APPSHOWINBOOK.value}  />
+                       </div>
+                   </div>
+                   <br/>
+                   <div className="row form-group">
+                       <label className="col-xs-8 text-right small control-label">Place of service(POS) code for Professional Claims:</label>
+                       <div className="col-xs-8">
+                         <DropdownPlugin name="POS" label="Place of service(POS) code for Professional Claims:" onChange={this._setDataState} value={this.state.data.POS.value}
+                           dropdownOptions={_optionsxrxFclPOS} labelClass={"col-xs-8 text-right small"} textBoxClass={"col-xs-16"}/>
+                       </div>
+                       <div className="col-xs-8">
+                         <CheckboxInput name="POS_81" labelName= "Outside Lab:"
+                            onChange={this._setDataState} checked={this.state.data.POS_81.value}  />
+                       </div>
+                   </div>
+                   <div className="row form-group">
+                       <label className="col-xs-8 text-right small control-label">Place of service(POS) code for Institutional Claims:</label>
+                       <div className="col-xs-8">
+                         <DropdownPlugin name="POSI" label="Place of service(POS) code for Institutional Claims:" onChange={this._setDataState} value={this.state.data.POSI.value}
+                           dropdownOptions={_optionsxrxFclPOS} labelClass={"col-xs-8 text-right small"} textBoxClass={"col-xs-16"}/>
+                       </div>
+                       <div className="col-xs-8">
+                         <CheckboxInput name="INPAT" labelName= "Inpatient Facility:"
+                            onChange={this._setDataState} checked={this.state.data.INPAT.value}  />
+                       </div>
+                   </div>
+                   <div className="row form-group">
+                       <label className="col-xs-8 text-right small control-label">Direct Address:</label>
+                       <div className="col-xs-8">
+                           <TxtInput id="DIRECTADDR" name="DIRECTADDR" value={this.state.data.DIRECTADDR.value} error={this.state.errMsg.DIRECTADDR}
+                            onChange={this._setDataState} onBlur={this._validate} maxLength="100" />
+                       </div>
+                       <label className="col-xs-1 text-right small control-label">CLIA:</label>
+                       <div className="col-xs-7">
+                           <TxtInput id="CLIANO" name="CLIANO" value={this.state.data.CLIANO.value}
+                            onChange={this._setDataState} maxLength="20" />
+                       </div>
+                   </div>
+
+                 </div>
+                </div>
+              </div>
+
+              <div className="panel panel-default">
+        				<div className="panel-heading" role="tab" id="headingTwo">
+        				  <h4 className="panel-title">
+        				    <a className="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+        				      <strong>Actual Address used in EMR</strong>
+        				    </a>
+        				  </h4>
+        				</div>
+        				<div id="collapseTwo" className="panel-collapse collapse" role="tabpanel" aria-labelledby="headingTwo">
+        					<div className="panel-body">
+                    <div className="row form-group">
+                        <label className="col-xs-2 text-right small control-label">Addr1:</label>
+                        <div className="col-xs-6">
+                            <TxtInput id="ACTUALADDR" name="ACTUALADDR" value={this.state.data.ACTUALADDR.value}
+                             onChange={this._setDataState} maxLength="50" />
+                        </div>
+                        <label className="col-xs-2 text-right small control-label">Addr2:</label>
+                        <div className="col-xs-8">
+                            <TxtInput id="ACTUALADDR2" name="ACTUALADDR2" value={this.state.data.ACTUALADDR2.value}
+                             onChange={this._setDataState} maxLength="50" />
+                        </div>
+                        <label className="col-xs-6 text-right small control-label"></label>
+                    </div>
+                    <div className="row form-group">
+                        <label className="col-xs-2 text-right small control-label">Zip:</label>
+                        <div className="col-xs-6">
+                          <ZipSearch zipData={zipData_Actual} colName={"ACTUALZIP"} onSelect={this._updateZipData_Actual} isRequired={false}
+                          showSelectedInfoBox={false} tabIndexSearch="-1" tabIndexButton="-1" tabIndexSearchType="-1" />
+                        </div>
+                        <label className="col-xs-2 text-right small control-label">City:</label>
+                        <div className="col-xs-8">
+                            <TxtInput id="ACTUALCITY" name="ACTUALCITY" value={this.state.data.ACTUALCITY.value}
+                             onChange={this._setDataState} maxLength="25" />
+                        </div>
+                        <label className="col-xs-2 text-right small control-label">State:</label>
+                        <div className="col-xs-4">
+                            <TxtInput id="ACTUALSTATE" name="ACTUALSTATE" value={this.state.data.ACTUALSTATE.value}
+                             onChange={this._setDataState} maxLength="2" />
+                        </div>
+                    </div>
+                    <div className="row form-group">
+                        <label className="col-xs-2 text-right small control-label">Phone:</label>
+                        <div className="col-xs-6">
+                          <TxtInput id="ACTUALPHONE" name="ACTUALPHONE" value={this.state.data.ACTUALPHONE.value} error={this.state.errMsg.ACTUALPHONE}
+                           onChange={this._setDataState} maxLength="20" onBlur={this._validate} />
+                        </div>
+                        <label className="col-xs-2 text-right small control-label">Fax:</label>
+                        <div className="col-xs-8">
+                            <TxtInput id="FAX" name="FAX" value={this.state.data.FAX.value} error={this.state.errMsg.FAX}
+                             onChange={this._setDataState} maxLength="20" onBlur={this._validate} />
+                        </div>
+                        <label className="col-xs-2 text-right small control-label">SPI:</label>
+                        <div className="col-xs-4">
+                            <TxtInput id="SPI" name="SPI" value={this.state.data.SPI.value} error={this.state.errMsg.SPI}
+                             onChange={this._setDataState} maxLength="3" onBlur={this._validate} />
+                        </div>
+                    </div>
+
+                 </div>
+                </div>
+              </div>
+
+              <div className="panel panel-default">
+      					<div className="panel-heading" role="tab" id="headingThree">
+      					  <h4 className="panel-title">
+      					    <a className="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+      					      <strong>Secondary Identification used in Claims</strong>
+      					    </a>
+      					  </h4>
+      					</div>
+      					<div id="collapseThree" className="panel-collapse collapse" role="tabpanel" aria-labelledby="headingThree">
+      					  <div className="panel-body">
+                    <div className="row form-group">
+                        <label className="col-xs-2 text-right small control-label">State License No-0B:</label>
+                        <div className="col-xs-6">
+                            <TxtInput id="STATELICENSENO" name="STATELICENSENO" value={this.state.data.STATELICENSENO.value}
+                             onChange={this._setDataState} maxLength="20" />
+                        </div>
+                        <label className="col-xs-2 text-right small control-label">Commercial No-G2:</label>
+                        <div className="col-xs-6">
+                            <TxtInput id="COMMERCIALNO" name="COMMERCIALNO" value={this.state.data.COMMERCIALNO.value}
+                             onChange={this._setDataState} maxLength="20" />
+                        </div>
+                        <label className="col-xs-2 text-right small control-label">Location / MirCallID-LU:</label>
+                        <div className="col-xs-6">
+                            <TxtInput id="LOCATIONNO" name="LOCATIONNO" value={this.state.data.LOCATIONNO.value}
+                             onChange={this._setDataState} maxLength="20" />
+                        </div>
+                    </div>
+                 </div>
+                </div>
+              </div>
+
+              <div className="panel panel-default">
+      					<div className="panel-heading" role="tab" id="headingFour">
+      					  <h4 className="panel-title">
+      					    <a className="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+      					      <strong>Info used in Electronic/Paper Claims (N3 & N4)</strong>
+      					    </a>
+      					  </h4>
+      					</div>
+      					<div id="collapseFour" className="panel-collapse collapse" role="tabpanel" aria-labelledby="headingFour">
+      						<div className="panel-body">
+                      <div className="row form-group">
+                          <label className="col-xs-2 text-right small control-label">Addr1:</label>
+                          <div className="col-xs-6">
+                              <TxtInput id="ADDR" name="ADDR" value={this.state.data.ADDR.value}
+                               onChange={this._setDataState} maxLength="50" />
+                          </div>
+                          <label className="col-xs-2 text-right small control-label">Addr2:</label>
+                          <div className="col-xs-8">
+                              <TxtInput id="ADDR2" name="ADDR2" value={this.state.data.ADDR2.value}
+                               onChange={this._setDataState} maxLength="50" />
+                          </div>
+                          <label className="col-xs-6 text-right small control-label"></label>
+                      </div>
+                      <div className="row form-group">
+                          <label className="col-xs-2 text-right small control-label">Zip:</label>
+                          <div className="col-xs-6">
+                            <ZipSearch zipData={zipData} colName={"ZIP"} onSelect={this._updateZipData} isRequired={false}
+                            showSelectedInfoBox={false} tabIndexSearch="-1" tabIndexButton="-1" tabIndexSearchType="-1" />
+                          </div>
+                          <label className="col-xs-2 text-right small control-label">City:</label>
+                          <div className="col-xs-8">
+                              <TxtInput id="CITY" name="CITY" value={this.state.data.CITY.value}
+                               onChange={this._setDataState} maxLength="25" />
+                          </div>
+                          <label className="col-xs-2 text-right small control-label">State:</label>
+                          <div className="col-xs-4">
+                              <TxtInput id="STATE" name="STATE" value={this.state.data.STATE.value}
+                               onChange={this._setDataState} maxLength="2" />
+                          </div>
+                      </div>
+                      <div className="row form-group">
+                          <label className="col-xs-2 text-right small control-label">Phone:</label>
+                          <div className="col-xs-6">
+                            <TxtInput id="PHONE" name="PHONE" value={this.state.data.PHONE.value} error={this.state.errMsg.ACTUALPHONE}
+                             onChange={this._setDataState} maxLength="20" onBlur={this._validate} />
+                          </div>
+                          <label className="col-xs-2 text-right small control-label">Contact:</label>
+                          <div className="col-xs-8">
+                              <TxtInput id="CONTACT" name="CONTACT" value={this.state.data.CONTACT.value}
+                               onChange={this._setDataState} maxLength="20" />
+                          </div>
+                          <label className="col-xs-2 text-right small control-label"></label>
+                          <div className="col-xs-4">
+                          </div>
+                      </div>
+                   </div>
+                  </div>
+                </div>
+
+              <div className="panel panel-default">
+      					<div className="panel-heading" role="tab" id="headingFive">
+      					  <h4 className="panel-title">
+      					    <a className="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseFive" aria-expanded="false" aria-controls="collapseFive">
+      					      <strong>Pre 5010</strong>
+      					    </a>
+      					  </h4>
+      					</div>
+      					<div id="collapseFive" className="panel-collapse collapse" role="tabpanel" aria-labelledby="headingFive">
+      						<div className="panel-body">
+                    <div className="row form-group">
+                        <label className="col-xs-4 text-right small control-label">Primary Id:</label>
+                        <div className="col-xs-8">
+                            <TxtInput id="NM109_ID_CODE" name="NM109_ID_CODE" value={this.state.data.NM109_ID_CODE.value}
+                             onChange={this._setDataState} maxLength="20" />
+                        </div>
+                        <label className="col-xs-4 text-right small control-label">Primary Qual. Type:</label>
+                        <div className="col-xs-8">
+                          <DropdownPlugin name="NM108_ID_CODE_QUAL" label="" onChange={this._setDataState} value={this.state.data.NM108_ID_CODE_QUAL.value}
+                            dropdownOptions={_optionsxrxFclPrimaryIdQualifierType} labelClass={"col-xs-8 text-right small"} textBoxClass={"col-xs-16"}/>
+                        </div>
+                    </div>
+                    <div className="row form-group">
+                        <label className="col-xs-4 text-right small control-label">Taxonomy Code:</label>
+                        <div className="col-xs-8">
+                            <TxtInput id="TAXONOMYCODE" name="TAXONOMYCODE" value={this.state.data.TAXONOMYCODE.value}
+                             onChange={this._setDataState} maxLength="15" />
+                        </div>
+                        <label className="col-xs-4 text-right small control-label">Taxonomy Qual. Type:</label>
+                        <div className="col-xs-8">
+                          <DropdownPlugin name="ENTITYIDCODE" label="" onChange={this._setDataState} value={this.state.data.ENTITYIDCODE.value}
+                            dropdownOptions={_optionsxrxFclEntityCode} labelClass={"col-xs-8 text-right small"} textBoxClass={"col-xs-16"}/>
+                        </div>
+                    </div>
+
+                 </div>
+                </div>
+              </div>
+
+              <div className="panel panel-default">
+      					<div className="panel-heading" role="tab" id="headingSix">
+      					  <h4 className="panel-title">
+      					    <a className="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseSix" aria-expanded="false" aria-controls="collapseSix">
+      					      <strong>Pre 5010 Legacy Numbers</strong>
+      					    </a>
+      					  </h4>
+      					</div>
+      					<div id="collapseSix" className="panel-collapse collapse" role="tabpanel" aria-labelledby="headingSix">
+      						<div className="panel-body">
+                      <div className="row form-group">
+                          <label className="col-xs-5 text-right small control-label">Medicaid PIN-1D: </label>
+                          <div className="col-xs-3">
+                              <TxtInput id="MEDICAIDNO" name="MEDICAIDNO" value={this.state.data.MEDICAIDNO.value}
+                              onChange={this._setDataState} maxLength="20" />
+                          </div>
+                          <label className="col-xs-5 text-right small control-label">Blue Cross PIN(1A): </label>
+                          <div className="col-xs-3">
+                            <TxtInput id="BLUECROSSNO" name="BLUECROSSNO" value={this.state.data.BLUECROSSNO.value}
+                            onChange={this._setDataState} maxLength="20" />
+                          </div>
+                          <label className="col-xs-5 text-right small control-label">Blue Shield/State LicNo-1B: </label>
+                          <div className="col-xs-3">
+                            <TxtInput id="BLUESHIELDNO" name="BLUESHIELDNO" value={this.state.data.BLUESHIELDNO.value}
+                            onChange={this._setDataState} maxLength="20" />
+                          </div>
+                      </div>
+                      <div className="row form-group">
+                          <label className="col-xs-5 text-right small control-label">Medicare PIN-1C: </label>
+                          <div className="col-xs-3">
+                              <TxtInput id="MEDICARENO" name="MEDICARENO" value={this.state.data.MEDICARENO.value}
+                              onChange={this._setDataState} maxLength="20" />
+                          </div>
+                          <label className="col-xs-5 text-right small control-label">DMERC Medicare PIN-1C: </label>
+                          <div className="col-xs-3">
+                            <TxtInput id="MEDICAREDMERCNO" name="MEDICAREDMERCNO" value={this.state.data.MEDICAREDMERCNO.value}
+                            onChange={this._setDataState} maxLength="20" />
+                          </div>
+                          <label className="col-xs-5 text-right small control-label">Railroad Medicare PIN-1C: </label>
+                          <div className="col-xs-3">
+                            <TxtInput id="MEDICARERAILROADNO" name="MEDICARERAILROADNO" value={this.state.data.MEDICARERAILROADNO.value}
+                            onChange={this._setDataState} maxLength="20" />
+                          </div>
+                      </div>
+                      <div className="row form-group">
+                          <label className="col-xs-5 text-right small control-label">Fed Tax Id No-TJ: </label>
+                          <div className="col-xs-3">
+                              <TxtInput id="FEDTAXIDNO" name="FEDTAXIDNO" value={this.state.data.FEDTAXIDNO.value}
+                              onChange={this._setDataState} maxLength="20" />
+                          </div>
+                          <label className="col-xs-5 text-right small control-label">UPIN No-1G: </label>
+                          <div className="col-xs-3">
+                            <TxtInput id="UPINNO" name="UPINNO" value={this.state.data.UPINNO.value}
+                            onChange={this._setDataState} maxLength="20" />
+                          </div>
+                          <label className="col-xs-5 text-right small control-label">CHAMPUS Id No-1H: </label>
+                          <div className="col-xs-3">
+                            <TxtInput id="CHAMPUSIDNO" name="CHAMPUSIDNO" value={this.state.data.CHAMPUSIDNO.value}
+                            onChange={this._setDataState} maxLength="20" />
+                          </div>
+                      </div>
+                      <div className="row form-group">
+                          <label className="col-xs-5 text-right small control-label">Ind Accident No-X5: </label>
+                          <div className="col-xs-3">
+                              <TxtInput id="INDUSTRIALACCIDENTNO" name="INDUSTRIALACCIDENTNO" value={this.state.data.INDUSTRIALACCIDENTNO.value}
+                              onChange={this._setDataState} maxLength="20" />
+                          </div>
+                          <label className="col-xs-5 text-right small control-label">Mammography Certificate No.: </label>
+                          <div className="col-xs-3">
+                            <TxtInput id="MAMOGRAPHY" name="MAMOGRAPHY" value={this.state.data.MAMOGRAPHY.value}
+                            onChange={this._setDataState} maxLength="20" />
+                          </div>
+                          <label className="col-xs-5 text-right small control-label">Network Id/State LicNo-N5: </label>
+                          <div className="col-xs-3">
+                            <TxtInput id="PLANNETWORKIDNO" name="PLANNETWORKIDNO" value={this.state.data.PLANNETWORKIDNO.value}
+                            onChange={this._setDataState} maxLength="20" />
+                          </div>
+                      </div>
+
+                 </div>
+                </div>
+              </div>
+
+              </div>
+              <hr/>
+              <div>
+                <label className="col-xs-6 control-label text-right text-muted">Date Entered : </label>
+                <label className="col-xs-6 control-label text-muted">{this.state.data.ENTRYDATE.value}</label>
+                <label className="col-xs-6 control-label text-right text-muted">By Whom : </label>
+                <label className="col-xs-6 control-label text-muted">{this.state.data.USERID.value}</label>
+              </div>
+            </form>
+          );
+        }
+      });
+
+      ReactDOM.render(
+             <FclEdit  />,
+             document.getElementById('divFclEdit')
+      );
+    </script>
+  </head>
+  <body>
+      <div id="divFclEdit">
+      </div>
+  </body>
+</html>

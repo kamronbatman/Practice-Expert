@@ -1,0 +1,1869 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>PCP Letter</title>
+    <link rel="stylesheet" type="text/css" href="../../public/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="../../public/font-awesome-4.5.0/css/font-awesome.min.css">
+    <link rel="stylesheet" type="text/css" href="../../node_modules/fixed-data-table/dist/fixed-data-table-base.min.css">
+    <link rel="stylesheet" type="text/css" href="../../node_modules/fixed-data-table/dist/fixed-data-table-style.min.css">
+    <link rel="stylesheet" type="text/css" href="../../node_modules/fixed-data-table/dist/fixed-data-table.min.css">
+    <link rel="stylesheet" type="text/css" href="./pcpLetter.css">
+  </head>
+  <body>
+
+    <div id="wrapper">
+
+        <div id="top-bar">
+          <button id="btnOptions" onclick="showOptions()"><i class="fa fa-bars"></i> Oprtions</button>
+
+          <span id="spanToolBar" style="visibility:hidden;">
+              <button id="btnRefresh" onclick="refreshSummary()" class="btn btn-default"><i class="fa fa-refresh"></i> Refresh</button>
+              <button id="btnPrintSummary" onclick="printSummary()" class="btn btn-info"><i class="fa fa-print"></i> Print</button>
+              <button id="btnSaveLetter" onclick="saveLetter()" class="btn btn-success"><i class="fa fa-save"></i> Save Letter</button>
+              <button id="btnFaxLetter" onclick="faxLetter()" class="btn btn-primary"><i class="fa fa-fax"></i> Fax</button>
+          </span>
+          <span id="divRfdSearch"></span>
+          <span id="spanLoading" style="margin-left: 10px; font-size:12px;"><i class="fa fa-refresh fa-spin"></i> Loading...</span>
+          <span id="spanSending" style="margin-left: 10px; font-size:12px; display: none;"><i class="fa fa-refresh fa-spin"></i> Sending...</span>
+        </div>
+        <div id="side-nav">
+            <div>
+              <a href="javascript:void(0)" class="closebtn" onclick="closeOptionsNav()">&times;</a>
+            </div>
+
+            <div id="divSaveOptions" style="margin-top:30px; display:none">
+                <div>
+                  <button id="btnSaveOptions" onclick="saveOptions()" class="btn btn-warning" style="margin-left : 5px;"><i class="fa fa-save"></i> Save</button>
+                </div>
+                <div style="margin-top: 15px;">
+                  <label id = "lblVisitType" style="margin-left: 5px;" ></label>
+                </div>
+                <hr style="margin-top: 0px; margin-bottom: 5px;" />
+            </div>
+            <div>
+              <div id="side-nav-options" style="margin-left : 15px;">
+              </div>
+            </div>
+        </div>
+        <div id="main">
+          <div id="main-content">
+          </div>
+        </div>
+        <!-- Modal -->
+        <div class="modal" id="faxModal" tabindex="-1" role="dialog" aria-labelledby="faxModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-sm" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title" id="faxModalLabel" style="margin-left: 5px"><p class="text-muted">Send Fax</p></h4>
+              </div>
+              <div class="modal-body">
+                <div style="margin-left: 5px">
+                  <b>Send To Fax Number&nbsp;:&nbsp;</b><input type="text" name="faxNumber" id="faxNumber" style="width: 120px; border-radius: 2px 2px 2px 2px; border: 1px solid #A9A9A9; background-color: #FCF5D8; padding: 2px 5px; border-color : grey;" /><br />
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" id="btnSendFax" onclick="sendFax()"  class="btn btn-primary"><i class="fa fa-paper-plane"></i> Send</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+    </div>
+
+    <script>
+        var remote = require('electron').remote;
+        var nodeModulesPath = remote.getGlobal('nodeModulesPath');
+        var $ = jQuery = require(nodeModulesPath + "jquery");
+    </script>
+
+    <script src="../../public/bootstrap/js/bootstrap.min.js"></script>
+    <script src="../../public/javascripts/JSXTransformer.js"></script>
+      <script type="text/jsx" src="../../common/user_controls/SearchSelectButton.jsx"></script>
+    <script type="text/jsx" src="../../dc/dcRfd/rfdSearch.jsx"></script>
+    <script type="text/jsx">
+
+        var remote = require('electron').remote;
+        var nodeModulesPath = remote.getGlobal('nodeModulesPath');
+        var appPath = remote.getGlobal('appPath');
+      var cmGlb = remote.getGlobal('cmGlb');
+
+      var Handlebars = require(nodeModulesPath + 'handlebars');
+
+      //React
+      var React = require(nodeModulesPath + "react");
+      var ReactDOM = require(nodeModulesPath + "react-dom");
+
+      var bootbox = require(nodeModulesPath + 'bootbox');
+
+      var _userId =   cmGlb.userId;
+      var _patId =  cmGlb.patId; //'CLINTON';
+      var _dateOfVisit = cmGlb.dateOfVisit; //'2016-09-14 10:13:00';
+      var _dctId =  cmGlb.dctId;
+      var _license = cmGlb.license;
+      var _databaseI = cmGlb.databaseI;
+      var _rfdId = cmGlb.rfdId;
+
+      var _faxNumber = cmGlb.rfdFax;
+      var _visitType = cmGlb.visitType ? cmGlb.visitType : "";
+
+      var _interFaxUserName = "";
+      var _interFaxPassword = "";
+
+
+      console.log("User Id : "+_userId);
+      console.log("PatId Id : "+_patId);
+      console.log("Date Of Visit: "+_dateOfVisit);
+      console.log("Dct Id : "+_dctId);
+      console.log("Rfd Id : "+ _rfdId);
+      console.log("License : "+_license);
+      console.log("Database I: "+_databaseI);
+      console.log("Fax Numbe: "+_faxNumber);
+      console.log("Visit Type: "+_visitType);
+      console.log(cmGlb.isSqlAzure);
+
+      var pcpLetterSql = require(appPath + "/ehr/ehrPcpLetter/pcpLetterSql.js");
+
+      $(document).ready(function () {
+        renderRfdComponent();
+        getPcpLetter();
+
+        $("#lblVisitType").text('Options For '+ _visitType);
+
+      });
+
+      function refreshSummary() {
+        getPcpLetter();
+      }
+
+      function showOptions() {
+
+            $( "#side-nav-options" ).empty();
+            document.getElementById("side-nav").style.width = "250px";
+            document.getElementById("top-bar").style.marginLeft = "250px";
+            document.getElementById("main").style.marginLeft = "250px";
+            document.getElementById("divSaveOptions").style.display = "block";
+
+            pcpLetterSql.getOptions(_userId, _visitType, function (err, record) {
+
+                    if(err)
+                    {
+
+                      console.error(err);
+                      alert("Error: Retrieving options list.");
+                    }
+                    else
+                    {
+                      //console.log(record);
+                      if(record && record.length > 0)
+                      {
+
+                        var data = record[0];
+                        for (var key in data)
+                        {
+                          if (data.hasOwnProperty(key))
+                          {
+                            //console.log(key + " -> " + data[key].value);
+                            if(data[key].value)
+                            {
+
+                                $( "#side-nav-options" ).append("<label style='cursor: pointer'><input type='checkbox' id='"+key+"' name='"+key+"'  checked />&nbsp;" + formatKeyName(key) +"</label><br />" );
+                            }
+                            else
+                            {
+                                $( "#side-nav-options" ).append("<label style='cursor: pointer'><input type='checkbox' id='"+key+"' name='"+key+"'  />&nbsp;" + formatKeyName(key) +"</label><br />" );
+                            }
+
+                          }
+
+
+                        }
+
+                      }
+                      else
+                      {
+                        console.log(record);
+                        alert("No record found for this user in options table.");
+                      }
+                    }
+              });
+      }
+
+      function closeOptionsNav() {
+
+        $( "#side-nav-options" ).empty();
+        document.getElementById("side-nav").style.width = "0px";
+        document.getElementById("top-bar").style.marginLeft = "0px";
+        document.getElementById("main").style.marginLeft = "0px";
+        document.getElementById("divSaveOptions").style.display = "none";
+
+      }
+
+      function saveOptions() {
+        //alert("Save!");
+        var elements = document.getElementById("side-nav-options").children;
+        //console.log(elements);
+        var saveData = {};
+
+        if(elements && elements.length > 0)
+        {
+          for(var i = 0; i < elements.length; i++)
+          {
+
+              if(elements[i].nodeName == "LABEL")
+              {
+                var subElements = elements[i].children;
+                if(subElements && subElements.length > 0)
+                {
+                  for(var j = 0; j < subElements.length; j++)
+                  {
+                    if(subElements[j].nodeName == "INPUT")
+                    {
+                      //console.log(subElements[j].id);
+                      //console.log(subElements[j].checked);
+                      //var checkBox
+                      saveData[subElements[j].id] = subElements[j].checked;
+
+
+                    }
+                  }
+                }
+
+              }
+          }
+
+          $("#btnSaveOptions").css({"opacity":"0.65", "cursor":"not-allowed"});
+          //Save Options
+          pcpLetterSql.saveOptions(_userId, _visitType, saveData, function (err, record) {
+
+              if(err)
+              {
+                  console.error(err);
+                  alert("Error: Saving options list.");
+              }
+              else
+              {
+                //console.log(record);
+                var isFromSaveOption = true;
+                getPcpLetter(isFromSaveOption);
+              }
+          });
+
+        }
+
+      }
+
+      function printSummary() {
+
+        var restorePage = document.body.innerHTML;
+        var printContent = document.getElementById("main").innerHTML;
+        document.body.innerHTML = printContent;
+
+        //directly print to printer
+        //window.print();
+
+        //Print to pdf
+        const fs = require('fs');
+        const os = require('os');
+        const path = require('path');
+        const electron = require('electron');
+        const BrowserWindow = electron.remote.BrowserWindow;
+        const shell = electron.shell;
+        const win = BrowserWindow.getFocusedWindow();
+
+        var dateTimeSecUid = stringDateTimeUniqueNumber();
+
+        const pdfPath = path.join(os.tmpdir(), 'printSummary_'+ dateTimeSecUid +'.pdf');
+
+        //console.log(pdfPath);
+
+        // Use default printing options
+        win.webContents.printToPDF({marginsType: 0}, function (error, data) {
+
+              document.body.innerHTML = restorePage;
+              renderRfdComponent();
+
+              if (error)
+              {
+                console.error(error);
+
+                alert("Error: While printing document (Print to PDF.)");
+              }
+              else {
+                fs.writeFile(pdfPath, data, function (error) {
+
+                  if (error) {
+                    alert("Error: While printing document (Print to PDF Creating File.)");
+                    console.error(error);
+                  }
+                  else {
+                    shell.openItem(pdfPath);
+                  }
+
+                });
+              }
+
+        });
+
+      }
+      function saveLetter() {
+
+        var restorePage = document.body.innerHTML;
+        var printContent = document.getElementById("main").innerHTML;
+        document.body.innerHTML = printContent;
+
+        const electron = require('electron');
+        const BrowserWindow = electron.remote.BrowserWindow;
+        const win = BrowserWindow.getFocusedWindow();
+
+        win.webContents.printToPDF({}, function (error, data) {
+
+              document.body.innerHTML = restorePage;
+              renderRfdComponent();
+
+              if (error) {
+                console.log(error);
+                alert("Error Save");
+              }
+              else {
+
+                  var imgData = {
+                      img : data,
+                      imgType : 'PCP Letter',
+                      imgSubtype : 'PCP Letter',
+                      servDate : _dateOfVisit,
+                      patId : _patId,
+                      dctId : _dctId,
+                      userId : _userId,
+                      database : _databaseI
+                  }
+
+                  pcpLetterSql.isLetterSaved(imgData, function(err, record) {
+
+                      if(err)
+                      {
+                        console.log(err);
+                        alert("Error while saving!");
+                      }
+                      else
+                      {
+                        if(record && record.length > 0)
+                        {
+
+                          var r = confirm("This Letter is already saved for this visit. Would you like to save it again?");
+                          if (r == true) {
+                              saveLetterImg();
+                          }
+
+                        }
+                        else {
+                          saveLetterImg ();
+                        }
+
+                      }
+                  });
+
+                  function saveLetterImg (){
+
+                    pcpLetterSql.saveLetter(imgData, function(err, record){
+
+                        if(err)
+                        {
+                          console.log(err);
+                          alert("Error while saving!");
+                        }
+                        else {
+                          console.log("Saved Successfully!");
+                          alert("Saved Successfully.");
+
+                        }
+
+                    });
+
+                  }
+
+
+              }
+
+
+
+
+        });
+
+      }
+      function faxLetter() {
+          if (cmGlb.license.includes(cmGlb.licenseYamtoob))
+          {
+              // Modified to protect the original author
+              _interFaxUserName = "cal-med";
+              _interFaxPassword = "REDACTED";
+
+          }
+          else if (cmGlb.license.includes(cmGlb.licenseTapadiya))
+          {
+              // Modified to protect the original author
+              _interFaxUserName = "cal-med";
+              _interFaxPassword = "REDACTED";
+          }
+          else if (cmGlb.license.includes(cmGlb.licenseInnocenzi))
+          {
+              // Modified to protect the original author
+              _interFaxUserName = "cal-med";
+              _interFaxPassword = "REDACTED";
+          }
+          else
+          {
+              // Modified to protect the original author
+              _interFaxUserName = "cal-med";
+              _interFaxPassword = "REDACTED";
+              //alert("Please contact your dealer to activate Fax option");
+              //return;
+          }
+
+
+          console.log(_interFaxUserName);
+          console.log(_interFaxPassword);
+          $('#faxModal').modal('show');
+          document.getElementById('faxNumber').value = "";
+          document.getElementById('faxNumber').value = _faxNumber;
+
+      }
+      function sendFax() {
+
+        var faxNo = document.getElementById('faxNumber').value;
+        if(!faxNo){
+          alert("Please enter fax number.");
+          return;
+        }
+
+
+        var faxNoTrim = faxNo.trim();
+        var faxNoClean = faxNoTrim.replace(/-/g, "");
+
+        console.log("Fax No : " + faxNoClean);
+
+        //Hide Modal.
+        $('#faxModal').modal('hide');
+
+        var restorePage = document.body.innerHTML;
+        var printContent = document.getElementById("main").innerHTML;
+        document.body.innerHTML = printContent;
+
+        const electron = require('electron');
+        const BrowserWindow = electron.remote.BrowserWindow;
+        const win = BrowserWindow.getFocusedWindow();
+
+        win.webContents.printToPDF({}, function (error, data) {
+
+        document.body.innerHTML = restorePage;
+        renderRfdComponent();
+
+          if (error)
+          {
+            console.log(error);
+
+            alert("Error Fax");
+
+          }
+          else
+          {
+            if(data) {
+
+              //Fax Functionality
+              var InterFAX = require(nodeModulesPath + 'interfax');
+              var interfax = new InterFAX({username: _interFaxUserName, password: _interFaxPassword});
+
+              $("#spanSending").show();
+              $("#spanToolBar").css("visibility", "hidden");
+
+
+              interfax.files.create(data, {mimeType: 'application/pdf'}, function (error, file){
+
+                $("#spanSending").hide();
+                $("#spanToolBar").css("visibility", "visible");
+
+                  if(error)
+                  {
+                    console.log(error);
+                    alert("Error to Fax (Creating InterFax File)");
+                  }
+                  else
+                  {
+
+                      interfax.deliver({
+                        faxNumber : faxNoClean,
+                        file : file
+                      }, function(error, response) {
+                            if (error) {
+                              console.log(error);
+                              alert("Error to Fax (Sending).");
+                              //=> an error object
+                            } else {
+                              console.log(response.id);
+                              alert("Fax Send Successfully.")
+                              //=> the ID of the Fax just created
+                            }
+                      });
+                  }
+
+              });
+            }
+            else {
+              alert("There is no pdf/data to send");
+            }
+          }
+
+        });
+
+
+
+      }
+
+      function getPcpLetter(isFromSaveOption) {
+
+          $("#spanLoading").show();
+          $("#spanToolBar").css("visibility", "hidden");
+
+          pcpLetterSql.getPcpLetterTemplate(function(err, record){
+
+
+              if(err)
+              {
+                $("#spanLoading").hide();
+                console.error(err);
+                alert("Error: Retrieving pcpLetter Template.");
+              }
+              else
+              {
+                //console.log(record);
+                if(record && record.length > 0)
+                {
+                      var template = record[0].FORMHTML.value; // $("#tmpTemplate").html(); record[0].FORMHTML.value;
+                      var renderer = Handlebars.compile(template);
+
+                      pcpLetterSql.getPcpLetterData(_patId, _dateOfVisit, _visitType, _license, _userId, _rfdId, function (err1, record1) {
+
+                            $("#spanLoading").hide();
+                            $("#spanToolBar").css("visibility", "visible");
+
+                            if(isFromSaveOption){
+                              $("#btnSaveOptions").css({"opacity":"", "cursor":""});
+                              document.getElementById("side-nav").style.width = "0px";
+                              document.getElementById("top-bar").style.marginLeft = "0px";
+                              document.getElementById("main").style.marginLeft = "0px";
+                              document.getElementById("divSaveOptions").style.display = "none";
+                              $( "#side-nav-options" ).empty();
+                            }
+
+
+                            if(err1)
+                            {
+                              console.error(err1);
+                              alert("Error: Retrieving pcpLetter Data.");
+                            }
+                            else
+                            {
+                              var result = renderer(createOneJsonObjFromRecord(record1));
+                              var element = document.getElementById("main-content");
+                              element.innerHTML = result;
+                            }
+
+                      });
+                }
+                else
+                {
+                  console.log(record);
+                  alert("No record found in xrxForms_List table for pcpLetter.");
+                }
+
+              }
+
+          });
+
+      }
+
+      function createOneJsonObjFromRecord(record) {
+
+            var data = {};
+
+            data["dateOfVisit"] = stringFormatedDate(_dateOfVisit);
+            data["todaysDate"] = stringFormatedDate();
+
+            for(i = 0; i < record.length; i++)
+            {
+
+                //console.log(record[i]["TAG"].value);
+                if (record[i]["ORDER1"].value == "30") { //fuVisit
+
+                    if (!fuVisit)
+                    {
+                      var fuVisit = {
+                          caption: 'F/U Visit:',
+                          fuVisits: []
+                      };
+                      data["fuVisit"] = fuVisit;
+                    }
+
+                    if(isOdd(record[i]["ORDER2"].value))
+                    {
+                      var objfuVisits = {};
+                      objfuVisits["keyName"] = record[i]["TEXT2"].value;
+                    }
+                    else
+                    {
+                      objfuVisits["value"] = record[i]["TEXT3"].value;
+                      fuVisit.fuVisits.push(objfuVisits);
+                    }
+                }
+                else if(record[i]["ORDER1"].value == "40") { //hpi
+
+                  if (!hpi)
+                  {
+                    var hpi = {
+                        caption: 'History of Present Illness:',
+                        hpis: []
+                    };
+                    data["hpi"] = hpi;
+                  }
+
+                  if(isOdd(record[i]["ORDER2"].value))
+                  {
+                    var objHPIs = {};
+                    objHPIs["keyName"] = record[i]["TEXT1"].value;
+                  }
+                  else
+                  {
+                    objHPIs["value"] = record[i]["TEXT2"].value;
+                    hpi.hpis.push(objHPIs);
+                  }
+                }
+                else if(record[i]["ORDER1"].value == "50") { //medicalHistory
+
+                    if (!medicalHistory)
+                    {
+                      var medicalHistory = {
+                          caption: 'Medical History:',
+                          medicalHistories: []
+                      };
+                      data["medicalHistory"] = medicalHistory;
+                    }
+
+
+                    if(isOdd(record[i]["ORDER2"].value))
+                    {
+                      var objMedicalHistories = {};
+                      objMedicalHistories["keyName"] = record[i]["TEXT2"].value;
+                    }
+                    else
+                    {
+                      objMedicalHistories["value"] = record[i]["TEXT2"].value;
+                      medicalHistory.medicalHistories.push(objMedicalHistories);
+                    }
+
+                }
+                else if(record[i]["ORDER1"].value == "60") { //surgicalHistory
+                    if (!surgicalHistory)
+                    {
+                      var surgicalHistory = {
+                          caption: 'Surgical History:',
+                          surgicalHistories: []
+                      };
+                      data["surgicalHistory"] = surgicalHistory;
+                    }
+
+
+                    if(isOdd(record[i]["ORDER2"].value))
+                    {
+                      var objSurgicalHistories = {};
+                      objSurgicalHistories["keyName"] = record[i]["TEXT2"].value;
+                    }
+                    else
+                    {
+                      objSurgicalHistories["value"] = record[i]["TEXT2"].value;
+                      surgicalHistory.surgicalHistories.push(objSurgicalHistories);
+                    }
+                }
+                else if(record[i]["ORDER1"].value == "70") { //healthMaintenance
+                    if (!healthMaintenance)
+                    {
+                      var healthMaintenance = {
+                          caption: 'Health Maintenance:',
+                          healthMaintenanceList: []
+                      };
+                      data["healthMaintenance"] = healthMaintenance;
+                    }
+
+                    if(isOdd(record[i]["ORDER2"].value))
+                    {
+                      var objhealthMaintenanceList = {};
+                      objhealthMaintenanceList["keyName"] = record[i]["TEXT2"].value;
+                    }
+                    else
+                    {
+                      objhealthMaintenanceList["value"] = record[i]["TEXT2"].value;
+                      healthMaintenance.healthMaintenanceList.push(objhealthMaintenanceList);
+                    }
+                }
+                else if(record[i]["ORDER1"].value == "80") { //pediatricHistory
+                    if (!pediatricHistory)
+                    {
+                      var pediatricHistory = {
+                          caption: 'Pediatric History:',
+                          pediatricHistoryList: []
+                      };
+                      data["pediatricHistory"] = pediatricHistory;
+                    }
+
+
+                    if(isOdd(record[i]["ORDER2"].value))
+                    {
+                      var objPediatricHistoryList = {};
+                      objPediatricHistoryList["keyName"] = record[i]["TEXT2"].value;
+                    }
+                    else
+                    {
+                      objPediatricHistoryList["value"] = record[i]["TEXT2"].value;
+                      pediatricHistory.pediatricHistoryList.push(objPediatricHistoryList);
+                    }
+                }
+                else if(record[i]["ORDER1"].value == "90") { //psychiatricHistory
+                    if (!psychiatricHistory)
+                    {
+                      var psychiatricHistory = {
+                          caption: 'Psychiatric History:',
+                          psychiatricHistoryList: []
+                      };
+                      data["psychiatricHistory"] = psychiatricHistory;
+                    }
+
+
+                    if(isOdd(record[i]["ORDER2"].value))
+                    {
+                      var objPsychiatricHistoryList = {};
+                      objPsychiatricHistoryList["keyName"] = record[i]["TEXT2"].value;
+                    }
+                    else
+                    {
+                      objPsychiatricHistoryList["value"] = record[i]["TEXT2"].value;
+                      psychiatricHistory.psychiatricHistoryList.push(objPsychiatricHistoryList);
+                    }
+                }
+                else if(record[i]["ORDER1"].value == "100") { //vascularHistory
+                    if (!vascularHistory)
+                    {
+                      var vascularHistory = {
+                          caption: 'Vascular History:',
+                          vascularHistoryList: []
+                      };
+                      data["vascularHistory"] = vascularHistory;
+                    }
+
+                    if(isOdd(record[i]["ORDER2"].value))
+                    {
+                      var objVascularHistoryList = {};
+                      objVascularHistoryList["keyName"] = record[i]["TEXT2"].value;
+                    }
+                    else
+                    {
+                      objVascularHistoryList["value"] = record[i]["TEXT2"].value;
+                      vascularHistory.vascularHistoryList.push(objVascularHistoryList);
+                    }
+                }
+                else if(record[i]["ORDER1"].value == "110") { //obstetricalHistory
+                    if (!obstetricalHistory)
+                    {
+                      var obstetricalHistory = {
+                          caption: 'Obstetrical History:',
+                          obstetricalHistoryList: []
+                      };
+                      data["obstetricalHistory"] = obstetricalHistory;
+                    }
+
+                    if(isOdd(record[i]["ORDER2"].value))
+                    {
+                      var objObstetricalHistoryList = {};
+                      objObstetricalHistoryList["keyName"] = record[i]["TEXT2"].value;
+                    }
+                    else
+                    {
+                      objObstetricalHistoryList["value"] = record[i]["TEXT2"].value;
+                      obstetricalHistory.obstetricalHistoryList.push(objObstetricalHistoryList);
+                    }
+                }
+                else if(record[i]["ORDER1"].value == "120") { //allergy
+
+                    if(!allergy)
+                    {
+                      var allergy = {
+                        caption : 'Allergies:',
+                        allergies : []
+                      };
+                      data["allergy"] = allergy;
+                    }
+
+                    var textAllergy = record[i]["TEXT2"].value;
+                    allergy.allergies.push(textAllergy);
+
+                }
+                else if(record[i]["ORDER1"].value == "130") { //medicationHistory
+
+                    if(!medicationHistory)
+                    {
+                      var medicationHistory = {
+                        caption : 'Medication History:',
+                        medicationHistoryList : []
+                      };
+                      data["medicationHistory"] = medicationHistory;
+                    }
+
+                    var textMedicationHistory = record[i]["TEXT2"].value;
+                    medicationHistory.medicationHistoryList.push(textMedicationHistory);
+
+                }
+                else if(record[i]["ORDER1"].value == "150") { //familyHistory
+                    if (!familyHistory)
+                    {
+                      var familyHistory = {
+                          caption: 'Family History:',
+                          familyHistoryList: []
+                      };
+                      data["familyHistory"] = familyHistory;
+                    }
+
+                    if(isOdd(record[i]["ORDER2"].value))
+                    {
+                      var objFamilyHistoryList = {};
+                      objFamilyHistoryList["keyName"] = record[i]["TEXT2"].value;
+                    }
+                    else
+                    {
+                      objFamilyHistoryList["value"] = record[i]["TEXT2"].value;
+                      familyHistory.familyHistoryList.push(objFamilyHistoryList);
+                    }
+                }
+                else if(record[i]["ORDER1"].value == "160") { //socialHistory
+                    if (!socialHistory)
+                    {
+                      var socialHistory = {
+                          caption: 'Social History:',
+                          socialHistoryList: []
+                      };
+                      data["socialHistory"] = socialHistory;
+                    }
+
+                    if(isOdd(record[i]["ORDER2"].value))
+                    {
+                      var objSocialHistoryList = {};
+                      objSocialHistoryList["keyName"] = record[i]["TEXT2"].value;
+                    }
+                    else
+                    {
+                      objSocialHistoryList["value"] = record[i]["TEXT2"].value;
+                      socialHistory.socialHistoryList.push(objSocialHistoryList);
+                    }
+                }
+                else if (record[i]["ORDER1"].value == "170" || record[i]["ORDER1"].value == "175") { //reviewOfSystem
+
+                  if (!reviewOfSystem)
+                  {
+                    var reviewOfSystem = {
+                        caption: 'Review Of System:',
+                        reviewOfSystemList: []
+                    };
+                    data["reviewOfSystem"] = reviewOfSystem;
+                  }
+
+                  if(isOdd(record[i]["ORDER2"].value))
+                  {
+                    var objReviewOfSystemList = {};
+                    objReviewOfSystemList["keyName"] = record[i]["TEXT2"].value;
+                  }
+                  else
+                  {
+
+                    if(record[i]["ORDER1"].value == "170")
+                    {
+                      objReviewOfSystemList["value"] = record[i]["TEXT3"].value;
+                    }
+                    else if(record[i]["ORDER1"].value == "175")
+                    {
+                      objReviewOfSystemList["value"] = record[i]["TEXT2"].value;
+                    }
+
+                    reviewOfSystem.reviewOfSystemList.push(objReviewOfSystemList);
+                  }
+                }
+                else if (record[i]["ORDER1"].value == "190"){ //vitalSign
+                    if (!vitalSign)
+                    {
+                      var vitalSign = {
+                          caption: 'Vital Signs:',
+                          text: record[i]["TEXT2"].value
+                      };
+                      data["vitalSign"] = vitalSign;
+                    }
+                }
+                else if (record[i]["ORDER1"].value == "200"){ //narrative
+                  if (!narrative)
+                  {
+                    var narrative = {
+                        caption: 'Narrative',
+                        text: record[i]["TEXT1"].value
+
+                    };
+                    data["narrative"] = narrative;
+                  }
+                }
+                else if (record[i]["ORDER1"].value == "210") { //exam
+
+                      if (!exam)
+                      {
+                        var exam = {
+                            caption: 'Exam:',
+                            exams: []
+                        };
+                        data["exam"] = exam;
+                      }
+
+                      if(isOdd(record[i]["ORDER2"].value))
+                      {
+                        var objExams = {};
+                        objExams["keyName"] = record[i]["TEXT2"].value;
+                      }
+                      else
+                      {
+                        objExams["value"] = record[i]["TEXT3"].value;
+                        exam.exams.push(objExams);
+                      }
+
+                }
+                else if(record[i]["TAG"].value == "examSlitLamps") { //examSlitLamps
+
+                  if(!examSlitLamps)
+                  {
+                    var examSlitLamps = {};
+                    data["examSlitLamps"] = examSlitLamps;
+                  }
+
+                  var key = record[i]["TEXT1"].value;
+
+                  if(key == "odGrade" || key == "odPTM" || key == "odPas") {
+
+                    if(!odGradePTMPas)
+                    {
+                      var odGradePTMPas = {};
+                      examSlitLamps["odGradePTMPas"] = odGradePTMPas;
+                    }
+                    odGradePTMPas[key] = record[i]["TEXT2"].value;
+
+                  }
+                  else if(key == "osGrade" || key == "osPTM" || key == "osPas") {
+
+                    if(!osGradePTMPas)
+                    {
+                      var osGradePTMPas = {};
+                      examSlitLamps["osGradePTMPas"] = osGradePTMPas;
+                    }
+                    osGradePTMPas[key] = record[i]["TEXT2"].value;
+                  }
+                  else if(key.startsWith("slit")) {
+                    if(!slit)
+                    {
+                      var slit = {};
+                      examSlitLamps["slit"] = slit;
+                    }
+                    slit[key] = record[i]["TEXT2"].value;
+                  }
+                  else if(key.startsWith("dilated") || key == "phenylephrine" || key == "tropicamide") {
+
+                      if(!dilated)
+                      {
+                        var dilated = {};
+                        examSlitLamps["dilated"] = dilated;
+                      }
+                      if(key.startsWith("dilatedOd") || key.startsWith("dilatedOs"))
+                      {
+                        if(!dilatedOdOs)
+                        {
+                          var dilatedOdOs = {};
+                          dilated["dilatedOdOs"] = dilatedOdOs;
+                        }
+                        dilatedOdOs[key] = record[i]["TEXT2"].value;
+                      }
+                      else {
+                        dilated[key] = record[i]["TEXT2"].value;
+                      }
+                  }
+                  else {
+                      examSlitLamps[key] = record[i]["TEXT2"].value;
+                  }
+
+                }
+                else if(record[i]["TAG"].value == "examRefractions") { //examRefractions
+
+                  if(!examRefractions)
+                  {
+                    var examRefractions = {};
+                    data["examRefractions"] = examRefractions;
+                  }
+
+                  var orderNo = record[i]["ORDER1"].value.toString();
+                  var key = record[i]["TEXT1"].value;
+
+                  if(orderNo == "1000") {
+
+                    if(!examRefractionsCaptionOne)
+                    {
+                      var examRefractionsCaptionOne = "";
+                      examRefractionsCaptionOne = record[i]["TEXT2"].value;
+                      examRefractions["examRefractionsCaptionOne"] = examRefractionsCaptionOne;
+                    }
+                  }
+                  else if(orderNo == "2000") {
+
+                    if(!examRefractionsCaptionTwo)
+                    {
+                      var examRefractionsCaptionTwo = "";
+                      examRefractionsCaptionTwo = record[i]["TEXT2"].value;
+                      examRefractions["examRefractionsCaptionTwo"] = examRefractionsCaptionTwo;
+                    }
+                  }
+                  else if(orderNo == "3000") {
+
+                      if(!examRefractionsCaptionThree)
+                      {
+                        var examRefractionsCaptionThree = "";
+                        examRefractionsCaptionThree = record[i]["TEXT2"].value;
+                        examRefractions["examRefractionsCaptionThree"] = examRefractionsCaptionThree;
+                      }
+                  }
+                  else if(orderNo.startsWith("10")) {
+                    if(!examRefractionsOne)
+                    {
+                      var examRefractionsOne = {};
+                      examRefractions["examRefractionsOne"] = examRefractionsOne;
+                    }
+                    examRefractionsOne[key] = record[i]["TEXT2"].value;
+                  }
+                  else if(orderNo.startsWith("20")) {
+                    if(!examRefractionsTwo)
+                    {
+                      var examRefractionsTwo = {};
+                      examRefractions["examRefractionsTwo"] = examRefractionsTwo;
+                    }
+                    examRefractionsTwo[key] = record[i]["TEXT2"].value;
+                  }
+                  else if(orderNo.startsWith("30")) {
+                    if(!examRefractionsThree)
+                    {
+                      var examRefractionsThree = {};
+                      examRefractions["examRefractionsThree"] = examRefractionsThree;
+                    }
+                    examRefractionsThree[key] = record[i]["TEXT2"].value;
+                  }
+                }
+                else if (record[i]["TAG"].value == "eyeWorkup230") { //eyeWorkup
+
+                  if(!eyeWorkup)
+                  {
+                    var eyeWorkup = {};
+                    data["eyeWorkup"] = eyeWorkup;
+                  }
+
+                  var orderNo = record[i]["ORDER1"].value.toString();
+
+                  if(orderNo == "0")
+                  {
+                    if(!row0)
+                    {
+                      var row0 = {};
+                      eyeWorkup["row0"] = row0;
+                    }
+
+                    var key = record[i]["TEXT1"].value;
+                    row0[key] = record[i]["TEXT2"].value;
+                  }
+                  else if(orderNo == "1")
+                  {
+                    if(!row1)
+                    {
+                      var row1 = {};
+                      eyeWorkup["row1"] = row1;
+                    }
+
+                    var key = record[i]["TEXT1"].value;
+                    if(key.startsWith("distanceCorrected"))
+                    {
+                      if(!distanceCorrected)
+                      {
+                        var distanceCorrected = {};
+                        row1["distanceCorrected"] = distanceCorrected;
+                      }
+                      distanceCorrected[key] = record[i]["TEXT2"].value;
+                    }
+                    if(key.startsWith("distanceUnCorrected"))
+                    {
+                      if(!distanceUnCorrected)
+                      {
+                        var distanceUnCorrected = {};
+                        row1["distanceUnCorrected"] = distanceUnCorrected;
+                      }
+                      distanceUnCorrected[key] = record[i]["TEXT2"].value;
+                    }
+                    if(key.startsWith("nearCorrected"))
+                    {
+                      if(!nearCorrected)
+                      {
+                        var nearCorrected = {};
+                        row1["nearCorrected"] = nearCorrected;
+                      }
+                      nearCorrected[key] = record[i]["TEXT2"].value;
+                    }
+                    if(key.startsWith("nearUnCorrected"))
+                    {
+                      if(!nearUnCorrected)
+                      {
+                        var nearUnCorrected = {};
+                        row1["nearUnCorrected"] = nearUnCorrected;
+                      }
+                      nearUnCorrected[key] = record[i]["TEXT2"].value;
+                    }
+                  }
+                  else if(orderNo == "2")
+                  {
+                    if(!row2)
+                    {
+                      var row2 = {};
+                      eyeWorkup["row2"] = row2;
+                    }
+
+                    var key = record[i]["TEXT1"].value;
+                    row2[key] = record[i]["TEXT2"].value;
+                  }
+                  else if(orderNo == "3")
+                  {
+                    if(!row3)
+                    {
+                      var row3 = {};
+                      eyeWorkup["row3"] = row3;
+                    }
+
+                    var key = record[i]["TEXT1"].value;
+                    //row3[key] = record[i]["TEXT2"].value;
+
+                    if(key.endsWith("1"))
+                    {
+                      if(!intraocular1)
+                      {
+                        var intraocular1 = {};
+                        row3["intraocular1"] = intraocular1;
+                      }
+                      intraocular1[key] = record[i]["TEXT2"].value;
+                    }
+                    else if(key.endsWith("2"))
+                    {
+                      if(!intraocular2)
+                      {
+                        var intraocular2 = {};
+                        row3["intraocular2"] = intraocular2;
+                      }
+                      intraocular2[key] = record[i]["TEXT2"].value;
+
+                    }
+
+
+
+                  }
+                  else if(orderNo == "4")
+                  {
+                    if(!row4)
+                    {
+                      var row4 = {};
+                      eyeWorkup["row4"] = row4;
+                    }
+
+                    var key = record[i]["TEXT1"].value;
+                    //row4[key] = record[i]["TEXT2"].value;
+
+                    if(key.startsWith("amsler"))
+                    {
+                      if(!amsler)
+                      {
+                        var amsler = {};
+                        row4["amsler"] = amsler;
+                      }
+                      amsler[key] = record[i]["TEXT2"].value;
+                    }
+                    if(key.startsWith("color"))
+                    {
+                      if(!color)
+                      {
+                        var color = {};
+                        row4["color"] = color;
+                      }
+                      color[key] = record[i]["TEXT2"].value;
+                    }
+                    if(key.startsWith("glaucoma"))
+                    {
+                      if(!glaucoma)
+                      {
+                        var glaucoma = {};
+                        row4["glaucoma"] = glaucoma;
+                      }
+                      glaucoma[key] = record[i]["TEXT2"].value;
+                    }
+                  }
+
+
+                }
+                else if (record[i]["ORDER1"].value == "260") { //diagnosticStudy
+
+                      if (!diagnosticStudy)
+                      {
+                        var diagnosticStudy = {
+                            caption: 'Diagnostic Study:',
+                            diagnosticStudyList: []
+                        };
+                        data["diagnosticStudy"] = diagnosticStudy;
+                      }
+
+
+                      if(isOdd(record[i]["ORDER2"].value))
+                      {
+                        var objDiagnosticStudyList = {};
+                        objDiagnosticStudyList["keyName"] = record[i]["TEXT2"].value;
+                      }
+                      else
+                      {
+                        objDiagnosticStudyList["value"] = record[i]["TEXT2"].value;
+                        diagnosticStudy.diagnosticStudyList.push(objDiagnosticStudyList);
+                      }
+                }
+                else if (record[i]["ORDER1"].value == "270") { //assessmentNote
+
+                    if (!assessmentNote)
+                    {
+                      var assessmentNote = {
+                          caption: 'Previous Assessments notes:',
+                          assessmentNoteList: []
+                      };
+                      data["assessmentNote"] = assessmentNote;
+                    }
+
+                    var textAssessmentNote = record[i]["TEXT1"].value;
+                    assessmentNote.assessmentNoteList.push(textAssessmentNote);
+                }
+                else if (record[i]["ORDER1"].value == "280") { //assessment
+
+                    if (!assessment)
+                    {
+                      var assessment = {
+                          caption: 'Assessment for this encounter:',
+                          assessmentList: []
+                      };
+                      data["assessment"] = assessment;
+                    }
+
+                    var textAssessment = record[i]["TEXT2"].value;
+                    assessment.assessmentList.push(textAssessment);
+                }
+                else if (record[i]["ORDER1"].value == "285"){ //assessment Free Form
+                  if (!assessmentFreeForm)
+                  {
+                    var assessmentFreeForm = {
+                        caption: 'Diagnostic',
+                        text: record[i]["TEXT1"].value
+
+                    };
+                    data["assessmentFreeForm"] = assessmentFreeForm;
+                  }
+                }
+                else if (record[i]["ORDER1"].value == "310") { //procedure
+
+                    if (!procedure)
+                    {
+                      var procedure = {
+                          caption: 'Procedures:',
+                          procedureList: []
+                      };
+                      data["procedure"] = procedure;
+                    }
+
+                    var textProcedure = record[i]["TEXT2"].value;
+                    procedure.procedureList.push(textProcedure);
+
+                }
+                else if (record[i]["ORDER1"].value == "295") { //carePlan
+
+                  if (!carePlan)
+                  {
+                    var carePlan = {
+                        caption: 'Care Plan:',
+                        carePlanList: []
+                    };
+                    data["carePlan"] = carePlan;
+                  }
+
+                  if(isOdd(record[i]["ORDER2"].value))
+                  {
+                    var objCarePlanList = {};
+                    objCarePlanList["keyName"] = record[i]["TEXT2"].value;
+                  }
+                  else
+                  {
+                    objCarePlanList["value"] = record[i]["TEXT3"].value;
+                    carePlan.carePlanList.push(objCarePlanList);
+                  }
+
+                }
+                else if (record[i]["ORDER1"].value == "300") { //planFreeFormat
+                  var keyPlanFreeFormat = record[i]["TAG"].value;
+                  data[keyPlanFreeFormat] = record[i]["TEXT2"].value;
+                }
+                else if (record[i]["ORDER1"].value == "320") {//carePlanGoal
+
+                  if (!carePlanGoal)
+                  {
+                    var carePlanGoal = {
+                        caption: 'Care Plan Goals:',
+                        carePlanGoalList: []
+                    };
+                    data["carePlanGoal"] = carePlanGoal;
+                  }
+
+                  if(isOdd(record[i]["ORDER2"].value))
+                  {
+                    var objCarePlanGoalList = {};
+                    objCarePlanGoalList["keyName"] = record[i]["TEXT2"].value;
+                  }
+                  else
+                  {
+                    objCarePlanGoalList["value"] = record[i]["TEXT3"].value;
+                    carePlanGoal.carePlanGoalList.push(objCarePlanGoalList);
+                  }
+
+                }
+                else if (record[i]["ORDER1"].value == "330") {//labOrder
+
+                    if (!labOrder)
+                    {
+                      var labOrder = {
+                          caption: 'Lab Order(s):',
+                          labOrderList: []
+                      };
+                      data["labOrder"] = labOrder;
+                    }
+
+                    var textLabOrder = record[i]["TEXT2"].value;
+                    labOrder.labOrderList.push(textLabOrder);
+                }
+                else if (record[i]["ORDER1"].value == "350") { //patientReminder
+                  var keyPatientReminder = record[i]["TAG"].value;
+                  data[keyPatientReminder] = record[i]["TEXT2"].value;
+                }
+                else if (record[i]["ORDER1"].value == "355") {//order
+
+                  if(!order)
+                  {
+                    var order = {
+                      caption : 'Order(s)',
+                      orderList : []
+                    };
+                    data["order"] = order;
+                   }
+
+
+                     var objOrder = {text1: '', text2: '', text3: ''};
+
+                     if(record[i]["TEXT1"].value)
+                     {
+                       if(record[i]["TEXT1"].value.trim())
+                       {
+                         objOrder.text1 = record[i]["TEXT1"].value
+                       }
+                    }
+                     else if(record[i]["TEXT2"].value)
+                     {
+                       if(record[i]["TEXT2"].value.trim())
+                       {
+                         objOrder.text2 = record[i]["TEXT2"].value;
+                       }
+
+                     }
+                     else if(record[i]["TEXT3"].value)
+                     {
+                       if(record[i]["TEXT3"].value.trim())
+                       {
+                         objOrder.text3 = record[i]["TEXT3"].value;
+                       }
+                     }
+
+
+                     order.orderList.push(objOrder);
+
+
+
+                }
+                else if (record[i]["ORDER1"].value == "390") {//rx
+
+                    if(!rx)
+                    {
+                      var rx = {
+                        caption : 'Medications prescribed during this visit:',
+                        rxList : []
+                      };
+                      data["rx"] = rx;
+                    }
+
+                    var textRx = record[i]["TEXT2"].value;
+                    rx.rxList.push(textRx);
+                }
+                else if(record[i]["ORDER1"].value == "255") {//Mental Status
+
+                  if (!mentalStatus)
+                  {
+                    var mentalStatus = {
+                        caption: 'Mental Status:',
+                        mentalStatusList: []
+                    };
+                    data["mentalStatus"] = mentalStatus;
+                  }
+
+                  if(isOdd(record[i]["ORDER2"].value))
+                  {
+                    var objMentalStatusList = {};
+                    objMentalStatusList["keyName"] = record[i]["TEXT2"].value;
+                  }
+                  else
+                  {
+                    objMentalStatusList["value"] = record[i]["TEXT3"].value;
+                    mentalStatus.mentalStatusList.push(objMentalStatusList);
+                  }
+                }
+                else if(record[i]["ORDER1"].value == "400") {//generalInstruction
+                      if(!generalInstruction)
+                      {
+                        var generalInstruction = {
+                          caption : '',
+                          generalInstructionList : []
+                        };
+                        data["generalInstruction"] = generalInstruction;
+                      }
+
+                      if(record[i]["TEXT1"].value)
+                      {
+                        generalInstruction.caption = record[i]["TEXT1"].value;
+                      }
+                      else
+                      {
+                        var textGeneralInstruction = record[i]["TEXT2"].value;
+                        generalInstruction.generalInstructionList.push(textGeneralInstruction);
+                      }
+                }
+                else if(record[i]["ORDER1"].value == "410") {//woundCare
+
+                    if(!woundCare)
+                    {
+                      var woundCare = {
+                        caption : '',
+                        woundCareList : []
+                      };
+                      data["woundCare"] = woundCare;
+                    }
+
+                    if(record[i]["TEXT1"].value)
+                    {
+                      woundCare.caption = record[i]["TEXT1"].value;
+                    }
+                    else
+                    {
+                      var textWoundCare = record[i]["TEXT2"].value;
+                      woundCare.woundCareList.push(textWoundCare);
+                    }
+                }
+                else if(record[i]["ORDER1"].value == "430") { //vaccination
+
+                    if (!vaccination)
+                    {
+                      var vaccination = {
+                          caption: 'Vaccination(s) for this visit:',
+                          vaccinationList: []
+                      };
+                      data["vaccination"] = vaccination;
+                    }
+
+
+                    var textVaccination= record[i]["TEXT2"].value;
+                    vaccination.vaccinationList.push(textVaccination);
+
+
+                }
+                else if (record[i]["TAG"].value == "logo") {//Logo
+
+                  if (record[i]["IMAGE"].value) {
+
+                    // var blobinfo = require("blobinfo");
+                    // var buffer = new Buffer(record[i]["IMAGE"].value);
+                    // console.log(blobinfo.inspect(buffer));
+
+                    var logoSrc =  decodeArrayBuffer(record[i]["IMAGE"].value);
+                    data["logoSrc"] = logoSrc;
+
+
+                  }
+
+                }
+                else if (record[i]["TAG"].value == "signature") {
+
+                  if (record[i]["IMAGE"].value) {
+
+                    // var blobinfo = require("blobinfo");
+                    // var buffer = new Buffer(record[i]["IMAGE"].value);
+                    // console.log(blobinfo.inspect(buffer));
+
+                    var signatureSrc =  decodeArrayBuffer(record[i]["IMAGE"].value);
+                    data["signatureSrc"] = signatureSrc;
+
+
+                  }
+
+                }
+                else if (record[i]["ORDER1"].value == "500"){ //pcpLetterNotes
+                  if (!pcpLetterNotes)
+                  {
+                    var pcpLetterNotes = {
+                        caption: 'Remarks',
+                        text: record[i]["TEXT1"].value
+
+                    };
+                    data["pcpLetterNotes"] = pcpLetterNotes;
+                  }
+                }
+
+                else
+                {
+                  var key = record[i]["TAG"].value;
+                  data[key] = record[i]["TEXT1"].value;
+                }
+
+            }
+
+
+            //console.log(data);
+
+            return data;
+      }
+
+      function isOdd(num) { return num % 2;}
+
+      function formatKeyName(keyName)
+      {
+            //console.log(keyName);
+
+          if(keyName == "FUVISIT30")
+          {
+            return "F/U Visit";
+          }
+          else if(keyName == "HPI40")
+          {
+            return "HPI";
+          }
+          else if(keyName == "HISTPASTMEDICAL50")
+          {
+            return "Medical History";
+          }
+          else if(keyName == "HISTSURGERY60")
+          {
+            return "Surgical History";
+          }
+          else if(keyName == "HEALTHMAINTENANCE70")
+          {
+            return "Health Maintenance";
+          }
+          else if(keyName == "HISTPEDIATRIC80")
+          {
+            return "Pediatric History";
+          }
+          else if(keyName == "PSYCHIATRICHISTORY90")
+          {
+            return "Psychiatric History";
+          }
+          else if(keyName == "VASCULARHISTORY100")
+          {
+            return "Vascular History";
+          }
+          else if(keyName == "HISTOB110")
+          {
+            return "Obstetrical History";
+          }
+          else if(keyName == "HISTALLERGIES120")
+          {
+            return "Allergies";
+          }
+          else if(keyName == "HISTMEDICATIONS130")
+          {
+            return "Medication History";
+          }
+          else if(keyName == "HISTSURGERY60")
+          {
+            return "Surgery History";
+          }
+          else if(keyName == "HISTFAMILY150")
+          {
+            return "Family History";
+          }
+          else if(keyName == "HISTSOCIAL160")
+          {
+            return "Social History";
+          }
+          else if(keyName == "REVIEWOFSYSTEMS170175")
+          {
+            return "Review of Systems";
+          }
+          else if(keyName == "VITALSIGNS190")
+          {
+            return "Vital Signs";
+          }
+          else if(keyName == "NARRATIVE200")
+          {
+            return "Narrative";
+          }
+          else if(keyName == "EXAMS210")
+          {
+            return "Exams";
+          }
+          else if(keyName == "IMAGES250")
+          {
+              return "Images";
+          }
+          else if(keyName == "SLITLAMP220")
+          {
+            return "Slit/Lamp";
+          }
+          else if(keyName == "EXAMREFRATION225")
+          {
+            return "Exam Refration";
+          }
+          else if(keyName == "EYEWORKUP230")
+          {
+            return "Eye Workup";
+          }
+          else if(keyName == "BIOPSY240")
+          {
+            return "Biopsy";
+          }
+          else if(keyName == "DIAGNOSTICSTUDIES260")
+          {
+            return "Diagnostic Studies";
+          }
+          else if(keyName == "ASSESSMENTNOTES270")
+          {
+            return "Assessment Notes";
+          }
+          else if(keyName == "ASSESSMENT280")
+          {
+            return "Assessment";
+          }
+          else if(keyName == "ASSESSMENTSFREEFORM285")
+          {
+            return "Assessments Free Form";
+          }
+          else if(keyName == "PROCEDURES310")
+          {
+            return "Procedures";
+          }
+          else if(keyName == "CAREPLAN295")
+          {
+            return "Care Plan";
+          }
+          else if(keyName == "PLANFREEFORMAT300")
+          {
+            return "Plan Free Format";
+          }
+          else if(keyName == "CAREPLANGOALS320")
+          {
+            return "Care Plan Goals";
+          }
+          else if(keyName == "LABORDERS330")
+          {
+            return "Lab Orders";
+          }
+          else if(keyName == "REFERRALTOPHYSICIAN340")
+          {
+            return "Referral To Physician";
+          }
+          else if(keyName == "REFERRALTOFACILITY345")
+          {
+            return "Referral To Facility";
+          }
+          else if(keyName == "PATIENTREMINDER350")
+          {
+            return "Patient Reminder";
+          }
+          else if(keyName == "ORDERS355")
+          {
+            return "Orders";
+          }
+          else if(keyName == "DECISIONAIDS380")
+          {
+            return "Decision Aids";
+          }
+          else if(keyName == "RXTHISVISIT390")
+          {
+            return "Rx This Visit";
+          }
+          else if(keyName == "MENTALSTATUS255")
+          {
+            return "Mental Status";
+          }
+          else if(keyName == "GENERALINSTRUCTIONS400")
+          {
+            return "General Instructions";
+          }
+          else if(keyName == "WOUNDCARE410")
+          {
+            return "Woundcare";
+          }
+          else if(keyName == "VACCINATION430")
+          {
+            return "Vaccination";
+          }
+          else
+          {
+            return keyName;
+          }
+
+      }
+
+
+
+
+      function stringFormatedDate(datePara) {
+
+        if(datePara)
+        {
+            var date = new Date(datePara);
+
+            var month = date.getMonth() + 1;
+            var dateD = date.getDate();
+            var year = date.getFullYear();
+
+          return  month +"/"+ dateD +"/"+ year;
+
+        }
+        else
+        {
+          var date = new Date();
+
+          var month = date.getMonth() + 1;
+          var dateD = date.getDate();
+          var year = date.getFullYear();
+
+          return  month +"/"+ dateD +"/"+ year;
+
+        }
+
+
+
+      }
+
+      function stringDateTimeUniqueNumber() {
+
+          var date = new Date();
+
+          var month = date.getMonth() + 1;
+          var dateD = date.getDate();
+          var year = date.getFullYear();
+          var hours = date.getHours();
+          var minutes = date.getMinutes();
+          var seconds = date.getSeconds();
+          return  month +""+ dateD +""+ year +""+ hours +""+ minutes +""+ seconds;
+      }
+
+      function decodeArrayBuffer(buffer) {
+          var mime;
+          var a = new Uint8Array(buffer);
+          var nb = a.length;
+          if (nb < 4)
+              return null;
+          var b0 = a[0];
+          var b1 = a[1];
+          var b2 = a[2];
+          var b3 = a[3];
+          if (b0 == 0x89 && b1 == 0x50 && b2 == 0x4E && b3 == 0x47)
+              mime = 'image/png';
+          else if (b0 == 0xff && b1 == 0xd8)
+              mime = 'image/jpeg';
+          else if (b0 == 0x47 && b1 == 0x49 && b2 == 0x46)
+              mime = 'image/gif';
+
+          //0x42 BMP
+          else if(b0 == 0x42)
+              mime = 'image/bmp';
+          else
+              return null;
+          var binary = "";
+          for (var i = 0; i < nb; i++)
+              binary += String.fromCharCode(a[i]);
+          var base64 = window.btoa(binary);
+          var image = new Image();
+
+          image.src = 'data:' + mime + ';base64,' + base64;
+          return image.src;
+        }
+
+      var updateRfdData =  function(selectedRfdData, isValid) {
+            // Some code
+            currentRfdId = _rfdId;
+            if(selectedRfdData && isValid)
+            {
+              console.log("Valid Rfd Id *****");
+              //console.log(selectedRfdData);
+              if(!selectedRfdData.rfdId){
+                return;
+              }
+
+
+              _rfdId = selectedRfdData.rfdId;
+              _faxNumber = selectedRfdData.fax ?  selectedRfdData.fax : "";
+
+              if(_rfdId && _rfdId.toLowerCase() != currentRfdId.toLowerCase())
+              {
+                  console.log("*** Get -- Called ***");
+                  getPcpLetter();
+              }
+
+
+            }
+            else
+            {
+              //console.log("In Valid Rfd Id *****");
+            }
+      };
+
+      function renderRfdComponent(){
+
+        $( "#divRfdSearch" ).empty();
+
+        var rfdInitData = { recNo:'', rfdId: _rfdId, fax:''};
+        ReactDOM.render(
+                 <RfdSearch width="100px" rfdData={rfdInitData} isRequired={false} showSelectedInfoBox={false} onSelect={updateRfdData}  />,
+                 document.getElementById('divRfdSearch')
+        );
+
+      };
+
+
+
+  </script>
+
+  <script type="text/jsx">
+
+
+  </script>
+
+</body>
+</html>

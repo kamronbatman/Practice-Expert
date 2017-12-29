@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Letters</title>
+    <link rel="stylesheet" type="text/css" href="../public/font-awesome-4.5.0/css/font-awesome.min.css">
+    <link rel="stylesheet" type="text/css" href="./letters.css">
+  </head>
+  <body>
+    <div id="wrapper">
+        <div id="top-bar">
+          <button id="btnPrintLetter" onclick="printLetter()"><i class="fa fa-print"></i> Print</button>
+          <button id="btnSaveLetter" onclick="saveLetter()"><i class="fa fa-save"></i> Save</button>
+          <button id="btnFaxLetter" onclick="faxLetter()"><i class="fa fa-fax"></i> Fax</button>
+        </div>
+        <div id="side-nav">
+        </div>
+        <div id="side-nav-sub">
+        </div>
+        <div id="main">
+          <div id="main-content">
+          </div>
+        </div>
+        <div id="faxNoModal" class="modal">
+
+          <!-- Modal content -->
+          <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <br />
+            <p><b>Send To Fax Number&nbsp;:&nbsp;&nbsp;</b><input type="text" name="faxNumber" id="faxNumber" style="width: 200px"><br /></p>
+            <hr />
+            <p><button id="btnSendFax" onclick="sendFax()"><i class="fa fa-paper-plane"></i> Send</button></p>
+          </div>
+
+        </div>
+    </div>
+
+
+
+  </body>
+  <script type="text/x-handlebars-template" id="ulCatItemsListTemplate">
+    <ul>
+      {{#catItemsList}}
+      <li onclick="openNav(this, '{{RECNO.value}}', '{{CATEGORY.value}}')">
+      {{CATEGORY.value}}<i class="" style="float: right; margin-top:4px"></i>
+      </li>
+      {{/catItemsList}}
+    </ul>
+  </script>
+  <script type="text/x-handlebars-template" id="ulItemsListTemplate">
+    <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+    <ul>
+      {{#itemsList}}
+      <li onclick="showLetter(this, '{{RECNO.value}}', '{{FORMNAME.value}}')">
+        {{FORMNAME.value}}<i class="" style="float: right; margin-top:4px"></i>
+      </li>
+      {{/itemsList}}
+    </ul>
+  </script>
+
+  <script>
+      var remote = require('electron').remote;
+      var nodeModulesPath = remote.getGlobal('nodeModulesPath');
+      var appPath = remote.getGlobal('appPath');
+    var cmGlb = remote.getGlobal('cmGlb');
+    var toastr = require(nodeModulesPath + 'toastr');
+    var bootbox = require(nodeModulesPath + 'bootbox');
+
+    var _patId =  cmGlb.patId; //'CLINTON';
+    var _dctId =  cmGlb.dctId;
+    var _userId =  cmGlb.userId;
+    var _dateOfVisit = cmGlb.dateOfVisit; //'2016-09-14 10:13:00';
+    var _license = cmGlb.license;
+    var _databaseI = cmGlb.databaseI;
+    var _interFaxUserName = "cal-med";
+    var _interFaxPassword = "J0nSnowL!ves";
+    var _faxNumber = cmGlb.rfdFax;
+
+
+
+    var _catValue = null;
+    var _letterName = null;
+
+    console.log(_patId);
+    console.log(_dateOfVisit);
+    console.log(_license);
+    console.log(_databaseI);
+
+    var $ = jQuery = require(nodeModulesPath + "jquery");
+
+    var Handlebars = require(nodeModulesPath + 'handlebars');
+    var sqlLetters = require(appPath + "/letters/sqlLetters.js");
+
+    $(document).ready(function () {
+
+      sqlLetters.getCatList(function (err, record) {
+            if(err) {
+              alert(err);
+            }
+            else {
+              var template = $("#ulCatItemsListTemplate").html();
+              var renderer = Handlebars.compile(template);
+              var result = renderer({ "catItemsList": record});
+              var element = document.getElementById("side-nav");
+              element.innerHTML = result;
+            }
+        });
+
+    });
+
+    /* Set the width of the side navigation to 250px and the left margin of the page content to 250px */
+    function openNav(ele, recNo, catValue) {
+
+      //console.log(catValue);
+
+      _catValue = catValue;
+
+      var lis = document.getElementById("side-nav").getElementsByTagName("li");
+      for (var i = 0; i < lis.length; i++) {
+        lis[i].style.backgroundColor = "transparent";
+        lis[i].getElementsByTagName("i")[0].className = "";
+      }
+
+      ele.style.backgroundColor = "white";
+      ele.getElementsByTagName("i")[0].className = "fa fa-arrow-right";
+
+      sqlLetters.getList(recNo, function (err, record) {
+        if(err) {
+          alert(err);
+        }
+        else {
+            var template = $("#ulItemsListTemplate").html();
+            var renderer = Handlebars.compile(template);
+            var result = renderer({ "itemsList": record});
+            var element = document.getElementById("side-nav-sub");
+            element.innerHTML = result;
+        }
+      });
+
+      document.getElementById("side-nav-sub").style.display = "block";
+      document.getElementById("top-bar").style.marginLeft = "151px";
+      document.getElementById("main").style.marginLeft = "151px";
+      document.getElementById("main-content").innerHTML = "";
+      _letterName = null;
+    }
+    /* Set the width of the side navigation to 0 and the left margin of the page content to 0 */
+    function closeNav() {
+
+      var lis = document.getElementById("side-nav").getElementsByTagName("li");
+      for (var i = 0; i < lis.length; i++) {
+        lis[i].style.backgroundColor = "transparent";
+        lis[i].getElementsByTagName("i")[0].className = "";
+      }
+
+
+      document.getElementById("side-nav-sub").style.display = "none";
+      document.getElementById("top-bar").style.marginLeft = "0";
+      document.getElementById("main").style.marginLeft = "0";
+      document.getElementById("main-content").innerHTML = "";
+      _catValue = null;
+      _letterName = null;
+    }
+
+    function showLetter(ele, recNo, letterName) {
+
+      //console.log(letterName);
+
+      _letterName = letterName;
+
+      var lis = document.getElementById("side-nav-sub").getElementsByTagName("li");
+      for (var i = 0; i < lis.length; i++) {
+        lis[i].style.backgroundColor = "transparent";
+        lis[i].getElementsByTagName("i")[0].className = "";
+      }
+
+      ele.style.backgroundColor = "#D3D3D3";
+
+      ele.getElementsByTagName("i")[0].className = "fa fa-arrow-right";
+
+      sqlLetters.getLetter(recNo, function (err, record) {
+        if(err) {
+          alert(err);
+        }
+        else {
+
+          if(record && record.length > 0)
+          {
+            var template = record[0].FORMHTML.value; // $("#tmpTemplate").html() //record[0].FORMHTML.value;
+            var renderer = Handlebars.compile(template);
+
+            sqlLetters.getLetterData(_patId, _dateOfVisit, _license, recNo, function (err, record1) {
+                if(err) {
+                  alert(err);
+                }
+                else {
+                  var result = renderer(createOneJsonObjFromRecord(record1)); //renderer({ "itemsList": record});
+                  var element = document.getElementById("main-content");
+                  element.innerHTML = result;
+                }
+            });
+          }
+        }
+      });
+    }
+
+    function createOneJsonObjFromRecord(record) {
+
+      var data = {};
+
+      data["todaysDate"] = stringTodaysDate();
+
+      for(i = 0; i < record.length; i++)
+      {
+
+        if (record[i]["TAG"].value == "assessments") {
+
+          if(!assessment)
+          {
+            var assessment = {
+              caption : 'Assessment for this encounter:',
+              assessments : []
+            };
+            data["assessment"] = assessment;
+          }
+
+          var textAssessment = record[i]["TEXT1"].value + ", " + record[i]["TEXT2"].value;
+          assessment.assessments.push(textAssessment);
+        }
+        else if (record[i]["TAG"].value == "HPIs") {
+
+          if(!hpi)
+          {
+            var hpi = {
+              caption : 'History of Present Illness:',
+              hpis : []
+            }
+            data["hpi"] = hpi;
+          }
+
+          var objHpis = {title : record[i]["TEXT1"].value, text : record[i]["TEXT2"].value};
+          hpi.hpis.push(objHpis);
+        }
+        else if (record[i]["TAG"].value == "rxs") {
+          if(!rx)
+          {
+            var rx = {
+              caption : 'Medication prescribed during this visit:',
+              rxs : []
+            };
+            data["rx"] = rx;
+          }
+
+          var textRx = record[i]["TEXT1"].value;
+          rx.rxs.push(textRx);
+        }
+        else if (record[i]["TAG"].value == "orders") {
+
+          if(!order)
+          {
+            var order = {
+              caption : 'Order(s):',
+              orders : []
+            }
+            data["order"] = order;
+          }
+
+          var objOrders = {title : record[i]["TEXT1"].value, text : record[i]["TEXT2"].value};
+          order.orders.push(objOrders);
+        }
+        else if (record[i]["TAG"].value == "PlanAdults") {
+
+          if(!planAdult)
+          {
+            var planAdult = {
+              caption : 'Care Plan:',
+              planAdults : []
+            }
+            data["planAdult"] = planAdult;
+          }
+
+          var objPlanAdults = {title : record[i]["TEXT1"].value, text : record[i]["TEXT2"].value};
+          planAdult.planAdults.push(objPlanAdults);
+
+        }
+        else if (record[i]["TAG"].value == "logo") {
+
+          if (record[i]["IMAGE"].value) {
+
+            // var blobinfo = require("blobinfo");
+            // var buffer = new Buffer(record[i]["IMAGE"].value);
+            // console.log(blobinfo.inspect(buffer));
+
+            var logoSrc =  decodeArrayBuffer(record[i]["IMAGE"].value);
+            data["logoSrc"] = logoSrc;
+
+
+          }
+
+        }
+        else if (record[i]["TAG"].value == "signature") {
+
+          if (record[i]["IMAGE"].value) {
+
+            // var blobinfo = require("blobinfo");
+            // var buffer = new Buffer(record[i]["IMAGE"].value);
+            // console.log(blobinfo.inspect(buffer));
+
+            var signatureSrc =  decodeArrayBuffer(record[i]["IMAGE"].value);
+            data["signatureSrc"] = signatureSrc;
+
+
+          }
+
+        }
+        else if (record[i]["TAG"].value == "eyeWorkup") {
+
+          if(!eyeWorkup)
+          {
+            var eyeWorkup = {};
+            data["eyeWorkup"] = eyeWorkup;
+          }
+
+          if(record[i]["ORDERNO"].value == "0")
+          {
+            if(!row0)
+            {
+              var row0 = {};
+              eyeWorkup["row0"] = row0;
+            }
+
+            var key = record[i]["TEXT1"].value;
+            row0[key] = record[i]["TEXT2"].value;
+          }
+          else if(record[i]["ORDERNO"].value == "1")
+          {
+            if(!row1)
+            {
+              var row1 = {};
+              eyeWorkup["row1"] = row1;
+            }
+
+            var key = record[i]["TEXT1"].value;
+            if(key.startsWith("distanceCorrected"))
+            {
+              if(!distanceCorrected)
+              {
+                var distanceCorrected = {};
+                row1["distanceCorrected"] = distanceCorrected;
+              }
+              distanceCorrected[key] = record[i]["TEXT2"].value;
+            }
+            if(key.startsWith("distanceUnCorrected"))
+            {
+              if(!distanceUnCorrected)
+              {
+                var distanceUnCorrected = {};
+                row1["distanceUnCorrected"] = distanceUnCorrected;
+              }
+              distanceUnCorrected[key] = record[i]["TEXT2"].value;
+            }
+            if(key.startsWith("nearCorrected"))
+            {
+              if(!nearCorrected)
+              {
+                var nearCorrected = {};
+                row1["nearCorrected"] = nearCorrected;
+              }
+              nearCorrected[key] = record[i]["TEXT2"].value;
+            }
+            if(key.startsWith("nearUnCorrected"))
+            {
+              if(!nearUnCorrected)
+              {
+                var nearUnCorrected = {};
+                row1["nearUnCorrected"] = nearUnCorrected;
+              }
+              nearUnCorrected[key] = record[i]["TEXT2"].value;
+            }
+          }
+          else if(record[i]["ORDERNO"].value == "2")
+          {
+            if(!row2)
+            {
+              var row2 = {};
+              eyeWorkup["row2"] = row2;
+            }
+
+            var key = record[i]["TEXT1"].value;
+            row2[key] = record[i]["TEXT2"].value;
+          }
+          else if(record[i]["ORDERNO"].value == "3")
+          {
+            if(!row3)
+            {
+              var row3 = {};
+              eyeWorkup["row3"] = row3;
+            }
+
+            var key = record[i]["TEXT1"].value;
+            //row3[key] = record[i]["TEXT2"].value;
+
+            if(key.endsWith("1"))
+            {
+              if(!intraocular1)
+              {
+                var intraocular1 = {};
+                row3["intraocular1"] = intraocular1;
+              }
+              intraocular1[key] = record[i]["TEXT2"].value;
+            }
+            else if(key.endsWith("2"))
+            {
+              if(!intraocular2)
+              {
+                var intraocular2 = {};
+                row3["intraocular2"] = intraocular2;
+              }
+              intraocular2[key] = record[i]["TEXT2"].value;
+
+            }
+
+
+
+          }
+          else if(record[i]["ORDERNO"].value == "4")
+          {
+            if(!row4)
+            {
+              var row4 = {};
+              eyeWorkup["row4"] = row4;
+            }
+
+            var key = record[i]["TEXT1"].value;
+            //row4[key] = record[i]["TEXT2"].value;
+
+            if(key.startsWith("amsler"))
+            {
+              if(!amsler)
+              {
+                var amsler = {};
+                row4["amsler"] = amsler;
+              }
+              amsler[key] = record[i]["TEXT2"].value;
+            }
+            if(key.startsWith("color"))
+            {
+              if(!color)
+              {
+                var color = {};
+                row4["color"] = color;
+              }
+              color[key] = record[i]["TEXT2"].value;
+            }
+            if(key.startsWith("glaucoma"))
+            {
+              if(!glaucoma)
+              {
+                var glaucoma = {};
+                row4["glaucoma"] = glaucoma;
+              }
+              glaucoma[key] = record[i]["TEXT2"].value;
+            }
+          }
+
+        }
+        else if(record[i]["TAG"].value == "examSlitLamps") {
+
+          if(!examSlitLamps)
+          {
+            var examSlitLamps = {};
+            data["examSlitLamps"] = examSlitLamps;
+          }
+
+          var key = record[i]["TEXT1"].value;
+
+          if(key == "odGrade" || key == "odPTM" || key == "odPas") {
+
+            if(!odGradePTMPas)
+            {
+              var odGradePTMPas = {};
+              examSlitLamps["odGradePTMPas"] = odGradePTMPas;
+            }
+            odGradePTMPas[key] = record[i]["TEXT2"].value;
+
+          }
+          else if(key == "osGrade" || key == "osPTM" || key == "osPas") {
+
+            if(!osGradePTMPas)
+            {
+              var osGradePTMPas = {};
+              examSlitLamps["osGradePTMPas"] = osGradePTMPas;
+            }
+            osGradePTMPas[key] = record[i]["TEXT2"].value;
+          }
+          else if(key.startsWith("slit")) {
+            if(!slit)
+            {
+              var slit = {};
+              examSlitLamps["slit"] = slit;
+            }
+            slit[key] = record[i]["TEXT2"].value;
+          }
+          else if(key.startsWith("dilated") || key == "phenylephrine" || key == "tropicamide") {
+
+              if(!dilated)
+              {
+                var dilated = {};
+                examSlitLamps["dilated"] = dilated;
+              }
+              if(key.startsWith("dilatedOd") || key.startsWith("dilatedOs"))
+              {
+                if(!dilatedOdOs)
+                {
+                  var dilatedOdOs = {};
+                  dilated["dilatedOdOs"] = dilatedOdOs;
+                }
+                dilatedOdOs[key] = record[i]["TEXT2"].value;
+              }
+              else {
+                dilated[key] = record[i]["TEXT2"].value;
+              }
+          }
+          else {
+              examSlitLamps[key] = record[i]["TEXT2"].value;
+          }
+
+        }
+        else if(record[i]["TAG"].value == "examRefractions") {
+
+          if(!examRefractions)
+          {
+            var examRefractions = {};
+            data["examRefractions"] = examRefractions;
+          }
+
+          var orderNo = record[i]["ORDERNO"].value.toString();
+          var key = record[i]["TEXT1"].value;
+
+          if(orderNo == "1000") {
+
+            if(!examRefractionsCaptionOne)
+            {
+              var examRefractionsCaptionOne = "";
+              examRefractionsCaptionOne = record[i]["TEXT2"].value;
+              examRefractions["examRefractionsCaptionOne"] = examRefractionsCaptionOne;
+            }
+          }
+          else if(orderNo == "2000") {
+
+            if(!examRefractionsCaptionTwo)
+            {
+              var examRefractionsCaptionTwo = "";
+              examRefractionsCaptionTwo = record[i]["TEXT2"].value;
+              examRefractions["examRefractionsCaptionTwo"] = examRefractionsCaptionTwo;
+            }
+          }
+          else if(orderNo == "3000") {
+
+              if(!examRefractionsCaptionThree)
+              {
+                var examRefractionsCaptionThree = "";
+                examRefractionsCaptionThree = record[i]["TEXT2"].value;
+                examRefractions["examRefractionsCaptionThree"] = examRefractionsCaptionThree;
+              }
+          }
+          else if(orderNo.startsWith("10")) {
+            if(!examRefractionsOne)
+            {
+              var examRefractionsOne = {};
+              examRefractions["examRefractionsOne"] = examRefractionsOne;
+            }
+            examRefractionsOne[key] = record[i]["TEXT2"].value;
+          }
+          else if(orderNo.startsWith("20")) {
+            if(!examRefractionsTwo)
+            {
+              var examRefractionsTwo = {};
+              examRefractions["examRefractionsTwo"] = examRefractionsTwo;
+            }
+            examRefractionsTwo[key] = record[i]["TEXT2"].value;
+          }
+          else if(orderNo.startsWith("30")) {
+            if(!examRefractionsThree)
+            {
+              var examRefractionsThree = {};
+              examRefractions["examRefractionsThree"] = examRefractionsThree;
+            }
+            examRefractionsThree[key] = record[i]["TEXT2"].value;
+          }
+        }
+        else if(record[i]["TAG"].value == "diagnosticStudies") {
+
+          if(!diagnosticStudie)
+          {
+            var diagnosticStudie = {
+              caption : 'Diagnostic Studies:',
+              diagnosticStudies : []
+            }
+            data["diagnosticStudie"] = diagnosticStudie;
+          }
+
+          if(record[i]["ORDERNO"].value != '1')
+          {
+            var objDiagnosticStudies = {title : record[i]["TEXT1"].value, text : record[i]["TEXT2"].value};
+            diagnosticStudie.diagnosticStudies.push(objDiagnosticStudies);
+          }
+
+
+        }
+        else {
+          var key = record[i]["TAG"].value;
+          data[key] = record[i]["TEXT1"].value;
+        }
+      }
+
+      //console.log(data);
+
+      return data;
+    }
+
+    function printLetter()
+    {
+
+      if(!_letterName){
+        alert("Please select letter to print.")
+        return;
+      }
+
+
+      var restorePage = document.body.innerHTML;
+      var printContent = document.getElementById("main").innerHTML;
+      document.body.innerHTML = printContent;
+
+      //directly print to printer
+      //window.print();
+
+      //Print to pdf
+      const fs = require('fs');
+      const os = require('os');
+      const path = require('path');
+      const electron = require('electron');
+      const BrowserWindow = electron.remote.BrowserWindow;
+      const shell = electron.shell;
+      const win = BrowserWindow.getFocusedWindow();
+
+      var dateTimeSecUid = stringDateTimeUniqueNumber();
+
+      const pdfPath = path.join(os.tmpdir(), 'printLetter_'+dateTimeSecUid+'.pdf');
+
+      // Use default printing options
+      win.webContents.printToPDF({}, function (error, data) {
+
+            if (error) throw error
+            fs.writeFile(pdfPath, data, function (error) {
+
+              if (error) {
+                throw error
+              }
+
+              shell.openItem(pdfPath);
+              document.body.innerHTML = restorePage;
+            });
+      });
+
+    }
+
+    function saveLetter() {
+
+      if(!_letterName){
+        alert("Please select letter to save.");
+        return;
+      }
+
+      var restorePage = document.body.innerHTML;
+      var printContent = document.getElementById("main").innerHTML;
+      document.body.innerHTML = printContent;
+
+      const electron = require('electron');
+      const BrowserWindow = electron.remote.BrowserWindow;
+      const win = BrowserWindow.getFocusedWindow();
+
+      win.webContents.printToPDF({}, function (error, data) {
+
+            if (error) {
+              console.log(error);
+              alert("Error Save");
+            }
+            else {
+
+                var imgData = {
+                    img : data,
+                    imgType : _catValue,
+                    imgSubtype : _letterName,
+                    servDate : _dateOfVisit,
+                    patId : _patId,
+                    dctId : _dctId,
+                    userId : _userId,
+                    database : _databaseI
+                }
+
+                sqlLetters.isLetterSaved(imgData, function(err, record) {
+
+                    if(err)
+                    {
+                      console.log(err);
+                      alert("Error while saving!");
+                    }
+                    else
+                    {
+                      if(record && record.length > 0)
+                      {
+
+                        var r = confirm("This Letter is already saved for this visit. Would you like to save it again?");
+                        if (r == true) {
+                            saveLetterImg();
+                        }
+
+                      }
+                      else {
+                        saveLetterImg ();
+                      }
+
+                    }
+                });
+
+                function saveLetterImg (){
+
+                  sqlLetters.saveLetter(imgData, function(err, record){
+
+                      if(err)
+                      {
+                        console.log(err);
+                        alert("Error while saving!");
+                      }
+                      else {
+                        console.log("Saved Successfully!");
+                        alert("Saved Successfully.");
+
+                      }
+
+                  });
+
+                }
+
+
+            }
+
+
+            document.body.innerHTML = restorePage;
+      });
+
+    }
+
+
+
+    var openModal = null;
+
+    function faxLetter() {
+
+        //alert(" This Fax feature is in imlementation....");
+        if(!_letterName){
+          alert("Please select letter to fax.")
+          return;
+        }
+
+        var modal = document.getElementById('faxNoModal');
+        // Get the <span> element that closes the modal
+        var spanModal = document.getElementsByClassName("close-modal")[0];
+
+        // When the user clicks on <span> (x), close the modal
+        spanModal.onclick = function() {
+            document.getElementById('faxNumber').value = "";
+            modal.style.display = "none";
+        }
+        // When the user clicks anywhere outside of the modal, close it
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                document.getElementById('faxNumber').value = "";
+                modal.style.display = "none";
+            }
+        }
+
+        document.getElementById('faxNumber').value = "";
+        document.getElementById('faxNumber').value = _faxNumber;
+        modal.style.display = "block";
+
+        openModal = modal;
+    }
+
+
+    function sendFax() {
+
+      var faxNo = document.getElementById('faxNumber').value;
+      if(!faxNo){
+        alert("Please enter fax number.");
+        return;
+      }
+
+
+      var faxNoTrim = faxNo.trim();
+      var faxNoClean = faxNoTrim.replace(/-/g, "");
+
+      console.log("Fax No : " + faxNoClean);
+
+      //Hide Modal.
+      openModal.style.display = "none";
+
+      var restorePage = document.body.innerHTML;
+      var printContent = document.getElementById("main").innerHTML;
+      document.body.innerHTML = printContent;
+
+      const electron = require('electron');
+      const BrowserWindow = electron.remote.BrowserWindow;
+      const win = BrowserWindow.getFocusedWindow();
+
+      win.webContents.printToPDF({}, function (error, data) {
+
+        if (error)
+        {
+          console.log(error);
+          alert("Error Fax");
+        }
+        else
+        {
+
+
+          if(data) {
+
+            //Fax Functionality
+            var InterFAX = require('interfax');
+            var interfax = new InterFAX({username: _interFaxUserName, password: _interFaxPassword});
+
+
+            interfax.files.create(data, {mimeType: 'application/pdf'}, function (error, file){
+
+                if(error)
+                {
+                  console.log(error);
+                  alert("Error to Fax (Creating InterFax File)");
+                }
+                else
+                {
+
+                    interfax.deliver({
+                      faxNumber : faxNoClean,
+                      file : file
+                    }, function(error, response) {
+                          if (error) {
+                            console.log(error);
+                            alert("Error to Fax (Sending).");
+                            //=> an error object
+                          } else {
+                            console.log(response.id);
+                            alert("Fax Send Successfully.")
+                            //=> the ID of the Fax just created
+                          }
+                    });
+                }
+
+            });
+          }
+          else {
+            alert("There is no pdf/data to send");
+          }
+
+
+
+        }
+
+        document.body.innerHTML = restorePage;
+
+      });
+
+
+
+    }
+
+    function stringDateTimeUniqueNumber() {
+
+        var date = new Date();
+
+        var month = date.getMonth() + 1;
+        var dateD = date.getDate();
+        var year = date.getFullYear();
+        var hours = date.getHours();
+        var minutes = date.getMinutes();
+        var seconds = date.getSeconds();
+        return  month +""+ dateD +""+ year +""+ hours +""+ minutes +""+ seconds;
+    }
+
+    function stringTodaysDate() {
+
+        var date = new Date();
+
+        var month = date.getMonth() + 1;
+        var dateD = date.getDate();
+        var year = date.getFullYear();
+
+        return  month +"/"+ dateD +"/"+ year;
+
+
+    }
+
+
+    function decodeArrayBuffer(buffer) {
+        var mime;
+        var a = new Uint8Array(buffer);
+        var nb = a.length;
+        if (nb < 4)
+            return null;
+        var b0 = a[0];
+        var b1 = a[1];
+        var b2 = a[2];
+        var b3 = a[3];
+        if (b0 == 0x89 && b1 == 0x50 && b2 == 0x4E && b3 == 0x47)
+            mime = 'image/png';
+        else if (b0 == 0xff && b1 == 0xd8)
+            mime = 'image/jpeg';
+        else if (b0 == 0x47 && b1 == 0x49 && b2 == 0x46)
+            mime = 'image/gif';
+
+        //0x42 BMP
+        else if(b0 == 0x42)
+            mime = 'image/bmp';
+        else
+            return null;
+        var binary = "";
+        for (var i = 0; i < nb; i++)
+            binary += String.fromCharCode(a[i]);
+        var base64 = window.btoa(binary);
+        var image = new Image();
+
+        image.src = 'data:' + mime + ';base64,' + base64;
+        return image.src;
+      }
+
+
+</script>
+
+</html>

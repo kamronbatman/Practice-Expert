@@ -1,0 +1,687 @@
+<html>
+<head>
+	<title>Icd Search(web version)</title>
+	<link rel="stylesheet" type="text/css" href="../../public/bootstrap/css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../../public/font-awesome-4.5.0/css/font-awesome.min.css">
+	<link rel="stylesheet" type="text/css" href="../../node_modules/fixed-data-table/dist/fixed-data-table-base.min.css">
+	<link rel="stylesheet" type="text/css" href="../../node_modules/fixed-data-table/dist/fixed-data-table-style.min.css">
+	<link rel="stylesheet" type="text/css" href="../../node_modules/fixed-data-table/dist/fixed-data-table.min.css">
+	<link rel="stylesheet" type="text/css" href="../../public/stylesheets/calmed.css">
+
+
+	<style>
+
+
+	</style>
+
+	<script type="text/javascript">
+        //Jquer-Bootsrap
+        var remote = require('electron').remote;
+        var nodeModulesPath = remote.getGlobal('nodeModulesPath');
+        var appPath = remote.getGlobal('appPath');
+        var $ = jQuery = require(nodeModulesPath + "jquery");
+	</script>
+
+	<script src="../../public/bootstrap/js/bootstrap.min.js"></script>
+	<script src="../../public/javascripts/JSXTransformer.js"></script>
+	<!--Components -->
+	<script type="text/jsx" src="./IcdSearch.jsx"></script>
+	<script type="text/jsx" src="../../common/user_controls/txtInput.jsx"></script>
+	<script type="text/jsx" src="../../common/user_controls/lbl.jsx"></script>
+	<script type="text/jsx" src="../../common/user_controls/dropdownPlugin.jsx"></script>
+	<script type="text/jsx" src="../../common/user_controls/dateInput.jsx"></script>
+	<script type="text/jsx" src="../../common/user_controls/textAreaPlugin.jsx"></script>
+
+	<script type="text/jsx" src="../../common/user_controls/SearchSelectButton.jsx"></script>
+
+	<script type="text/jsx" src="../../dc/dcSnomed/snomedSearch.jsx"></script>
+
+	<script type="text/javascript">
+				var bootbox = require(nodeModulesPath + "bootbox");
+        //React
+        var React = require(nodeModulesPath + "react");
+        var ReactDOM = require(nodeModulesPath + "react-dom");
+
+                //Other
+        var moment = require(nodeModulesPath + 'moment');
+        //Electron
+        var cmGlb = remote.getGlobal('cmGlb');
+        //Sql
+        var sqlEhrIcd = require(appPath + "/ehr/ehrIcdEdit/sqlEhrIcd.js");
+        //var patId = cmGlb.patId;
+        var patName = cmGlb.patName;
+        var dateOfVisit =  cmGlb.dateOfVisit;
+        var dctId = cmGlb.dctId;
+        var fclId = cmGlb.fclId;
+        var userId = cmGlb.userId;
+        var recNo = cmGlb.recno;
+        var originalChgCode = '';
+
+	</script>
+
+	<script type="text/jsx">
+
+        var EhrIcdEdit = React.createClass({
+
+
+            getInitialState: function() {
+
+                return {
+
+                    icdRecord :  {
+
+                        RECNO : {value : ''},
+                        PATID : {value : cmGlb.patId},
+                        PATNAME : {value : patName},
+                        DCTID : {value : dctId},
+                        FCLID : {value : fclId},
+                        SERVDATE : {value : dateOfVisit},
+                        POSTDATE : {value : moment(new Date()).format("YYYY-MM-DD")},
+                        CHGTYPE : {value : 1},
+                        CHGCODE : {value : ''},
+                        CHGNAME : {value : ''},
+                        CHGDESC : {value : ''},
+                        STATUS : {value : 'Active'},
+                        ONSETDATE : {value : moment(new Date()).format("YYYY-MM-DD")},
+                        RESOLUTIONDATE : {value : ''},
+                        CHRONICITY : {value : 'Acute'},
+                        CLASSIFICATION : {value : ''},
+                        SUBCLASSIFICATION : {value : ''},
+                        SNOMED : {value : ''},
+                        USERID : {value : userId}
+                    },
+                    isValidIcd: false,
+                    isComponentDidMount: false,
+                    errMsg: "",
+										srchSnomed : "",
+										snomedIcdMapData : []
+
+                };
+            },
+            getDefaultProps : function(){
+
+                return {
+
+                    inputFieldStyle : {
+                        backgroundColor: '#FCF5D8'
+                    },
+                    icdEditOptionsStatus : [
+                        {value:"Active", text:'Active'},
+                        {value:"Inactive", text:'Inactive'},
+                        {value:"Resolved", text:'Resolved'},
+                        {value:"Improving1", text:'Improving1'},
+                        {value:"Improving2", text:'Improving2'},
+                        {value:"Improving3", text:'Improving3'},
+                        {value:"Improving4", text:'Improving4'},
+                        {value:"Improving5", text:'Improving5'},
+                        {value:"Improving6", text:'Improving6'},
+                        {value:"Improving7", text:'Improving7'},
+                        {value:"Improving8", text:'Improving8'},
+                        {value:"Improving9", text:'Improving9'},
+                        {value:"Improving10", text:'Improving10'}
+                    ],
+                    icdEditOptionsChronicity : [
+
+                        {value:"Acute", text:'Acute'},
+                        {value:"Chronic", text:'Chronic'}
+                    ]
+
+                };
+            },
+            _keyDown: function(e) {
+
+                var F10 = 121;
+                var ESC = 27;
+
+                if(e.keyCode == F10)
+                {
+                    this._save();
+                }
+                else if(e.keyCode == ESC)
+                {
+
+                    var allModals = document.getElementsByClassName("modal");
+                    if(allModals && allModals.length > 0)
+                    {
+                        var isModalsHide = false;
+                        for (var i=0, max = allModals.length; i < max; i++)
+                        {
+                            console.log("Outside : "+i);
+                            if($(allModals[i]).hasClass('in'))
+                            {
+                                isModalsHide = true;
+                                console.log("Inside : "+i);
+                                $(allModals[i]).modal('hide');
+                            }
+
+                        }
+
+                        if(isModalsHide)
+                        {
+                            return;
+                        }
+                        else
+                        {
+                            this._close();
+                        }
+                    }
+                    else
+                    {
+                        this._close();
+                    }
+                }
+
+            },
+            _save : function(){
+
+								this.setState({errMsg: ""});
+                if(this.state.isValidIcd === true)
+                {
+                    var self = this;
+                    sqlEhrIcd.isIcdAlreadyExists(self.state.icdRecord, function (err, isExsists) {
+
+                        if (err) {
+                            alert(err);
+                        }
+                        else if (isExsists){
+
+                            bootbox.alert("This ICD code is already exists for this date of visit.", function () {});
+
+                        }
+                        else if (!err && !isExsists) {
+
+
+                            var record = self.state.icdRecord;
+
+							//record.CHGNAME.value = self.record.CHGNAME.value;
+                            //record.CHGDESC.value = self.record.CHGDESC.value;
+														record.SNOMED.value = self.state.srchSnomed;
+														//Data before save.
+														//console.log(record);
+														//return;
+
+														sqlEhrIcd.icdSave(record,
+                                function (err, isDataSaved) {
+
+                                    if (isDataSaved && !err) {
+
+
+                                        if (self.state.icdRecord.RECNO.value)
+                                        {
+                                            window.close();
+                                        }
+                                        else
+                                        {
+                                            self.setState({icdRecord: {
+                                                RECNO : {value : ''},
+                                                PATID : {value : cmGlb.patId},
+                                                PATNAME : {value : patName},
+                                                DCTID : {value : dctId},
+                                                FCLID : {value : fclId},
+                                                SERVDATE : {value : dateOfVisit},
+                                                POSTDATE : {value : moment(new Date()).format("YYYY-MM-DD")},
+                                                CHGTYPE : {value : 1},
+                                                CHGCODE : {value : ''},
+                                                CHGNAME : {value : ''},
+                                                CHGDESC : {value : ''},
+                                                STATUS : {value : 'Active'},
+                                                ONSETDATE : {value : moment(new Date()).format("YYYY-MM-DD")},
+                                                RESOLUTIONDATE : {value : ''},
+                                                CHRONICITY : {value : 'Acute'},
+                                                CLASSIFICATION : {value : ''},
+                                                SUBCLASSIFICATION : {value : ''},
+                                                SNOMED : {value : ''},
+                                                USERID : {value : userId}
+                                            },
+                                                isValidIcd: false,
+                                                errMsg: "",
+																								srchSnomed : "",
+																								snomedIcdMapData : []
+                                            });
+
+                                        }
+                                    }
+                                    else
+                                    {
+                                        alert(err);
+                                    }
+                                });
+                        }
+                    });
+                }
+                else
+                {
+                    this.setState({errMsg: "Empty or invalid ICD Code."});
+                }
+            },
+            _close : function(){
+                if ((!this.state.icdRecord.CHGCODE) || (!this.state.icdRecord.CHGCODE.value)) {
+
+                    window.close();
+                    return;
+                };
+
+                bootbox.confirm({
+
+                    buttons: {
+                        confirm: {
+                            label: 'Yes',
+                            className: 'btn btn-danger'
+                        },
+                        cancel: {
+                            label: 'Cancel',
+                            className: 'btn btn-default'
+                        }
+                    },
+                    message: "Are you sure you want to close this window without saving?",
+                    callback: function (result) {
+
+                        if (result == true) {
+                            window.close();
+                        }
+
+                    }
+                });
+            },
+            _icdChange: function(chgCode, chgName, isValidIcd, chronic, SNOMED){
+
+                if(!this.state.isComponentDidMount){
+
+                    this.setState({isComponentDidMount : true});
+                    return;
+                }
+
+                if(isValidIcd)
+                {
+
+                    this.state.icdRecord.CHGCODE.value =  chgCode;
+                    this.state.icdRecord.CHGNAME.value =  chgName;
+                  	this.state.icdRecord.SNOMED.value =  SNOMED;
+
+                    if(chronic)
+                    {
+                        this.state.icdRecord.CHRONICITY.value = "Chronic";
+                    }
+                    else
+                    {
+                        this.state.icdRecord.CHRONICITY.value = "Acute";
+                    }
+
+                    this.setState({icdRecord : this.state.icdRecord,  isValidIcd: true, errMsg: ""});
+
+										if(!this.state.srchSnomed)
+										{
+											this.setState({srchSnomed : SNOMED});
+										}
+
+
+                }
+								else if (!isValidIcd && !chgCode) {
+
+									this.state.icdRecord.CHGCODE.value =  "";
+									this.state.icdRecord.CHGNAME.value =  "";
+									this.state.icdRecord.SNOMED.value =  "";
+									this.state.icdRecord.CHRONICITY.value = "Acute";
+
+									this.setState({icdRecord : this.state.icdRecord,  isValidIcd: false, errMsg: ""});
+
+								}
+                else
+                {
+
+                    this.setState({isValidIcd: false});
+
+                }
+            },
+            _statusChange : function(event){
+
+                this.state.icdRecord.STATUS.value =  event.target.value;
+                this.setState({icdRecord : this.state.icdRecord});
+            },
+            _chronicityChange: function(event){
+
+                this.state.icdRecord.CHRONICITY.value =  event.target.value;
+                this.setState({icdRecord : this.state.icdRecord});
+            },
+            _onsetDateChange: function(event){
+
+                this.state.icdRecord.ONSETDATE.value =  event.target.value;
+                this.setState({icdRecord : this.state.icdRecord});
+            },
+            _resolutionDateChange: function(event){
+                this.state.icdRecord.RESOLUTIONDATE.value =  event.target.value;
+                this.setState({icdRecord : this.state.icdRecord});
+            },
+            _classificationChange : function(event){
+                this.state.icdRecord.CLASSIFICATION.value =  event.target.value;
+                this.setState({icdRecord : this.state.icdRecord});
+            },
+            _subClassificationChange : function(event){
+                this.state.icdRecord.SUBCLASSIFICATION.value =  event.target.value;
+                this.setState({icdRecord : this.state.icdRecord});
+            },
+          	_assessmentChange: function(event){
+                this.state.icdRecord.CHGDESC.value =  event.target.value;
+                this.setState({icdRecord : this.state.icdRecord});
+            },
+            _checkSqlEscapeCharater : function(sqlValue) {
+
+                var escapeSqlValue = "";
+                if (sqlValue) {
+                    escapeSqlValue = sqlValue.replace(new RegExp("'", 'g'), "''");
+                }
+                return escapeSqlValue;
+            },
+            _updateSnomedData: function(selectedSnomed, isValid) {
+
+								if(isValid)
+								{
+									this.setState({srchSnomed : selectedSnomed});
+								  this.setState({snomedIcdMapData : []});
+
+									//***Later
+									if(selectedSnomed)
+									{
+											 		//Two way binding --- Infinite loop
+													var self = this;
+													//Viral 05/23/2017  : commented (Old way to mapping).
+													// sqlEhrIcd.getIcdBasedOnSnomed(selectedSnomed, function(err, record){
+													//
+													// 			if(err)
+													// 			{
+													// 				//Do not do anything
+													// 				console.log(err);
+													// 			}
+													// 			else
+													// 			{
+													//
+													// 				if(record && record.length > 0)
+													// 				{
+													// 					self.state.icdRecord.CHGCODE.value = record[0].ICDNAME.value;
+													// 					self.setState({icdRecord : self.state.icdRecord});
+													// 				}
+													//
+													// 			}
+													//
+													// });
+
+													sqlEhrIcd.getSnomedToIcdMap(selectedSnomed, function(err, record){
+
+																	//console.log(selectedSnomed);
+																	if(err)
+																	{
+																		//Do not do anything
+																		console.log(err);
+																	}
+																	else
+																	{
+																		//console.log(record);
+																		if(record && record.length > 0)
+																		{
+																			var icd10 = record[0].ICD10.value;
+																			var advice = "ALWAYS " + record[0].ICD10.value;
+
+																			if(record.length == 1 && icd10 && record[0].MAPADVICE.value == advice)
+																			{
+																				if(!self.state.icdRecord.CHGCODE.value)
+																				{
+																					self.state.icdRecord.CHGCODE.value = record[0].ICD10.value;
+																					self.setState({icdRecord : self.state.icdRecord});
+																				}
+
+																			}
+																			else
+																			{
+																				self.setState({snomedIcdMapData : record});
+																			}
+																		}
+																		else
+																		{
+																			self.setState({snomedIcdMapData : []});
+																		}
+																	}
+
+													});
+
+										}
+
+								}
+
+						},
+            render: function(){
+								return (
+
+											<div>
+												<div className="top-menu-bar">
+													<ul>
+														<li onClick={this._save} style={{color : '#5cb85c'}}><i className="fa fa-floppy-o"></i> Save</li>
+														<li onClick={this._close} style={{color : '#f0ad4e'}}><i className="fa fa-times"></i> Close</li>
+													</ul>
+												</div>
+												<div className="main-body">
+													<div style={{marginTop : '25px'}}>
+														<form ref="ehrIcdForm" id="ehrIcdForm">
+															<div>
+																<Lbl labelFor="icdSearch" width="100px" text="Icd Search :&nbsp;" />
+																<IcdSearch ref="icdSearch" width="105px" descWidth="400px" onIcdChange={this._icdChange} initChgCode={this.state.icdRecord.CHGCODE.value} error={this.state.errMsg} />
+															</div>
+															<div>
+																<Lbl labelFor="dlStatus" width="100px" text="Status :&nbsp;" />
+																<DropdownPlugin name="dlStatus" width="140px"  onChange={this._statusChange}  value={this.state.icdRecord.STATUS.value} dropdownOptions={this.props.icdEditOptionsStatus} />
+																<Lbl labelFor="chronicity" width="258px" text="Chronicity :&nbsp;" />
+																<DropdownPlugin name="chronicity" width="140px"  onChange={this._chronicityChange}  value={this.state.icdRecord.CHRONICITY.value} dropdownOptions={this.props.icdEditOptionsChronicity} />
+															</div>
+															<div>
+																<Lbl labelFor="onsetDate" width="100px" text="Onset Date :&nbsp;" />
+																<DateInput name="onsetDate" width="140px" value={this.state.icdRecord.ONSETDATE.value ? moment(this.state.icdRecord.ONSETDATE.value).utcOffset(new Date().getTimezoneOffset()).format("YYYY-MM-DD") : ''}   onChange={this._onsetDateChange}  />
+																<Lbl labelFor="resolutionDate" width="258px" text="Resolution Date :&nbsp;" />
+																<DateInput name="resolutionDate" width="140px" value={this.state.icdRecord.RESOLUTIONDATE.value ? moment(this.state.icdRecord.RESOLUTIONDATE.value).utcOffset(new Date().getTimezoneOffset()).format("YYYY-MM-DD") : ''}   onChange={this._resolutionDateChange}  />
+															</div>
+															<div>
+																<Lbl labelFor="Classification" width="100px" text="Classification :&nbsp;" />
+																<TxtInput name="Classification" width="140px" value={this.state.icdRecord.CLASSIFICATION.value} onChange={this._classificationChange} />
+																<Lbl labelFor="SubClassification" width="258px" text="Sub Classification :&nbsp;" />
+																<TxtInput name="SubClassification" width="140px" value={this.state.icdRecord.SUBCLASSIFICATION.value} onChange={this._subClassificationChange} />
+															</div>
+															<div>
+															</div>
+															<div>
+																<Lbl labelFor="assessment" width="100px" text="Assessment :&nbsp;" textVerticalAlign="top" />
+																<TextAreaPlugin name="assessment" width="538px" rows="10" value={this.state.icdRecord.CHGDESC.value} onChange={this._assessmentChange} />
+															</div>
+															<div style={{marginTop : "5px"}}>
+																<Lbl labelFor="" width="100px" text="SNOMED :&nbsp;" />
+																<SnomedSearch width="147px" infoWidth="335px" isRequired={false} snomedCode={this.state.srchSnomed} onSelect={this._updateSnomedData}  showSelectedInfoBox={true}></SnomedSearch>
+															</div>
+															<div>
+																<div style={{marginLeft : "100px"}}><span style={{fontWeight: "bold"}}>Instructions;</span><span className="text-muted"> Below are just instructions for Snomed Code to Icd10 Code Mapping.</span></div>
+																<div style={{marginLeft : "100px"}}>
+																		<SnomedToIcd10Table mapContent = {this.state.snomedIcdMapData} />
+																</div>
+															</div>
+														</form>
+													</div>
+												</div>
+											</div>
+                )
+            },
+            componentDidMount: function() {
+                $(document.body).on('keydown', this._keyDown);
+
+                if (recNo) {
+
+
+                    var self = this;
+                    document.title = "Edit Diagnosis (web version)";
+                    sqlEhrIcd.icdGet(recNo, function (err_message, record) {
+
+                        if (err_message) {
+                            alert(err_message);
+                        }
+                        else {
+
+                            if (record && record.length > 0) {
+
+                                record[0].ONSETDATE.value = record[0].ONSETDATE.value ? moment(record[0].ONSETDATE.value).utcOffset(new Date().getTimezoneOffset()).format("YYYY-MM-DD") : '';
+                                record[0].RESOLUTIONDATE.value =  record[0].RESOLUTIONDATE.value ? moment(record[0].RESOLUTIONDATE.value).utcOffset(new Date().getTimezoneOffset()).format("YYYY-MM-DD") :  '';
+
+
+                                record[0].POSTDATE.value =  record[0].POSTDATE.value ? moment(record[0].POSTDATE.value).utcOffset(new Date().getTimezoneOffset()).format("YYYY-MM-DD") : moment(new Date()).format("YYYY-MM-DD");
+
+
+                                record[0].SERVDATE.value = dateOfVisit;
+
+																var snomedSrch = record[0].SNOMED.value ? record[0].SNOMED.value : "";
+
+                                self.setState({icdRecord: record[0], isValidIcd: true, srchSnomed : snomedSrch});
+
+
+
+                            }
+                            else {
+                                self.setState({isComponentDidMount : true});
+                            }
+
+                        }
+
+										});
+
+
+                }
+                else {
+
+                    document.title = "Add Diagnosis(web version)";
+                    this.setState({isComponentDidMount : true});
+
+                }
+            }
+
+				});
+
+
+				var SnomedToIcd10TableRow = React.createClass ({
+
+				            handleClick: function(e) {
+
+				               this.props.onSnomedSelect(this.props.rowData.ICD10.value);
+				            },
+
+				            render: function(){
+
+											var thtdStyle = {
+												 padding: '3px',
+												 textAlign: 'left',
+												 border: '1px solid black',
+												 borderCollapse: 'collapse',
+												 fontSize:	'11px'
+										 }
+
+				   							return (
+
+				                         <tr>
+				                          {/*   <td><button type="button" id="btnIcd" name="btnIcd" onClick={this.handleClick} className="btn btn-success btn-sm"><span className="glyphicon glyphicon-ok"></span></button></td> */}
+																		<td style={thtdStyle}>{this.props.rowData.ICD10.value}</td>
+																		<td style={thtdStyle}>{this.props.rowData.MAPRULE.value}</td>
+																		<td style={thtdStyle}>{this.props.rowData.MAPADVICE.value}</td>
+																		<td style={thtdStyle}>{this.props.rowData.MAPPRIORITY.value}</td>
+				                         </tr>
+				                    )
+				            }
+				});
+
+
+				var SnomedToIcd10Table = React.createClass({
+
+						render: function(){
+
+									var divMainTableStyle = {
+
+													height : '150px',
+													width : '540px',
+													overflow: 'scroll',
+													marginTop:'3px',
+													boxShadow: '3px 3px 3px #888888',
+													border: '3px solid darkgrey'
+									};
+
+									var tableStyle =  {
+
+									  	width: '1000px',
+									    backgroundColor: '#f1f1c1',
+											border: '1px solid black',
+									    borderCollapse: 'collapse',
+											fontSize:	'11px'
+									};
+
+
+									var thtdStyle = {
+									    padding: '3px',
+									    textAlign: 'left',
+											border: '1px solid black',
+									    borderCollapse: 'collapse',
+											fontSize:	'11px'
+									}
+
+
+
+									var onSnomedSelect = this.props.onSnomedSelect;
+									var rows = null;
+
+									if(this.props.mapContent) {
+											rows = this.props.mapContent.map(function (row, i) {
+
+													return (
+															<SnomedToIcd10TableRow key={i} rowData={row} onSnomedSelect={onSnomedSelect}  />
+													);
+
+											});
+									}
+
+									return (
+
+											<div>
+												  <div  style={divMainTableStyle} >
+															<table ref="snomedToIcd10Table" id="SnomedToIcd10Table" style={tableStyle}>
+															<thead>
+																<tr>
+																	{/* <th></th> */}
+																 	<th style={thtdStyle}>ICD10</th>
+																 	<th style={thtdStyle}>Map Rule</th>
+																 	<th style={thtdStyle}>Map Advice</th>
+																	<th style={thtdStyle}>Map Priority</th>
+																</tr>
+																</thead>
+																<tbody>
+																	{rows}
+																</tbody>
+															</table>
+													</div>
+											</div>
+									);
+
+								}
+
+				});
+
+
+
+
+
+
+        ReactDOM.render(
+						<EhrIcdEdit  />,
+            document.getElementById('icdEditor')
+        );
+
+
+	</script>
+
+
+</head>
+<body>
+
+<div id="icdEditor" class="container-fluid" style="max-width:800px; margin-top:20px;">
+</div>
+
+</body>
+</html>

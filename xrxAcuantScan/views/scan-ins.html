@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Medical Insurance Scan</title>
+    <link href="../acuant/css/bootstrap.css" rel="stylesheet" />
+    <link href="../acuant/css/custom.css" rel="stylesheet">
+
+    <style type="text/css">
+        input.btn {
+            width: 150px;
+        }
+
+        div.bigImg {
+            float: left;
+            width: 336px;
+            height: 212px;
+            padding: 15px 0 0 20px;
+            margin: 0px 0 0 0px;
+        }
+
+        div.bigImg img {
+            width: 336px;
+            height: 212px;
+        }
+
+        div.FaceImg {
+            float: left;
+            width: 140px;
+            height: 170px;
+        }
+
+        div.FaceImg img {
+            width: 140px;
+            height: 170px;
+        }
+
+        div.SigImg {
+            width: 160px;
+            height: 50px;
+        }
+
+        div.SigImg img {
+            width: 160px;
+            height: 50px;
+        }
+
+        table.mytable {
+            padding-left: 50px;
+        }
+
+        div.StateSelection {
+            float: left;
+            padding-left: 50px;
+            width: 250px;
+        }
+
+        div.ScanExtract {
+            float: left;
+            padding-left: 20px;
+            width: 800px;
+        }
+
+        label.labels {
+            display: block;
+            width: 50px;
+            float: left;
+        }
+
+        select.dropdown {
+            width: 150px;
+            visibility: hidden;*/
+        }
+    </style>
+
+</head>
+<body style="padding-top: 30px; background-color:  #ededed;">
+
+
+  <div class="col-md-offset-1 col-md-10">
+    <div>
+      <h4>Medical Insurance Scanner</h4>
+    </div>
+    <hr  style ='border-style: inset; border: 1px solid #27314C; ' />
+    <div>
+        <label for="btn-scan">Select scanner :&nbsp;</label>
+        <select class="form control" size="1" id="source" style="width: 220px;  margin-top:3px;"></select>
+        <input class="btn btn-primary btn-xs" type="button" value="Scan" id="btn-scan" />
+    </div>
+  </div>
+
+    <div id="dwtcontrolContainer" style="visibility:hidden;"></div> <!-- Controller needs to be displayed if used in IE -->
+    <script type="text/javascript" src="Resources/dynamsoft.webtwain.initiate.js"></script>
+    <script type="text/javascript" src="Resources/dynamsoft.webtwain.config.js"></script>
+
+    <script src="../scripts/js/MiscJS/base.js"></script>
+    <script>
+        goog.require('goog.crypt.base64');
+    </script>
+    <script src="../scripts/js/MiscJS/jquery-2.0.3.js"></script>
+    <script src="../scripts/js/MiscJS/bootstrap.js"></script>
+    <script src="../scripts/js/MiscJS/jquery.base64.js"></script>
+    <script src="../scripts/js/MiscJS/binaryajax.js"></script>
+    <script src="../scripts/js/CSSNWebServiceJS/scan-ins.js"></script>
+    <script src="../scripts/js/CSSNWebServiceJS/licensekey.js"></script>
+</body>
+</html>

@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Collection Agency List(web version)</title>
+    <link rel="stylesheet" type="text/css" href="../../public/font-awesome-4.5.0/css/font-awesome.min.css">
+		<link rel="stylesheet" type="text/css" href="../../node_modules/fixed-data-table/dist/fixed-data-table-base.min.css">
+		<link rel="stylesheet" type="text/css" href="../../node_modules/fixed-data-table/dist/fixed-data-table-style.min.css">
+		<link rel="stylesheet" type="text/css" href="../../node_modules/fixed-data-table/dist/fixed-data-table.min.css">
+    <link rel="stylesheet" type="text/css" href="../../public/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="../../public/stylesheets/calmed.css">
+
+    <script type="text/javascript">
+        var remote = require('electron').remote;
+        var nodeModulesPath = remote.getGlobal('nodeModulesPath');
+        var appPath = remote.getGlobal('appPath');
+          var $ = jQuery = require(nodeModulesPath + "jquery");
+          //React
+          var React = require(nodeModulesPath + "react");
+          var ReactDOM = require(nodeModulesPath + "react-dom");
+          //FixedDataTable
+          var FixedDataTable = require(nodeModulesPath + 'fixed-data-table');
+          var Table = FixedDataTable.Table;
+          var Column = FixedDataTable.Column;
+          var Cell = FixedDataTable.Cell;
+          //Other
+          var _ = require(nodeModulesPath + 'lodash');
+          var SortTypes = require(appPath + '/common/global/sortTypes');
+          var DataListStore = require(appPath + '/common/global/dataListStore');
+          var cmGlb = remote.getGlobal('cmGlb');
+        var colSql = require(appPath + "/dc/dcCol/colSql.js");
+    </script>
+    <script src="../../public/javascripts/JSXTransformer.js"></script>
+    <script src="../../public/bootstrap/js/bootstrap.min.js"></script>
+    <script type="text/jsx" src="../../common/user_controls/sortHeaderCell.jsx"></script>
+    <script type="text/jsx" src="../../common/user_controls/searchInput.jsx"></script>
+    <script type="text/jsx">
+
+      var ColList = React.createClass({
+      getDefaultProps: function() {
+          return {
+              sortColumnName: "COLNAME",
+              sortDirection: SortTypes.ASC,
+              searchText: "",
+              searchType: "COLNAME",
+              tableWidth: 400,
+              tableHeight:500
+          }
+      },
+      getInitialState: function() {
+        return {
+            size : 0,
+            columnNameWidth : 100,
+            sortBy: this.props.sortColumnName,
+            sortType: this.props.sortDirection,
+            searchText: this.props.searchText,
+            searchType: this.props.searchType,
+            dataList: new DataListStore(0),
+            tableWidth: this.props.tableWidth,
+            tableHeight: this.props.tableHeight
+        }
+      },
+      componentWillMount: function(){
+
+        this._getRowCount();
+      },
+      componentDidMount: function(){
+          var self = this;
+          setInterval(this._tableRefreshTimer, 3000);
+
+          var win = window;
+          if (win.addEventListener){
+             win.addEventListener('resize', _.throttle(this._update, 250), false);
+          }
+          else if (win.attachEvent){
+            win.attachEvent('onresize', _.throttle(this._update, 250));
+          }
+          else{
+            win.onresize = this._update;
+          }
+          this._update();
+
+          const ipcRenderer = require('electron').ipcRenderer;
+          ipcRenderer.on('get-edit-data', function (event, data) {
+            if(data && data.RECNO && data.RECNO.value){
+              colSql.colRowRecNo(data.RECNO.value, function(err, record){
+                if(err){
+                    console.log(err);
+                }
+                else{
+                  if(record){
+                    self.state.dataList.setObject(record);
+                  }
+                }
+              });
+            }
+          });
+
+          ipcRenderer.on('refresh-data', function (event) {
+            location.reload();
+          });
+      },
+      _tableRefreshTimer: function(){
+            if(this.isMounted()){
+              this.setState({sortType: this.state.sortType});
+            }
+      },
+      _update: function(){
+          if (this.isMounted()) {
+            //var node = this.getDOMNode();//deprecated
+            var node = ReactDOM.findDOMNode(this);
+            this.setState({
+              tableWidth  : node.clientWidth,
+              tableHeight : this.props.tableHeight
+            });
+          }
+      },
+      componentWillReceiveProps: function(props){
+
+          this._update();
+      },
+      componentWillUnmount: function(){
+          var win = window;
+          if(win.removeEventListener){
+            win.removeEventListener('resize', _.throttle(this._update, 250), false);
+          }
+          else if(win.removeEvent){
+              win.removeEvent('onresize', _.throttle(this._update, 250), false);
+          }
+          else{
+              win.onresize = null;
+          }
+      },
+      _getWhereClause: function(){
+          var whereClause = " WHERE 1=1 ";
+          if(this.state.searchText){
+            if(this.state.searchType === "COLNAME")
+              whereClause += " AND COLNAME LIKE '%" + this.state.searchText + "%'";
+            else if(this.state.searchType === "SHORTCODE")
+              whereClause += " AND SHORTCODE LIKE '%" + this.state.searchText + "%'";
+          }
+          console.log(whereClause);
+          return whereClause;
+      },
+      _getRowCount: function() {
+          var self = this;
+        colSql.colCount(this._getWhereClause() , function(err, count){
+            if(err){
+              console.log(err);
+              self._setRowCount(0);
+            }
+            else{
+              self._setRowCount(count);
+            }
+          });
+      },
+      _setRowCount: function(count) {
+          console.log("**************************************************************************************count: "+count);
+          this.setState({	size: count, dataList: new DataListStore(count, this._getWhereClause(), this.state.sortBy, this.state.sortType,  10, colSql.colRows)});
+          return;
+      },
+      _setSearchState: function(event)
+      {
+          var field = event.target.name;
+          var value = event.target.value;
+          this.state.searchText = value;
+          return this.setState({searchText: this.state.searchText});
+      },
+      _setSearchTypeState: function(type) {
+          //var type = "";
+          //type = event.target.value;
+          this.state.searchType = type;
+          return this.setState({searchText: '', searchType: this.state.searchType});
+      },
+      _search: function(event){
+        if((event.type === "keyup" && event.which === 13) || (event.type === "click")){
+          this._getRowCount();
+        }
+      },
+      _onSortChange: function(columnKey, sortDir) {
+
+        this.state.sortBy = columnKey;
+        this.state.sortType = sortDir;
+        this.setState({	sortBy: this.state.sortBy, sortType: this.state.sortType,
+			                 dataList: new DataListStore(this.state.size, this._getWhereClause(), this.state.sortBy, this.state.sortType,  10, colSql.colRows)});
+      },
+      _buttonCell: function(props){
+          var rowData = this.state.dataList.getObjectAt(props.rowIndex, true);//true to make the api call
+          if(rowData){
+            return  <Cell><button className="btn btn-warning btn-sm" onClick={this._openEditWindow.bind(this, rowData[props.columnKey].value)}><span className="fa fa-pencil-square-o"></span></button></Cell>;
+          }
+          else{
+            return <Cell></Cell>;
+          }
+      },
+      _dataCell: function(props){
+      		var rowData = this.state.dataList.getObjectAt(props.rowIndex, false);//false to avoid the api call
+      		if(rowData){
+      			return <Cell className="small">{rowData[props.columnKey].value}</Cell>;
+      		}
+      		else{
+      			return <Cell className="text-muted"><i className="fa fa-spinner fa-spin fa-1x fa-fw"></i></Cell>;
+      		}
+      },
+      _openEditWindow: function(recNo){
+
+        const BrowserWindow = require('electron').remote.BrowserWindow;
+        const ipcRenderer = require('electron').ipcRenderer;
+
+
+        const path = require('path');
+        const loadURL = path.join('file://', __dirname, 'colEdit.html');
+
+        const windowID = BrowserWindow.getFocusedWindow().id;
+
+        let win = new BrowserWindow({ width: 680, height: 450, center: true, parent : BrowserWindow.getFocusedWindow(), modal : true, show: false, resizable: false });
+
+        win.loadURL(loadURL);
+
+        var data = {recNo : recNo}
+
+        win.webContents.on('did-finish-load', function () {
+          win.webContents.send('get-data', windowID, data);
+        });
+        win.on('closed', function () {
+          win = null
+        });
+
+        win.show();
+
+      },
+      render: function(){
+
+                  return (
+
+                  <div>
+                    <div className="row">
+                      <div className="col-sm-3">
+                        <button onClick={this._openEditWindow.bind(this, null)} className="btn btn-primary"><i className="fa fa-plus" aria-hidden="true"></i>  Add New</button>
+                      </div>
+                      <div className="col-sm-6">
+                        <SearchInput name="searchText" value={this.state.searchText} onChange={this._setSearchState} setSearchType={this._setSearchTypeState} onKeyUp={this._search} onClick={this._search} placeholder={this.state.searchType} searchByList={[{name:"Search by Name", value:"COLNAME"}, {name:"Search by Short code", value:"SHORTCODE"}]}/>
+                      </div>
+                    </div>
+                    <hr />
+                    <div className="row">
+                          <Table
+                            rowHeight={40}
+                            headerHeight={40}
+                            rowsCount={this.state.size}
+                            width={this.state.tableWidth}
+                            height={this.state.tableHeight}>
+
+                        <Column columnKey="RECNO" header={<Cell></Cell>} cell={this._buttonCell} width={40} fixed={true}/>
+
+						    <Column columnKey="COLNAME"
+    								     header={<SortHeaderCell onSortChange={this._onSortChange} sortDir={(this.state.sortBy === 'COLNAME' ? this.state.sortType : '')}>Name</SortHeaderCell>}
+    								     cell={this._dataCell} width={150} flexGrow={1}/>
+
+						    <Column columnKey="SHORTCODE"
+    								     header={<SortHeaderCell onSortChange={this._onSortChange} sortDir={(this.state.sortBy === 'SHORTCODE' ? this.state.sortType : '')}>SC</SortHeaderCell>}
+    								     cell={this._dataCell} width={40} flexGrow={1}/>
+
+						    <Column columnKey="LASTNAME"
+    								     header={<SortHeaderCell onSortChange={this._onSortChange} sortDir={(this.state.sortBy === 'LASTNAME' ? this.state.sortType : '')}>Last</SortHeaderCell>}
+    								     cell={this._dataCell} width={150} flexGrow={1}/>
+
+                            <Column columnKey="FIRSTNAME"
+                                    header={<SortHeaderCell onSortChange={this._onSortChange} sortDir={(this.state.sortBy === 'FIRSTNAME' ? this.state.sortType : '')}>First</SortHeaderCell>}
+                                    cell={this._dataCell} width={150} flexGrow={1}/>
+
+                            <Column columnKey="COLCLASS"
+    								     header={<SortHeaderCell onSortChange={this._onSortChange} sortDir={(this.state.sortBy === 'COLCLASS' ? this.state.sortType : '')}>Class</SortHeaderCell>}
+    								     cell={this._dataCell} width={80} flexGrow={1}/>
+
+						    <Column columnKey="ADDR"
+    								     header={<SortHeaderCell onSortChange={this._onSortChange} sortDir={(this.state.sortBy === 'ADDR' ? this.state.sortType : '')}>Address</SortHeaderCell>}
+    								     cell={this._dataCell} width={150} flexGrow={1}/>
+
+						    <Column columnKey="ADDR2"
+    								     header={<SortHeaderCell onSortChange={this._onSortChange} sortDir={(this.state.sortBy === 'ADDR2' ? this.state.sortType : '')}>Addr2</SortHeaderCell>}
+    								     cell={this._dataCell} width={80} flexGrow={1}/>
+
+						    <Column columnKey="CITY"
+    								     header={<SortHeaderCell onSortChange={this._onSortChange} sortDir={(this.state.sortBy === 'CITY' ? this.state.sortType : '')}>City</SortHeaderCell>}
+    								     cell={this._dataCell} width={120} flexGrow={1}/>
+
+						    <Column columnKey="STATE"
+    								     header={<SortHeaderCell onSortChange={this._onSortChange} sortDir={(this.state.sortBy === 'STATE' ? this.state.sortType : '')}>St</SortHeaderCell>}
+    								     cell={this._dataCell} width={40} flexGrow={1}/>
+
+						    <Column columnKey="ZIP"
+    								     header={<SortHeaderCell onSortChange={this._onSortChange} sortDir={(this.state.sortBy === 'ZIP' ? this.state.sortType : '')}>Zip</SortHeaderCell>}
+    								     cell={this._dataCell} width={90} flexGrow={1}/>
+
+						    <Column columnKey="PHONE"
+    								     header={<SortHeaderCell onSortChange={this._onSortChange} sortDir={(this.state.sortBy === 'PHONE' ? this.state.sortType : '')}>Phone</SortHeaderCell>}
+    								     cell={this._dataCell} width={105} flexGrow={1}/>
+
+						    <Column columnKey="EXT"
+    								     header={<SortHeaderCell onSortChange={this._onSortChange} sortDir={(this.state.sortBy === 'EXT' ? this.state.sortType : '')}>Ext</SortHeaderCell>}
+    								     cell={this._dataCell} width={100} flexGrow={1}/>
+
+						    <Column columnKey="FAX"
+    								     header={<SortHeaderCell onSortChange={this._onSortChange} sortDir={(this.state.sortBy === 'FAX' ? this.state.sortType : '')}>Fax</SortHeaderCell>}
+    								     cell={this._dataCell} width={100} flexGrow={1}/>
+
+						    <Column columnKey="EMAIL"
+    								     header={<SortHeaderCell onSortChange={this._onSortChange} sortDir={(this.state.sortBy === 'EMAIL' ? this.state.sortType : '')}>Email</SortHeaderCell>}
+    								     cell={this._dataCell} width={120} flexGrow={1}/>
+
+                      </Table>
+                    </div>
+                  </div>
+                  );
+              }
+  });
+
+  ReactDOM.render(
+         <ColList  />,
+         document.getElementById('divColList')
+  );
+
+
+  </script>
+
+  </head>
+  <body>
+    <div id="divColList">
+    </div>
+  </body>
+</html>

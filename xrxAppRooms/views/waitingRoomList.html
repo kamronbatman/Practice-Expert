@@ -1,0 +1,46 @@
+<table id="approomsTable" class="table table-bordered table-hover table-condensed">
+<thead>
+	<tr>
+    <th>Room</th>
+		<th>Approx. Waiting Time</th>
+		<th>Patient</th>
+		<th>Checked-In Time</th>
+	</tr>
+</thead>
+<tbody>
+  {{#each waitlist}}
+	<tr>
+    <td>
+       <div class="btn-group dropup">
+            <a aria-expanded="false" class="btn btn-success dropdown-toggle" data-toggle="dropdown">
+                Waiting Room
+                <span class="caret"></span>
+            </a>
+            <ul class="dropdown-menu ">
+                {{#each ../rooms}}
+                  {{#if PATID.value}}
+                  {{! Do Nothing}}
+                    {{else}}
+                      <li>
+                        <a id="{{roomhelper_changeRoomButtonId ../RECNO.value RECNO.value}}" onclick="changeWaitingToRoom(this.id)" class="btn btn-info" >
+                          {{ ROOMID.value }}
+                        </a>
+                      </li>
+                  {{/if}}
+                {{/each}}
+            </ul>
+        </div>
+    </td>
+    <td>
+      {{ roomhelper_timeHumanizeFormat CHECKEDINTIME.value}}
+      </td>
+    <td>
+      {{ PATINFO.value }}
+    </td>
+    <td>
+      {{ roomhelper_timeFormat CHECKEDINTIME.value}}
+    </td>
+	</tr>
+  {{/each}}
+</tbody>
+</table>

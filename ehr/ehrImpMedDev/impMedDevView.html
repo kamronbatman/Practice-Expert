@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Implantable Device View</title>
+    <link rel="stylesheet" type="text/css" href="../../public/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="../../public/font-awesome-4.5.0/css/font-awesome.min.css">
+
+  </head>
+  <body>
+    <div style="margin-left : 20px; margin-right : 20px;">
+      <h1><i class="fa fa-desktop text-info" aria-hidden="true"></i> Implatable Device Information</h1>
+      <hr />
+      <div style="margin-left : 20px; margin-right : 20px;">
+        <div class="panel panel-success">
+          <div class="panel-heading">
+            <h3 class="panel-title">UDI Parse Information</h3>
+          </div>
+          <div id="divUDIParseInfo" class="panel-body">
+          </div>
+        </div>
+      </div>
+      <div style="margin-left : 20px; margin-right : 20px;">
+        <div class="panel panel-warning">
+          <div class="panel-heading">
+            <h3 class="panel-title">Device Information</h3>
+          </div>
+          <div id= "divDeviceInfo" class="panel-body">
+          </div>
+        </div>
+      </div>
+   </div>
+
+   <script>
+       var remote = require('electron').remote;
+       var nodeModulesPath = remote.getGlobal('nodeModulesPath');
+       var appPath = remote.getGlobal('appPath');
+
+        var $ = jQuery = require(nodeModulesPath + "jquery");
+        var cmGlb = remote.getGlobal('cmGlb');
+
+        //Sql
+       var impMedDevSql = require(appPath + "/ehr/ehrImpMedDev/impMedDevSql.js");
+        var _recNo = cmGlb.recno;
+
+
+        $(document).ready(function () {
+
+          function loadData(){
+
+            console.log("Load Data.");
+
+            if(_recNo)
+            {
+                impMedDevSql.getImpMedDev(_recNo, function(err, record) {
+
+                      if(err)
+                      {
+                        console.log(err);
+                        alert("Error: While loading record.");
+                      }
+                      else
+                      {
+
+                        if(record && record.length > 0)
+                        {
+                          _exsistingRecord = record[0];
+                          //Assign Values to fields.
+                          if(record[0].JSON.value)
+                          {
+                            var data = JSON.parse(record[0].JSON.value);
+
+                            if(data.parseUDIInfo)
+                            {
+                              console.log("UDI Parse Information");
+                              //console.log(data.parseUDIInfo);
+
+                              var htmlStrUDIParse = "";
+                              for (var key in data.parseUDIInfo) {
+
+                                  if (data.parseUDIInfo.hasOwnProperty(key)) {
+
+                                    var formatedKey = key.replace(/_/g, " ").toUpperCase();
+                                    htmlStrUDIParse = htmlStrUDIParse + "<div><span class='text-primary'>"+ formatedKey  +" :</span> "+ data.parseUDIInfo[key] +"</div>";
+
+                                  }
+                              }
+
+                              document.getElementById("divUDIParseInfo").innerHTML = htmlStrUDIParse;
+                            }
+
+
+                            if(data.deviceInfo)
+                            {
+
+                              console.log("Device Information");
+                              //console.log(data.deviceInfo);
+
+                              var htmlStrDevice = "";
+                              if(data.deviceInfo.gudid)
+                              {
+                                if(data.deviceInfo.gudid.device)
+                                {
+                                    var device = data.deviceInfo.gudid.device;
+
+                                    htmlStrDevice = htmlStrDevice + "<div><span class='text-primary'>Brand Name : </span>"+ device.brandName +"</div>";
+                                    htmlStrDevice = htmlStrDevice + "<div><span class='text-primary'>Version/Model Number : </span>"+ device.versionModelNumber +"</div>";
+                                    htmlStrDevice = htmlStrDevice + "<div><span class='text-primary'>Company Name : </span>"+ device.companyName +"</div>";
+                                    htmlStrDevice = htmlStrDevice + "<div><span class='text-primary'>MRI Safety Status : </span>"+ device.MRISafetyStatus +"</div>";
+
+                                    var labeledContainsNRLStr = "";
+                                    if(device.labeledContainsNRL == "false")
+                                    {
+                                      labeledContainsNRLStr = "No (false)";
+                                    }
+                                    else if(device.labeledContainsNRL == "true")
+                                    {
+                                      labeledContainsNRLStr = "Yes (true)";
+                                    }
+
+                                    htmlStrDevice = htmlStrDevice + "<div><span class='text-primary'>Labeled Contains NRL : </span>"+ labeledContainsNRLStr +"</div>";
+                                    htmlStrDevice = htmlStrDevice + "<div><span class='text-primary'>Device Description : </span>"+ device.deviceDescription +"</div>";
+
+                                    if(device.gmdnTerms)
+                                    {
+                                      if(device.gmdnTerms.gmdn)
+                                      {
+                                        var objGmdn = device.gmdnTerms.gmdn;
+
+                                        htmlStrDevice = htmlStrDevice + "<div><span class='text-primary'>GMDN PT Name : </span>"+ objGmdn.gmdnPTName +"</div>";
+                                        htmlStrDevice = htmlStrDevice + "<div><span class='text-primary'>GMDN PT Definition :</span> <p style='text-align:justify'>"+ objGmdn.gmdnPTDefinition +"</p></div>";
+                                      }
+
+                                    }
+
+                                    document.getElementById("divDeviceInfo").innerHTML = htmlStrDevice;
+                                }
+                              }
+
+                            }
+
+                          }
+                          else
+                          {
+                            alert("No value found in JSON field please verify UDI.");
+                          }
+
+                        }
+                        else
+                        {
+                          alert("No Record Found, Rec-No is invalid.");
+                        }
+
+                      }
+
+                });
+            }
+
+          }
+
+          loadData();
+
+
+       });
+
+    </script>
+
+
+
+  </body>
+</html>

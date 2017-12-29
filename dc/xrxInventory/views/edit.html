@@ -1,0 +1,39 @@
+<html>
+	<head>
+		<link rel="stylesheet" type="text/css" href="../../../public/font-awesome-4.5.0/css/font-awesome.min.css">
+		<link rel="stylesheet" type="text/css" href="../../../node_modules/fixed-data-table/dist/fixed-data-table-base.min.css">
+		<link rel="stylesheet" type="text/css" href="../../../node_modules/fixed-data-table/dist/fixed-data-table-style.min.css">
+		<link rel="stylesheet" type="text/css" href="../../../node_modules/fixed-data-table/dist/fixed-data-table.min.css">
+		<link rel="stylesheet" type="text/css" href="../../../public/bootstrap/css/bootstrap.min.css">
+		<link rel="stylesheet" type="text/css" href="../../../public/stylesheets/calmed.css">
+
+				<script type="text/javascript">
+                    var remote = require('electron').remote;
+                    var nodeModulesPath = remote.getGlobal('nodeModulesPath');
+                    var $ = jQuery = require(nodeModulesPath + "jquery");
+				</script>
+				<script type="text/javascript" src="../../../public/bootstrap/js/bootstrap.min.js"></script>
+        <script type="text/javascript" src="../../../public/javascripts/validator.min.js"></script>
+
+		    <script src="../../../public/javascripts/JSXTransformer.js"></script>
+				<script type="text/jsx" src="../../../dc/dcDct/DctSearch.jsx"></script>
+				<script type="text/jsx" src="../../../dc/dcFcl/FclSearch.jsx"></script>
+				<script type="text/jsx" src="../../../common/user_controls/SearchSelectButton.jsx"></script>
+        <script type="text/jsx" src="../scripts/edit.jsx"></script>
+				<script type="text/javascript" src="../scripts/edit.js"></script>
+
+        <title>Inventory Add/Edit</title>
+        <script>
+            //Script tag required to make the autocomplete table align correctly. (Even if no JS code neeeded)
+        </script>
+
+
+
+</head>
+	<body>
+        <div id="divEditor" class="container-fluid">
+
+        </div>
+
+	</body>
+</html>

@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Add/Edit Rolodexes (web version)</title>
+    <link rel="stylesheet" type="text/css" href="../../public/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="../../public/font-awesome-4.5.0/css/font-awesome.min.css">
+    <link rel="stylesheet" type="text/css" href="../../node_modules/fixed-data-table/dist/fixed-data-table-base.min.css">
+    <link rel="stylesheet" type="text/css" href="../../node_modules/fixed-data-table/dist/fixed-data-table-style.min.css">
+    <link rel="stylesheet" type="text/css" href="../../node_modules/fixed-data-table/dist/fixed-data-table.min.css">
+    <link rel="stylesheet" type="text/css" href="../../public/stylesheets/calmed.css">
+
+    <script type="text/javascript">
+        var remote = require('electron').remote;
+        var nodeModulesPath = remote.getGlobal('nodeModulesPath');
+        var appPath = remote.getGlobal('appPath');
+
+        var ipcRenderer = require('electron').ipcRenderer;
+        var cmGlb = remote.getGlobal('cmGlb');
+
+        var $ = jQuery = require(nodeModulesPath + "jquery");
+        //React
+        var React = require(nodeModulesPath + "react");
+        var ReactDOM = require(nodeModulesPath + "react-dom");
+        //Other
+        var moment = require(nodeModulesPath + 'moment');
+        var bootbox = require(nodeModulesPath + 'bootbox');
+        //other
+        var errorMessages = require(appPath + '/common/global/error-messages.js');
+        var rldxSql = require(appPath + "/dc/dcRldx/rldxSql.js");
+
+    </script>
+    <script src="../../public/bootstrap/js/bootstrap.min.js"></script>
+    <script src="../../public/javascripts/JSXTransformer.js"></script>
+    <!--Components -->
+	  <script type="text/jsx" src="../../common/user_controls/txtInput.jsx"></script>
+    <script type="text/jsx" src="../../common/user_controls/lbl.jsx"></script>
+    <script type="text/jsx" src="../../common/user_controls/dropdownPlugin.jsx"></script>
+    <script type="text/jsx" src="../../common/user_controls/SearchSelectButton.jsx"></script>
+
+    <script type="text/jsx" src="../dcZip/zipSearch.jsx"></script>
+    <script type="text/jsx" src="../dcCls/ClsSearch.jsx"></script>
+
+    <script type="text/jsx">
+
+      var _xrxRldxErrorMessages = {
+        Required: 'Required',
+        Invalid: 'Is Invalid',
+        Internal: 'Internal error',
+        Exists: 'Already exists'
+      };
+
+      var _rldxOptionsType = [
+        {value:"", text:'None'},
+        {value:"CLINIC", text:'Clinic'},
+        {value:"CONTACT", text:'Contact'},
+        {value:"'DIRECT MAIL", text:'Direct Mail'},
+        {value:"MAGAZINES", text:'Magazines'},
+        {value:"MANUFACTURER", text:'Manufacturer'},
+        {value:"NEWSPAPER", text:'Newspaper'},
+        {value:"PROSPECT CUSTOMER", text:'Prospect Customer'},
+        {value:"RADIO", text:'Radio'},
+        {value:"SALES REP", text:'Sales Rep.'},
+        {value:"SHIPPING COMPANY", text:'Shipping Company'},
+        {value:"TV", text:'TV'},
+        {value:"VENDOR", text:'Vendor'},
+        {value:"WAREHOUSE", text:'Warehouse'},
+        {value:"WEB COMPANY", text:'Web Company'},
+        {value:"YELLOW PAGES", text:'Yellow pages'}
+      ];
+      var RldxEdit = React.createClass({
+
+        getInitialState: function() {
+          return {
+
+            data: {
+                    RECNO :  {value : ''},
+                    RLDXNAME : {value : ''},
+                    SHORTCODE : {value : ''},
+                    CONTACT : {value : ''},
+                    ADDR : {value : ''},
+                    ADDR2 : {value : ''},
+                    CITY : {value : ''},
+                    STATE : {value : ''},
+                    ZIP : {value : ''},
+                    HOMEPHONE : {value : ''},
+                    WORKPHONE : {value : ''},
+                    CELLPHONE : {value : ''},
+                    FAX : {value : ''},
+                    EMAIL : {value : ''},
+                    RLDXTYPE : {value : ''},
+                    RLDXCLASS : {value : ''},
+                    HTTP : {value : ''},
+                    DIRECTADDR : {value : ''},
+                    APPCOLOR :  {value : '#FFFFFF'},
+                    ENTRYDATE: {value: moment().format('L')}, USERID: {value: cmGlb.userId}
+            },
+            errMsg: {
+                RLDXNAME: _xrxRldxErrorMessages.Required,
+                SHORTCODE : "",
+                RLDXCLASS: '',
+                ZIP : ''
+            },
+            dirty: false,
+            deleteButtonStyle:  {
+                                  display: "none"
+                                },
+            inputBoxUpperCase:  {
+                                  textTransform: "uppercase"
+                                },
+            parentWindowID : null,
+            isComponent : false
+
+          };
+        },
+        componentWillMount: function(){
+        },
+        _setDataState: function(event){
+          this.state.dirty = true;
+          var field = event.target.name;
+          var value = "";
+          if(event.target.type === "checkbox"){
+            value = event.target.checked;
+          }
+          else{
+            value = event.target.value;
+            if(value){
+              value = value.toUpperCase();
+            }
+          }
+          var key = field.toUpperCase();
+
+          this.state.data[key].value = value;
+          if(this.state.errMsg[key]){
+            this.state.errMsg[key] = "";
+          }
+
+          if(key === "HOMEPHONE" && this.state.data.HOMEPHONE.value){
+            var phone = this.state.data.HOMEPHONE.value.replace(/\D/g, '');
+            if(phone && phone.length === 10){
+              this.state.data.HOMEPHONE.value = phone.substring(0, 3) + '-' + phone.substring(3, 6) + '-' + phone.substring(6, 10);
+            }
+          }
+          if(key === "WORKPHONE" && this.state.data.WORKPHONE.value){
+            var phone = this.state.data.WORKPHONE.value.replace(/\D/g, '');
+            if(phone && phone.length === 10){
+              this.state.data.WORKPHONE.value = phone.substring(0, 3) + '-' + phone.substring(3, 6) + '-' + phone.substring(6, 10);
+            }
+          }
+          if(key === "CELLPHONE" && this.state.data.CELLPHONE.value){
+            var phone = this.state.data.CELLPHONE.value.replace(/\D/g, '');
+            if(phone && phone.length === 10){
+              this.state.data.CELLPHONE.value = phone.substring(0, 3) + '-' + phone.substring(3, 6) + '-' + phone.substring(6, 10);
+            }
+          }
+          if(key === "FAX" && this.state.data.FAX.value){
+            var fax = this.state.data.FAX.value.replace(/\D/g, '');
+            if(fax && fax.length === 10){
+              this.state.data.FAX.value = fax.substring(0, 3) + '-' + fax.substring(3, 6) + '-' + fax.substring(6, 10);
+            }
+          }
+
+          this.setState({data :this.state.data, errMsg: this.state.errMsg});
+        },
+        _close: function(){
+              var self=  this;
+
+               if(this.state.dirty) {
+
+                 bootbox.confirm("You will lose your changes please save before close", function (result) {
+                     if(result)
+                     {}
+                     else {
+                       self._windowClose();
+                     }
+                 });
+
+               }
+               else {
+                   self._windowClose();
+               }
+        },
+        _windowClose() {
+
+                  var varClose = setInterval(function(){
+                  if(!this.state.isWaitToClose)
+                  {
+                    window.close();
+                    clearInterval(varClose);
+                  }
+
+                }, 200);
+        },
+        _promiseSave: function(){
+
+          var validateUniqueId = this._validateUniqueId();
+          var validateUniqueShortCode = this._validateUniqueShortCode()
+
+          var self = this;
+
+          Promise.all([
+            validateUniqueId,
+            validateUniqueShortCode
+          ]).then(function(values){
+              console.log(values);
+              self._save();
+          }).catch(function(err){
+            console.error('Promise ERR : ', err);
+          });
+
+        },
+        _save: function(){
+            var recordnumber = this.state.data.RECNO.value;
+            var self = this;
+            if(this.state.errMsg.RLDXNAME || this.state.errMsg.SHORTCODE){
+                bootbox.alert("Please fix the errors.", function () {
+                });
+            }
+            else{
+              if(this.state.data.APPCOLOR.value){
+                  this.state.data.APPCOLOR.value = this.state.data.APPCOLOR.value.replace("#", "");
+                  this.state.data.APPCOLOR.value = parseInt(this.state.data.APPCOLOR.value, 16);
+                  this.state.data.APPCOLOR.value = this.state.data.APPCOLOR.value + "";
+
+                  while (this.state.data.APPCOLOR.value.length < 8)
+                  	this.state.data.APPCOLOR.value = "0" + this.state.data.APPCOLOR.value;
+              }
+              else{
+                this.state.data.APPCOLOR.value = "16777215";
+              }
+
+              this.state.data.ENTRYDATE.value = moment().format('L');
+              this.state.data.USERID.value = cmGlb.userId;
+
+              var data =  this.state.data;
+              rldxSql.rldxSave(data, function(err, record){
+
+                  if(err){
+                      bootbox.alert("Error while saving data.", function () {
+                      });
+                  }
+                  else
+                  {
+                    var parentWindowID = self.state.parentWindowID
+                    if(parentWindowID)
+                    {
+                      console.log(parentWindowID)
+
+                      const BrowserWindow = require('electron').remote.BrowserWindow;
+                      const fromWindow = BrowserWindow.fromId(parentWindowID);
+
+                      if(self.state.isComponent)
+                      {
+                        var data = {rldxName : self.state.data.RLDXNAME.value};
+                        fromWindow.webContents.send('get-components-data', data);
+                      }
+                      else
+                      {
+                        var data = self.state.data;
+                        if(self.state.data.RECNO.value)
+                        {
+                          fromWindow.webContents.send('get-edit-data', data);
+                        }
+                        else
+                        {
+                          fromWindow.webContents.send('refresh-data');
+                        }
+
+                      }
+
+                      window.close();
+                    }
+
+
+                  }
+              });
+            }
+        },
+        _delete: function(){
+            var recordnumber = this.state.data.RECNO.value;
+            var self = this;
+            if(recordnumber){
+              bootbox.confirm("This Rolodex will be permanently deleted and cannot be recovered. Are you sure?", function (result) {
+                if(result){
+                  rldxSql.rldxDelete(recordnumber, function(err, record){
+
+                      if(err){
+                          bootbox.alert("Error while deleting record.", function () {
+                          });
+                      }
+                      else{
+
+                        var parentWindowID = self.state.parentWindowID;
+                        const BrowserWindow = require('electron').remote.BrowserWindow;
+                        const fromWindow = BrowserWindow.fromId(parentWindowID);
+                        fromWindow.webContents.send('refresh-data');
+
+
+                        window.close();
+                      }
+                  });
+                }
+              });
+            }
+        },
+        _validateUniqueId: function(){
+
+            this.state.isWaitToClose =  true;
+
+            var self = this;
+            return  new Promise(function(resolve, reject){
+
+              self.state.errMsg.RLDXNAME = "";
+              var recordnumber = self.state.data.RECNO.value;
+
+
+                if(!self.state.data.RLDXNAME.value){
+                  self.state.errMsg.RLDXNAME = _xrxRldxErrorMessages.Required;
+                  self.setState({errMsg: self.state.errMsg});
+                  resolve("Validate Rldx");
+                }
+                else{
+
+                  rldxSql.rldxExistsId(self.state.data.RLDXNAME.value, recordnumber, function(err, record){
+
+                      this.state.isWaitToClose = false;
+
+                      if(err){
+                          console.log(err);
+                          self.state.errMsg.RLDXNAME = _xrxRldxErrorMessages.Internal;
+                      }
+                      else{
+                        if (record && record.length > 0){
+                          self.state.errMsg.RLDXNAME = _xrxRldxErrorMessages.Exists;
+                        }
+                        else{
+                          self.state.errMsg.RLDXNAME = "";
+                        }
+                      }
+                      self.setState({errMsg: self.state.errMsg});
+                      resolve("Validated Unique Id");
+                  });
+                }
+
+            });
+        },
+        _validateUniqueShortCode: function()
+         {
+              this.state.isWaitToClose =  true;
+
+              var self = this;
+              return  new Promise(function(resolve, reject){
+
+                    self.state.errMsg.SHORTCODE = "";
+
+                    var shortCode  = self.state.data.SHORTCODE.value;
+
+                    if(shortCode)
+                    {
+                        var recNo =   self.state.data.RECNO.value;
+                        rldxSql.rldxShortCodeExsists(shortCode, recNo, function (err , record) {
+
+                              this.state.isWaitToClose = false;
+
+                              if (record && record.length > 0)
+                              {
+                                self.state.errMsg.SHORTCODE = errorMessages.messages.Exists;
+                              }
+                              else if(err)
+                              {
+                                alert(err);
+                              }
+
+                              self.setState({errMsg: self.state.errMsg});
+                              resolve("Validated Unique ShortCode");
+                        });
+                    }
+                    else
+                    {
+                      self.setState({errMsg: self.state.errMsg});
+                      resolve("Validated Unique ShortCode");
+                    }
+              });
+
+
+        },
+        _validate: function(event){
+
+            var phonePattern = /^\(?(\d{3})\)?[-]?(\d{3})[-]?(\d{4})$/;
+            var emailPattern = /^([\w-]+(?:\.[\w-]+)*)@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$/i;
+
+            if(this.state.data.HOMEPHONE.value && !phonePattern.test(this.state.data.HOMEPHONE.value))
+              this.state.errMsg.HOMEPHONE = _xrxRldxErrorMessages.Invalid;
+            else
+              this.state.errMsg.HOMEPHONE = "";
+
+            if(this.state.data.WORKPHONE.value && !phonePattern.test(this.state.data.WORKPHONE.value))
+              this.state.errMsg.WORKPHONE = _xrxRldxErrorMessages.Invalid;
+            else
+              this.state.errMsg.WORKPHONE = "";
+
+            if(this.state.data.CELLPHONE.value && !phonePattern.test(this.state.data.CELLPHONE.value))
+              this.state.errMsg.CELLPHONE = _xrxRldxErrorMessages.Invalid;
+            else
+              this.state.errMsg.CELLPHONE = "";
+
+            if(this.state.data.EMAIL.value && !emailPattern.test(this.state.data.EMAIL.value))
+              this.state.errMsg.EMAIL = _xrxRldxErrorMessages.Invalid;
+            else
+              this.state.errMsg.EMAIL = "";
+
+            if(this.state.data.FAX.value && !phonePattern.test(this.state.data.FAX.value))
+              this.state.errMsg.FAX = _xrxRldxErrorMessages.Invalid;
+            else
+              this.state.errMsg.FAX = "";
+
+              this.setState({errMsg: this.state.errMsg});
+        },
+        _updateZipData: function(selectedZipData, isValid){
+
+            this.state.errMsg.ZIP = "";
+            if(selectedZipData && isValid){
+              this.state.data.ZIP.value = selectedZipData.zipCode;
+              this.state.data.CITY.value = selectedZipData.city;
+              this.state.data.STATE.value = selectedZipData.state;
+            }
+            else {
+              this.state.data.ZIP.value = "";
+              this.state.errMsg.ZIP = _xrxRldxErrorMessages.Invalid;
+            }
+            this.setState({data : this.state.data, errMsg: this.state.errMsg});
+            this._validate();
+        },
+        _updateClsData: function(cls, isValid){
+            this.state.errMsg.RLDXCLASS = "";
+            if(cls && isValid){
+              this.state.data.RLDXCLASS.value = cls;
+            }
+            else if(cls && !isValid){
+              this.state.data.RLDXCLASS.value = "";
+              this.state.errMsg.RLDXCLASS = _xrxRldxErrorMessages.Invalid;
+            }
+            else{
+              this.state.data.RLDXCLASS.value = "";
+            }
+            this.setState({data : this.state.data, errMsg: this.state.errMsg});
+            this._validate();
+        },
+        _keyDown: function(e) {
+            var F10 = 121;
+            var ESC = 27;
+            var ENTER = 13;
+            if(e.keyCode == F10) {
+                this._promiseSave();
+            }
+            else if(e.keyCode == ESC) {
+
+              var allModals = document.getElementsByClassName("modal");
+              if(allModals && allModals.length > 0)
+              {
+                var isModalsHide = false;
+                for (var i=0, max = allModals.length; i < max; i++)
+                {
+                    console.log("Outside : "+i);
+                    if($(allModals[i]).hasClass('in'))
+                    {
+                      isModalsHide = true;
+                      console.log("Inside : "+i);
+                      $(allModals[i]).modal('hide');
+                    }
+
+                }
+
+                if(isModalsHide)
+                {
+                  return;
+                }
+                else
+                {
+                  this._close();
+                }
+              }
+              else
+              {
+                  this._close();
+              }
+
+            }
+            else if(e.keyCode == ENTER) {
+                e.preventDefault();
+                // Set self as the current item in focus
+                var self = $(':focus'),
+                // Set the form by the current item in focus
+                form = self.parents('form:eq(0)'),
+                focusable;
+
+                // Array of Indexable/Tab-able items
+                focusable = form.find('input,a,select,button,textarea,div[contenteditable=true]').filter(':visible');
+
+                function enterKey(){
+                  if (e.which === 13 && !self.is('textarea')) { // [Enter] key
+
+                    // If not a regular hyperlink/button/textarea
+                    if ($.inArray(self, focusable) && (!self.is('a,button'))){
+                      // Then prevent the default [Enter] key behaviour from submitting the form
+                      e.preventDefault();
+                    } // Otherwise follow the link/button as by design, or put new line in textarea
+
+                    // Focus on the next item (either previous or next depending on shift)
+                    focusable.eq(focusable.index(self) + (e.shiftKey ? -1 : 1)).focus();
+
+                    return false;
+                  }
+                }
+                // We need to capture the [Shift] key and check the [Enter] key either way.
+                if (e.shiftKey) { enterKey() } else { enterKey() }
+            }
+        },
+        render: function(){
+
+          var zipData = { recNo:'', zipCode:this.state.data.ZIP.value, city:'', state:'', shortCode:''};
+
+          var isDeleteButtonDisplay = false;
+          if(this.state.data.RECNO.value && !this.state.isComponent){
+              isDeleteButtonDisplay =  true;
+          }
+
+
+          return(
+            <div>
+                <div className="top-menu-bar">
+                  <ul>
+                     <li onClick={this._promiseSave} style={{color : '#5cb85c'}}><i className="fa fa-floppy-o"></i> Save</li>
+                     {isDeleteButtonDisplay ? <li onClick={this._delete} style={{color : '#d9534f'}}><i className="fa fa-minus-circle"></i> Delete</li> : null}
+                     <li onClick={this._close} style={{color : '#f0ad4e'}}><i className="fa fa-times"></i> Close</li>
+                  </ul>
+                </div>
+                <div className="main-body">
+                  <div style={{marginTop : '25px'}}>
+                    <form ref="rldxForm" id="rldxForm">
+                        <div>
+                            <Lbl labelFor="rldxName" width="70px" text="* Name :&nbsp;" />
+                            <TxtInput name="rldxName" width="200px" value={this.state.data.RLDXNAME.value}  maxLength="25" onChange={this._setDataState} onBlur={this._validateUniqueId} error={this.state.errMsg.RLDXNAME}   />
+                            <Lbl labelFor="shortCode" width="90px" text="Short Code :&nbsp;" />
+                            <TxtInput name="shortCode" width="60px" value={this.state.data.SHORTCODE.value} maxLength="4" onChange={this._setDataState}  onBlur={this._validateUniqueShortCode} error={this.state.errMsg.SHORTCODE}  />
+                        </div>
+                        <div>
+                            <Lbl labelFor="rldxClass" width="70px" text="Class :&nbsp;" />
+                            <ClsSearch width="177px"  clsCat={"RldxCll"} clsDesc={this.state.data.RLDXCLASS.value} onSelect={this._updateClsData} isRequired={false} />
+                            <Lbl labelFor="rldxType" width="90px" text="Type :&nbsp;" />
+                            <DropdownPlugin name="RLDXTYPE" width="140px"  onChange={this._setDataState} onBlur={this._validate} value={this.state.data.RLDXTYPE.value} dropdownOptions={_rldxOptionsType} />
+                        </div>
+                        <div>
+                            <Lbl labelFor="contact" width="70px" text="Contact :&nbsp;" />
+                            <TxtInput name="contact" width="200px" value={this.state.data.CONTACT.value} maxLength="50" onChange={this._setDataState} onBlur={this._validate}  />
+                        </div>
+                        <div>
+                            <Lbl labelFor="addr" width="70px" text="Addr1 :&nbsp;" />
+                            <TxtInput name="addr" width="200px" value={this.state.data.ADDR.value} maxLength="55" onChange={this._setDataState} onBlur={this._validate}  />
+                            <Lbl labelFor="addr2" width="90px" text="Addr2 :&nbsp;" />
+                            <TxtInput name="addr2" width="140px" value={this.state.data.ADDR2.value} maxLength="35" onChange={this._setDataState} onBlur={this._validate}  />
+                        </div>
+                        <div>
+                            <Lbl labelFor="" width="70px" text="Zip :&nbsp;" />
+                            <ZipSearch width="147px" isRequired={false} zipData={zipData} colName={"ZIP"} onSelect={this._updateZipData} showSelectedInfoBox={false} />
+                            <Lbl labelFor="city" width="90px" text="City :&nbsp;" />
+                            <TxtInput name="city" width="200px" value={this.state.data.CITY.value} onChange={this._setDataState} onBlur={this._validate} maxLength="25" />
+                            <Lbl labelFor="state" width="40px" text="State :&nbsp;" />
+                            <TxtInput name="state"  width="35px" value={this.state.data.STATE.value} onChange={this._setDataState} onBlur={this._validate} maxLength="2" />
+                        </div>
+                        <div>
+                            <Lbl labelFor="homePhone" width="70px" text="Phone :&nbsp;" />
+                            <TxtInput name="homePhone" width="200px" value={this.state.data.HOMEPHONE.value} maxLength="20" onChange={this._setDataState} onBlur={this._validate}  />
+                            <Lbl labelFor="workPhone" width="90px" text="Work Phone :&nbsp;" />
+                            <TxtInput name="workPhone" width="140px" value={this.state.data.WORKPHONE.value} maxLength="20" onChange={this._setDataState} onBlur={this._validate}  />
+                        </div>
+                        <div>
+                            <Lbl labelFor="cellPhone" width="70px" text="Cell :&nbsp;" />
+                            <TxtInput name="cellPhone" width="200px" value={this.state.data.CELLPHONE.value} maxLength="20" onChange={this._setDataState} onBlur={this._validate}  />
+                            <Lbl labelFor="fax" width="90px" text="Fax :&nbsp;" />
+                            <TxtInput name="fax" width="140px" value={this.state.data.FAX.value} maxLength="20" onChange={this._setDataState} onBlur={this._validate}  />
+                        </div>
+                        <div>
+                            <Lbl labelFor="email" width="70px" text="Email :&nbsp;" />
+                            <TxtInput name="email" width="200px" value={this.state.data.EMAIL.value} maxLength="60" onChange={this._setDataState} onBlur={this._validate} placeholder="your@email.com"   />
+                            <Lbl labelFor="http" width="90px" text="Web site :&nbsp;" />
+                            <TxtInput name="http" width="140px" value={this.state.data.HTTP.value} maxLength="60" onChange={this._setDataState} onBlur={this._validate}  />
+                        </div>
+                        <div>
+                            <Lbl labelFor="directAddr" width="70px" text="Direct :&nbsp;" />
+                            <TxtInput name="directAddr" width="200px" value={this.state.data.DIRECTADDR.value} maxLength="100" onChange={this._setDataState} onBlur={this._validate}  />
+                            <Lbl labelFor="APPCOLOR" width="90px" text="Color :&nbsp;" />
+                            <input name="APPCOLOR" ref="APPCOLOR" type="color" value={this.state.data.APPCOLOR.value} onChange={this._setDataState}></input>
+                        </div>
+                        <hr  />
+                        <div>
+                          <label style={{marginLeft : '30px'}} className="text-muted">Date Entered : {this.state.data.ENTRYDATE.value}</label>
+                          <label style={{marginLeft : '30px'}} className="text-muted">By Whom : {this.state.data.USERID.value}</label>
+                        </div>
+                      </form>
+                  </div>
+                </div>
+
+              </div>
+          );
+        },
+        componentDidMount: function(){
+
+          $(document.body).on('keydown', this._keyDown);
+          $("#rldxName").focus();
+
+          var self = this;
+
+          ipcRenderer.on('get-data', function (event, parentWindowID, data){
+
+            self.setState({parentWindowID : parentWindowID});
+
+            if(data.recNo)
+            {
+              rldxSql.rldxRowRecNo(data.recNo, function(err, record){
+                    if(err)
+                    {
+                        alert("Error while getting Data.")
+                    }
+                    else{
+                        if(record){
+                          console.log(record);
+                          console.log(record.APPCOLOR.value);
+                          if(record.APPCOLOR.value){
+                            var colorHexa = record.APPCOLOR.value.toString(16);
+                            while (colorHexa.length < 6){
+                                colorHexa = "0" + colorHexa;
+                            }
+                            record.APPCOLOR.value = "#"+colorHexa;
+                          }
+                          else{
+                            record.APPCOLOR.value = "#FFFFFF";
+                          }
+
+                          if(record.ENTRYDATE.value){
+                              var entryDate = moment(record.ENTRYDATE.value);
+                              entryDate.utc();
+                              record.ENTRYDATE.value = entryDate.format('L');
+                          }
+                          self.setState({data : record, deleteButtonStyle: {display: "solid"}});
+                          self._validateUniqueId();
+                          self._validate();
+                        }
+                    }
+                });
+
+              }
+              //To be changed while creating a component (same as Zip)
+              if(data.searchType == 'RLDXNAME')
+              {
+                self.setState({isComponent : data.isComponent});
+                if(data.searchText){
+
+                }
+              }
+          });
+
+          ipcRenderer.on('get-components-data', function (event, data){
+              console.log(data);
+              if(data.zipData && data.colName){
+                self.state.data.ZIP.value = data.zipData.ZIPCODE.value;
+                self.state.data.CITY.value = data.zipData.CITY.value;
+                self.state.data.STATE.value = data.zipData.STATE.value;
+                self.setState({data: self.state.data});
+              }
+          });
+        },
+
+      });
+
+      ReactDOM.render(
+             <RldxEdit  />,
+             document.getElementById('divRldxEdit')
+      );
+    </script>
+  </head>
+  <body>
+      <div id="divRldxEdit">
+      </div>
+  </body>
+</html>

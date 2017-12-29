@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+	<head>
+			<title>Cqm Guide</title>
+			<link rel="stylesheet" type="text/css" href="../../public/bootstrap/css/bootstrap.min.css" />
+			<link rel="stylesheet" href="../../public/font-awesome-4.5.0/css/font-awesome.min.css" />
+			<link rel="stylesheet" href="../../public/stylesheets/calmed.css" />
+			<script type="text/javascript">
+                var remote = require('electron').remote;
+                var nodeModulesPath = remote.getGlobal('nodeModulesPath');
+				var $ = jQuery = require(nodeModulesPath + "jquery");
+			</script>
+			<script src="../../public/bootstrap/js/bootstrap.min.js"></script>
+			<script type="text/javascript">
+                var bootbox = require(nodeModulesPath + "bootbox");
+			</script>
+			<script type="text/javascript" src="./scripts/cqm-guide.js"></script>
+
+  </head>
+  <body>
+
+		<div class="top-menu-bar">
+			<ul>
+				 <li name="btnGuide" id="btnGuide"  style="color : #5cb85c;"><i class="fa fa-calculator" aria-hidden="true"></i> Calculate</li>
+				 <li name="btnUncheckAll" id="btnUncheckAll"  style="color : #f0ad4e"><i class="fa fa-undo" aria-hidden="true"></i> Un Check All</li>
+				 <li name="btnClose" id="btnClose"  style="color : #d9534f"><i class="fa fa-times" aria-hidden="true"></i> Close</li>
+			</ul>
+		</div>
+		<div class="main-body">
+			<div style="margin-top : 30px;">
+	      <div class="container">
+						<form id="mForm">
+							<fieldset>
+									<div class="form-group">
+										<span>Doctor Id : <label class="control-label" id="lblDctId" style="margin-right:15px"></label>Facility Id : <label class="control-label" id="lblFclId"></label></span>
+									</div>
+									<div class="form-group">
+										<label class="control-label">From Date</label>
+										<div>
+											<input  type="date" id="fromDate" name="fromDate"   className="form-control input-sm" />
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="control-label">To Date</label>
+										<div>
+											<input  type="date" id="toDate"  name="toDate"   className="form-control input-sm" />
+										</div>
+									</div>
+									<hr />
+									<div class="form-group">
+										<div class="checkbox">
+												<label class='col-sm-12'><input type="checkbox" name="m0002" id="m0002" /> 0002 Appropriate Testing for Children with Pharyngitis</label>
+										</div>
+										<div class="checkbox">
+												<label class='col-sm-12'><input name="m0018" id="m0018" type="checkbox"/> 0018 Controlling High Blood Pressure</label>
+										</div>
+										<div class="checkbox">
+												<label class='col-sm-12'><input name="m0022" id="m0022" type="checkbox"/> 0022 Use of High-Risk Medications in the Elderly</label>
+										</div>
+										<div class="checkbox">
+												<label class='col-sm-12'><input name="m0024" id="m0024" type="checkbox"/> 0024 Weight Assessment and Counseling for Nutrition and Physical Activity for Children and Adolescents (Measure)</label>
+										</div>
+										<div class="checkbox">
+												<label class='col-sm-12'><input name="m0028" id="m0028" type="checkbox"/>	0028 Preventive Care and Screening: Tobacco Use: Screening and Cessation Intervention</label>
+										</div>
+										<div class="checkbox">
+												<label class='col-sm-12'><input name="m0031" id="m0031" type="checkbox"/>	0031 Breast Cancer Screening</label>
+										</div>
+										<div class="checkbox">
+												<label class='col-sm-12'><input name="m0032" id="m0032" type="checkbox"/> 0032 Cervical Cancer Screening</label>
+										</div>
+										<div class="checkbox">
+												<label class='col-sm-12'><input name="m0033" id="m0033" type="checkbox"/> 0033 Chlamydia Screening for Women</label>
+										</div>
+										<div class="checkbox">
+												<label class='col-sm-12'><input name="m0034" id="m0034" type="checkbox"/> 0034 Colorectal Cancer Screening</label>
+										</div>
+										<div class="checkbox">
+											<label class='col-sm-12'><input name="m0036" id="m0036" type="checkbox"/> 0036 Use of Appropriate Medications for Asthma</label>
+										</div>
+										<div class="checkbox">
+												<label class='col-sm-12'><input name="m0041" id="m0041" type="checkbox"/> 0041 Preventive Care and Screening: Influenza Immunization</label>
+										</div>
+										<div class="checkbox">
+												<label class='col-sm-12'><input name="m0043" id="m0043" type="checkbox"/> 0043 Pneumonia Vaccination Status for Older Adults</label>
+										</div>
+										<div class="checkbox">
+												<label class='col-sm-12'><input name="m0056" id="m0056" type="checkbox"/> 0056 Diabetes: Foot Exam</label>
+										</div>
+										<div class="checkbox">
+												<label class='col-sm-12'><input name="m0069" id="m0069" type="checkbox"/> 0069 Appropriate Treatment for Children with Upper Respiratory Infection</label>
+										</div>
+										<div class="checkbox">
+												<label class='col-sm-12'><input name="m0086" id="m0086" type="checkbox"/> 0086 Primary Open-Angle Glaucoma (POAG): Optic Nerve Evaluation</label>
+										</div>
+										<div class="checkbox">
+												<label class='col-sm-12'><input name="m0088" id="m0088" type="checkbox"/> 0088 Diabetic Retinopathy: Documentation of Presence or Absence of Macular Edema and Level of Severity of Retinopathy</label>
+										</div>
+										<div class="checkbox">
+												<label class='col-sm-12'><input name="m0089" id="m0089" type="checkbox"/> 0089 Communication with the Physician Managing Ongoing Diabetes Care</label>
+										</div>
+										<div class="checkbox">
+												<label class='col-sm-12'><input name="m0101" id="m0101" type="checkbox"/> 0101 Screening for Future Fall Risk</label>
+										</div>
+										<div class="checkbox">
+												<label class='col-sm-12'><input name="m0384" id="m0384" type="checkbox"/> 0384 Oncology: Medical and Radiation - Pain Intensity Quantified</label>
+										</div>
+										<div class="checkbox">
+												<label class='col-sm-12'><input name="m0385" id="m0385" type="checkbox"/> 0385 Colon Cancer: Chemotherapy for AJCC Stage III Colon Cancer Patients</label>
+										</div>
+										<div class="checkbox">
+												<label class='col-sm-12'><input name="m0387" id="m0387" type="checkbox"/> 0387 Breast Cancer: Hormonal Therapy for Stage IC-IIIC Estrogen Receptor/Progesterone Receptor (ER/PR) Positive Breast Cancer</label>
+										</div>
+										<div class="checkbox">
+												<label class='col-sm-12'><input name="m0389" id="m0389" type="checkbox"/> 0389 Prostate Cancer: Avoidance of Overuse of Bone Scan for Staging Low Risk Prostate Cancer Patients</label>
+										</div>
+										<div class="checkbox">
+												<label class='col-sm-12'><input name="m0418" id="m0418" type="checkbox"/> 0418 Preventive Care and Screening: Screening for Clinical Depression and Follow-Up Plan</label>
+										</div>
+										<div class="checkbox">
+												<label class='col-sm-12'><input name="m0419" id="m0419" type="checkbox"/> 0419 Documentation of Current Medications in the Medical Record</label>
+										</div>
+										<div class="checkbox">
+												<label class='col-sm-12'><input name="m0421" id="m0421" type="checkbox"/> 0421 Preventive Care and Screening: Body Mass Index (BMI) Screening and Follow-Up Plan</label>
+										</div>
+										<div class="checkbox">
+												<label class='col-sm-12'><input name="m0564" id="m0564" type="checkbox"/> 0564 Cataracts: Complications within 30 Days Following Cataract Surgery Requiring Additional Surgical Procedures</label>
+										</div>
+										<div class="checkbox">
+												<label class='col-sm-12'><input name="m0565" id="m0565" type="checkbox"/> 0565 Cataracts: 20/40 or Better Visual Acuity within 90 Days Following Cataract Surgery</label>
+										</div>
+										<div class="checkbox">
+												<label class='col-sm-12'><input name="m0608" id="m0608" type="checkbox"/> 0608 Pregnant women that had HBsAg testing</label>
+										</div>
+										<div class="checkbox">
+												<label class='col-sm-12'><input name="m1401" id="m1401" type="checkbox"/> 1401 Maternal Depression Screening</label>
+										</div>
+									</div>
+							</fieldset>
+						</form>
+	      </div>
+			</div>
+		</div>
+		<div id="cqmInstructionsModal" class="modal fade" role="dialog">
+		  		<div class="modal-dialog">
+						<!-- Modal content-->
+				    <div class="modal-content">
+				      <div class="modal-header">
+				        <button type="button" class="close" data-dismiss="modal">&times;</button>
+				        <h4 class="modal-title text-primary"><i class="fa fa-info" aria-hidden="true"></i> Instructions</h4>
+				      </div>
+				      <div id="cqmInstructionsModalBody" class="modal-body" style="overflow-y: scroll; height:400px;">
+				      </div>
+				      <div class="modal-footer">
+				        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+				      </div>
+				    </div>
+					</div>
+			</div>
+
+	</body>
+</html>

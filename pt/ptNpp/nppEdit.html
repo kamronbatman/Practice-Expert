@@ -1,0 +1,146 @@
+<html>
+	<head>
+    <title>Patient Letter(web version)</title>
+		<script type="text/javascript">
+            var remote = require('electron').remote;
+            var nodeModulesPath = remote.getGlobal('nodeModulesPath');
+			var $ = jQuery = require(nodeModulesPath + "jquery");
+		</script>
+		<script type="text/javascript" src="nppEdit.js"></script>
+        <script type="text/x-handlebars-template" id="nppTemplate">
+            <div class="container">
+                {{#with npp}}
+                <form id="nppForm" class="form-horizontal">
+                    <div >
+                    	<button type="button" id="btnSave" name="btnSave" style="background-color:PaleGreen;" onclick="clickSave()"> Save</button>
+                        <button type="button" id="btnClose" name="btnClose" style="background-color:#FA8072;" onclick="clickClose()"> Close</button>
+                        <input type="hidden" id="Recno" name="Recno" value="{{RECNO.value}}" >
+                    </div>
+                    <fieldset style="background-color:#F0F8FF; border-color:#004080;">
+                        <legend style="color:#004080; font-family:Segoe UI;">Patient Non-Clinical Communications Preferences</legend>
+                        <div style="width:55%; float:left">
+							<div>
+	                      		<label>
+	                          		<input id="MsgAtCell" type="checkbox" name="MsgAtCell" {{edithelper_checked MSGATCELL.value}}
+	                            		tabindex="1" style="font-size:12px">Consents to leaving a message on her/his cell
+	                        	</label>
+							</div>
+							<div>
+	                    		<label>
+	                    			<input id="MsgAtWork" type="checkbox" name="MsgAtWork" {{edithelper_checked MSGATWORK.value}}
+	                        			tabindex="2"  style="font-size:12px" >Consents to leaving a message with anyone in her/his Work
+								</label>
+							</div>
+						</div>
+						<div style="width:45%; float:right">
+							<div>
+								<label>
+	                    	      	<input id="MsgAtHome" name="MsgAtHome" type="checkbox" {{edithelper_checked MSGATHOME.value}}
+	                        	    	tabindex="3" style="font-size:12px" >Consents to leaving a message at her/his Home
+	                            </label>
+							</div>
+							<div>
+								<label>
+	                    	      	<input id="MsgEmail" type="checkbox" name="MsgEmail" {{edithelper_checked MSGEMAIL.value}}
+	                        	    	tabindex="4" style="font-size:12px" >Consents to sending a message using Email
+								</label>
+							</div>
+                        </div>
+						<div>
+							<label>
+								<input id="MsgWithAnyoneAtHome" type="checkbox" name="MsgWithAnyoneAtHome" {{edithelper_checked MSGWITHANYONEATHOME.value}}
+									tabindex="5" style="font-size:12px" >Consents to leaving a message with anyone in her/his Household
+							</label>
+						</div>
+                    </fieldset>
+
+					<fieldset style="background-color:#F0F8FF; border-color:#004080;">
+						<legend style="color:#004080; font-family:Segoe UI;">Patient Clinical Communications Preferences</legend>
+						<div style="width:55%; float:left">
+							<label>
+								<input id="ConsentToHIE" type="checkbox" name="ConsentToHIE" {{edithelper_checked CONSENTTOHIE.value}}
+									tabindex="6" style="font-size:12px" >Consents to having his/her medical information shared in the HIE
+							</label>
+						</div>
+						<div style="width:45%; float:right">
+	                      	<label>
+    	                  		<input id="RetrieveMedHist" type="checkbox" name="RetrieveMedHist" {{edithelper_checked RETRIEVEMEDHIST.value}}
+        	                		tabindex="7" style="font-size:12px" >Consents to retrieve medication history
+            	          	</label>
+						</div>
+						<div>
+	                    	<label for="DirectAddr" style="font-weight: normal">Patient Direct Address(i.e.HealthVault):</label>
+							<input id="DirectAddr" type="text" name="DirectAddr"
+	                      		value="{{DIRECTADDR.value}}" maxlength="50" tabindex="8" style="background-color:#FCF5D8; font-size:12px" >
+						</div>
+					</fieldset>
+
+					<fieldset style="background-color:#F0F8FF; border-color:#004080;">
+						<legend style="color:#004080; font-family:Segoe UI";>HIPAA Notice of Privacy Practices</legend>
+						<div>
+	                    	<label for="NppDate" style="display: inline-block; width:167px; text-align:right">NPP Posted Date:</label>
+	                        <input id="NppDate" type="date" name="NppDate"
+	                      		value="{{edithelper_datetimeFormat NPPDATE.value}}"
+	                        	tabindex="9" style="background-color:#FCF5D8; font-size:14px" >
+		                    <label for="DeliveryMethod" style="font-weight: normal">DeliveryMethod:</label>
+		                    <select id="DeliveryMethod" name="DeliveryMethod" class="dropdown form-control input-sm" maxlength="10" tabindex="10" style="background-color:#FCF5D8; font-size:12px" >
+		                    	<option value="" {{edithelper_selected DELIVERYMETHOD.value ""}}>N/A</option>
+		                    	<option value="Personally" {{edithelper_selected DELIVERYMETHOD.value "Personally"}}>Personally</option>
+								<option value="U.S. Mail" {{edithelper_selected DELIVERYMETHOD.value "U.S. Mail"}}>U.S. Mail</option>
+		                      	<option value="E-Mail" {{edithelper_selected DELIVERYMETHOD.value "E-Mail"}}>E-Mail</option>
+		                      	<option value="Unknown" {{edithelper_selected DELIVERYMETHOD.value "Unknown"}}>Unknown</option>
+		                    </select>
+		                    <label for="IsSignedAcknoledgementOnFile" style="text-align: right; width:200px">Signed Acknowlegement on file</label>
+		                    <input id="IsSignedAcknoledgementOnFile" type="checkbox" name="IsSignedAcknoledgementOnFile"
+		                      	{{edithelper_checked ISSIGNEDACKNOLEDGEMENTONFILE.value}}
+		                        tabindex="11" style="font-size:12px" >
+						</div>
+						<div>
+							<label for="SignedAcknoledgementOnFileDate" style="display: inline-block; width:167px; text-align:right">Signed Ack On File Date:</label>
+	                    	<input id="SignedAcknoledgementOnFileDate" type="date" name="SignedAcknoledgementOnFileDate"
+	                      		value="{{edithelper_datetimeFormat SIGNEDACKNOLEDGEMENTONFILEDATE.value}}"
+	                      		tabindex="12" style="background-color:#FCF5D8; font-size:14px" >
+	                      	<label style="font-weight:normal;">
+	                    		<input id="IsRefused" type="checkbox" name="IsRefused" {{edithelper_checked ISREFUSED.value}}
+	                    			tabindex="13" style="background-color:#FCF5D8; font-size:14px" >Refused to sign
+		                    </label>
+		                    <label for="RefusedNote" style="padding-left:2em">Refused Note:</label>
+	                    	<input id="RefusedNote" type="text" name="RefusedNote"
+	                        	value="{{REFUSEDNOTE.value  }}"
+	                        	tabindex="14" style="background-color:#FCF5D8; font-size:14px" >
+						</div>
+					</fieldset>
+
+					<fieldset style="background-color:#F0F8FF; border-color:#004080;">
+						<legend style="color:#004080; font-family:Segoe UI;">Advanced Directives</legend>
+						<div>
+	                    	<label>
+	                      		<input id="AdvDirCom" type="checkbox" name="AdvDirCom" {{edithelper_checked ADVDIRCOM.value}}
+	                        		tabindex="15" style="font-size:14px" >Advanced Directives
+							</label>
+						</div>
+                      	<label for="AdvDirTyp" style="font-weight: normal">Adv Directives Type:</label>
+                      	<select id="AdvDirTyp" name="AdvDirTyp" class="dropdown form-control input-sm" maxlength="10" tabindex="16" style="background-color:#FCF5D8; font-size:12px" >
+                      		<option value="" {{edithelper_selected ADVDIRTYP.value ""}}>N/A</option>
+                        	<option value="Living Will" {{edithelper_selected ADVDIRTYP.value "Living Will"}}>Living Will</option>
+                        	<option value="Durable Power Of Attorney" {{edithelper_selected ADVDIRTYP.value "Durable Power Of Attorney"}}>Durable Power Of Attorney</option>
+                        	<option value="Do Not Resuscitate" {{edithelper_selected ADVDIRTYP.value "Do Not Resuscitate"}}>Do Not Resuscitate</option>
+                      	</select>
+                      	<label for="ReviewDate" style="font-weight: normal">Last Reviewed Date:</label>
+                      	<input id="ReviewDate" type="date" name="ReviewDate"
+                      		value="{{edithelper_datetimeFormat REVIEWDATE.value}}"
+                        	tabindex="17" style="background-color:#FCF5D8; font-size:14px" >
+                      	<div>
+							<label for="advDirNote" style="font-weight: normal">Note:</label>
+                      	</div>
+						<textarea id="AdvDirNote" name="AdvDirNote" type="text"
+							tabindex="18" style="background-color:#FCF5D8; font-size:12px" rows="4" cols="100">{{ADVDIRNOTE.value}}</textarea>
+					</fieldset>
+                </form>
+                {{/with}}
+            </div>
+        </script>
+	</head>
+  <body>
+  </body>
+</html>

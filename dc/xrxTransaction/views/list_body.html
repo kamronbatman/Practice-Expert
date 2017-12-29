@@ -1,0 +1,29 @@
+{{#each list}}
+{{listhelper_checkRowDeleted DELETEDDATE.value RECNO.value}}
+        <td>
+           {{listhelper_datetimeValue TRANSACTIONDATE.value}}
+        </td>
+        <td>{{ PARTNUMBER.value }}</td>
+        <td>{{ DESCRIPTION.value }}</td>
+        <td>{{ SERIALNUMBER.value }}</td>
+        <td>{{ STATUS.value }}</td>
+        <td>{{ DCTID.value }}</td>
+        <td>{{ PATID.value }}</td>
+        <td>{{ LASTNAME.value }}, {{ FIRSTNAME.value }}</td>
+        <td>
+            {{listhelper_datetimeValue FROMDATE.value}}
+        </td>
+        <td>
+            {{listhelper_datetimeValue TODATE.value}}
+        </td>
+        <td>
+            {{listhelper_datetimeValue PICKUPDATE.value}} 
+        </td>
+        <td>
+            {{listhelper_datetimeValue CREATEDDATE.value}}
+        </td>
+        <td>
+            {{listhelper_datetimeValue DELETEDDATE.value}}
+        </td>
+</tr>
+{{/each}}     

@@ -1,0 +1,68 @@
+"use strict";
+var companyId = "";
+var companyName = "";
+var companyStreet = "";
+var companyCityStateZip = "";
+var companyPhoneFax = "";
+var userId = "";
+var patId = "";
+var patName = "";
+var dateOfVisit = "";
+var dctId = "";
+var fclId = "";
+var rfdId = "";
+var rfdFax = "";
+var license = "";
+var mainFolder = "";
+var currDate = "";
+var recno = "";
+var insType = "";
+var providerName = "";
+var providerStreet = "";
+var providerCityStateZip = "";
+var providerPhoneFax = "";
+var databaseI = "";
+var connectionDataSourceName = "";
+var patEmail = "";
+var firstName = "";
+var visitType = "";
+var RunningApp = "";
+var isSqlAzure = "";
+
+var licenseYamtoob = "SOUTHERN CALIFORNIA EYE CONSULTANT";
+var licenseTapadiya = "DILIP TAPADIYA";
+var licenseInnocenzi = "ROBERT INNOCENZI";
+
+
+
+module.exports.companyId = companyId;
+module.exports.companyName = companyName;
+module.exports.companyStreet = companyStreet;
+module.exports.companyCityStateZip = companyCityStateZip;
+module.exports.companyPhoneFax = companyPhoneFax;
+module.exports.userId = userId;
+module.exports.patId = patId;
+module.exports.patName = patName;
+module.exports.dateOfVisit = dateOfVisit;
+module.exports.dctId = dctId;
+module.exports.fclId = fclId;
+module.exports.rfdId = rfdId;
+module.exports.rfdFax = rfdFax;
+module.exports.license = license;
+module.exports.mainFolder = mainFolder;
+module.exports.providerName = providerName;
+module.exports.providerStreet = providerStreet;
+module.exports.providerCityStateZip = providerCityStateZip;
+module.exports.providerPhoneFax = providerPhoneFax;
+module.exports.recno = recno;
+module.exports.insType = insType;
+module.exports.databaseI = databaseI;
+module.exports.connectionDataSourceName = connectionDataSourceName;
+module.exports.patEmail = patEmail;
+module.exports.firstName = firstName;
+module.exports.visitType = visitType;
+module.exports.isSqlAzure = isSqlAzure;
+
+module.exports.licenseYamtoob = licenseYamtoob;
+module.exports.licenseTapadiya = licenseTapadiya;
+module.exports.licenseInnocenzi = licenseInnocenzi;

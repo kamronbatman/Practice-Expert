@@ -1,0 +1,875 @@
+<html>
+  <head></head>
+  <title>PR1 Report(web version)</title>
+  <link rel="stylesheet" type="text/css" href="../../public/bootstrap/css/bootstrap.min.css" />
+  <link rel="stylesheet" type="text/css" href="../../public/font-awesome-4.5.0/css/font-awesome.min.css" />
+  <link rel="stylesheet" type="text/css" href="../../node_modules/fixed-data-table/dist/fixed-data-table-base.min.css">
+  <link rel="stylesheet" type="text/css" href="../../node_modules/fixed-data-table/dist/fixed-data-table-style.min.css">
+  <link rel="stylesheet" type="text/css" href="../../node_modules/fixed-data-table/dist/fixed-data-table.min.css">
+
+  <link rel="stylesheet" type="text/css" href="../../public/stylesheets/calmed.css" />
+
+  <script type="text/javascript">
+    //Jquer-Bootsrap
+    var remote = require('electron').remote;
+    var nodeModulesPath = remote.getGlobal('nodeModulesPath');
+    var $ = jQuery = require(nodeModulesPath + "jquery");
+  </script>
+  <script src="../../public/bootstrap/js/bootstrap.min.js"></script>
+  <script type="text/javascript">
+
+      var bootbox = require(nodeModulesPath + "bootbox");
+      //React
+      var React = require(nodeModulesPath + "react");
+      var ReactDOM = require(nodeModulesPath + "react-dom");
+
+      //Other
+      var moment = require(nodeModulesPath + 'moment');
+      var fs = require('fs');
+      var camelCase = require('camelcase');
+
+      //Electron
+
+      var appPath = remote.getGlobal('appPath');
+      var errorMessages = require(appPath + '/common/global/error-messages.js');
+      //Electron
+      var cmGlb = remote.getGlobal('cmGlb');
+
+
+      var _userId = cmGlb.userId;
+      var _dctId = cmGlb.dctId;
+      var _fclId =  cmGlb.fclId;
+      var _companyId = cmGlb.companyId;
+      var _companyName = cmGlb.companyName;
+      var	_providerName = (cmGlb.providerName ? cmGlb.providerName : '');
+      var _mainFolder = cmGlb.mainFolder;
+
+      var _patId = cmGlb.patId;
+      var _dateOfExam = cmGlb.dateOfVisit;
+
+      console.log(_patId);
+      console.log(_dateOfExam);
+
+      var pr1Sql = require(appPath + "/wc/pr1/pr1Sql.js");
+
+  </script>
+  <script src="../../public/javascripts/JSXTransformer.js"></script>
+  <!-- Components -->
+  <script type="text/jsx" src="../../common/user_controls/lbl.jsx"></script>
+  <script type="text/jsx" src="../../common/user_controls/txtInput.jsx"></script>
+  <script type="text/jsx" src="../../common/user_controls/dropdownPlugin.jsx"></script>
+  <script type="text/jsx" src="../../common/user_controls/checkboxInput.jsx"></script>
+  <script type="text/jsx" src="../../common/user_controls/dateInput.jsx"></script>
+  <script type="text/jsx" src="../../common/user_controls/textAreaPlugin.jsx"></script>
+  <script type="text/jsx" src="../../common/user_controls/SearchSelectButton.jsx"></script>
+
+  <script type="text/jsx" src="../../dc/dcFcl/FclSearch.jsx"></script>
+
+  <script type="text/jsx">
+      var Pr1Report = React.createClass ({
+
+          getDefaultProps : function(){
+              return {
+
+                limitsRestrictions2lbsOptions : [
+                  {value:'', text:'N/A'},
+                  {value:'5', text:'5'},
+                  {value:'10', text:'10'},
+                  {value:'15', text:'15'},
+                  {value:'20', text:'20'},
+                  {value:'25', text:'25'},
+                  {value:'30', text:'30'},
+                  {value:'35', text:'35'},
+                  {value:'40', text:'40'},
+                  {value:'45', text:'45'},
+                  {value:'50', text:'50'}
+                ],
+                limitsRestrictions4gtOptions : [
+                  {value:'', text:'N/A'},
+                  {value:'10', text:'10'},
+                  {value:'25', text:'25'},
+                  {value:'50', text:'50'},
+                  {value:'75', text:'75'}
+                ],
+                limitsRestrictions4exOptions : [
+                  {value:'', text:'N/A'},
+                  {value:'5', text:'5'},
+                  {value:'10', text:'10'},
+                  {value:'15', text:'15'},
+                  {value:'20', text:'20'},
+                  {value:'25', text:'25'},
+                  {value:'30', text:'30'},
+                  {value:'45', text:'45'}
+                ],
+                limitsRestrictions4HrsOptions : [
+                  {value:'', text:'N/A'},
+                  {value:'1', text:'1'},
+                  {value:'2', text:'2'},
+                  {value:'3', text:'3'},
+                  {value:'4', text:'4'},
+                  {value:'5', text:'5'}
+
+                ],
+                yesAndNoOptions : [{value:'', text:''}, {value:'Y', text:'Y'}, {value:'N', text:'N'}],
+                years : [
+                  {value:'', text:'N/A'},
+                  {value:'1', text:'1'},
+                  {value:'2', text:'2'},
+                  {value:'3', text:'3'},
+                  {value:'4', text:'4'},
+                  {value:'5', text:'5'},
+                  {value:'6', text:'6'},
+                  {value:'7', text:'7'},
+                  {value:'8', text:'8'},
+                  {value:'9', text:'9'},
+                  {value:'10', text:'10'},
+                  {value:'11', text:'11'},
+                  {value:'12', text:'12'},
+                  {value:'13', text:'13'},
+                  {value:'14', text:'14'},
+                  {value:'15', text:'15'},
+                  {value:'16', text:'16'},
+                  {value:'17', text:'17'},
+                  {value:'18', text:'18'},
+                  {value:'19', text:'19'},
+                  {value:'20', text:'20'},
+                  {value:'21', text:'21'},
+                  {value:'22', text:'22'},
+                  {value:'23', text:'23'},
+                  {value:'24', text:'24'},
+                  {value:'25', text:'25'},
+                  {value:'26', text:'26'},
+                  {value:'27', text:'27'},
+                  {value:'28', text:'28'},
+                  {value:'29', text:'29'},
+                  {value:'30', text:'30'},
+                  {value:'31', text:'31'},
+                  {value:'32', text:'32'},
+                  {value:'33', text:'33'},
+                  {value:'34', text:'34'},
+                  {value:'35', text:'35'},
+                  {value:'36', text:'36'},
+                  {value:'37', text:'37'},
+                  {value:'38', text:'38'},
+                  {value:'39', text:'39'},
+                  {value:'40', text:'40'},
+                  {value:'41', text:'41'},
+                  {value:'42', text:'42'},
+                  {value:'43', text:'43'},
+                  {value:'44', text:'44'},
+                  {value:'45', text:'45'},
+                  {value:'46', text:'46'},
+                  {value:'47', text:'47'},
+                  {value:'48', text:'48'},
+                  {value:'49', text:'49'},
+                  {value:'50', text:'50'}
+                ],
+                months : [
+                  {value:'', text:'N/A'},
+                  {value:'1', text:'1'},
+                  {value:'2', text:'2'},
+                  {value:'3', text:'3'},
+                  {value:'4', text:'4'},
+                  {value:'5', text:'5'},
+                  {value:'6', text:'6'},
+                  {value:'7', text:'7'},
+                  {value:'8', text:'8'},
+                  {value:'9', text:'9'},
+                  {value:'10', text:'10'},
+                  {value:'11', text:'11'},
+                  {value:'12', text:'12'}
+                ],
+                majorHandOptions : [{value:'', text:''}, {value:'R', text:'R'}, {value:'L', text:'L'}],
+            };
+          },
+          getInitialState : function(){
+            return {
+              templateOptions : [{value:'', text:''}],
+              TEMPLATE: 'STANDARD1PG',
+              data : {
+                RECNO:{value: ''},
+                PATID : {value: _patId},
+                F121 : {value: ''},
+                F122 : {value: ''},
+                F123 : {value: ''},
+                F131 : {value: ''},
+                F14 : {value: ''},
+                F151 : {value: moment.utc(_dateOfExam).format("YYYY-MM-DD")},
+                F16 : {value: ''},
+                F17 : {value: ''},
+                F18 : {value: ''},
+                F191 : {value: ''},
+                F192 : {value: ''},
+                F20 : {value: ''},
+                F211 : {value: ''},
+                F212 : {value: ''},
+                F221 : {value: ''},
+                F222 : {value: ''},
+                F23 : {value: ''},
+                F241 : {value: ''},
+                F242 : {value: ''},
+                F251 : {value: ''},
+                F252 : {value: ''},
+                F253 : {value: ''},
+                F261 : {value: ''},
+                F262 : {value: ''},
+                F263 : {value: ''},
+                F264 : {value: ''},
+                F265 : {value: ''},
+                F132 : {value: ''},
+                F152 : {value: ''},
+                CASENO : {value: ''},
+                CLAIMNO : {value: ''},
+                DATEOFHIRE : {value: ''},
+                REMARK : {value: ''},
+                F233 : {value: ''},
+                F243 : {value: ''},
+                ULCERS : {value: ''},
+                DIABETES : {value: ''},
+                ASTHMA : {value: ''},
+                ALLERGY : {value: ''},
+                CURRMED : {value: ''},
+                TETDATE : {value: ''},
+                WEIGHT : {value: ''},
+                BP : {value: ''},
+                REGDATE : {value: ''},
+                FDISDATE : {value: ''},
+                TDISDATE : {value: ''},
+                FMODDATE : {value: ''},
+                TMODDATE : {value: ''},
+                F14S : {value: ''},
+                F27 : {value: ''},
+                ILLRECNO : {value: ''},
+                ENTRYDATE : {value: ''},
+                USERNAME : {value: _userId},
+                DCTID : {value: _dctId},
+                FCLID : {value:_fclId},
+                LIMITSRESTRICTIONS1 : {value: null},
+                LIMITSRESTRICTIONS2 : {value: null},
+                LIMITSRESTRICTIONS2LBS : {value: ''},
+                LIMITSRESTRICTIONS3 : {value: null},
+                LIMITSRESTRICTIONS4 : {value: null},
+                LIMITSRESTRICTIONS4GT : {value: ''},
+                LIMITSRESTRICTIONS4EX : {value: ''},
+                LIMITSRESTRICTIONS4HRS : {value: ''},
+                LIMITSRESTRICTIONS5 : {value: null},
+                LIMITSRESTRICTIONS5POS : {value: ''},
+                LIMITSRESTRICTIONS5POSVAL : {value: ''},
+                LIMITSRESTRICTIONS6 : {value: null},
+                LIMITSRESTRICTIONS7 : {value: null},
+                LIMITSRESTRICTIONS8 : {value: null},
+                FIRSTAID : {value: ''},
+                JOBYEARS : {value: ''},
+                JOBMONTHS : {value: ''},
+                ALLERGIES : {value: ''},
+                MAJORHAND : {value: ''},
+                EMPCONTACTED : {value: ''},
+                EMPCONTACTDATE : {value: ''}
+              },
+              errMsg : {}
+            };
+          },
+          _setTemplateState: function(event){
+
+            var field = event.target.name;
+            var value = event.target.value;
+            var key = field.toUpperCase();
+            this.state[key] = value;
+            this.setState({data :this.state.data});
+
+          },
+          _setDataState: function(event){
+
+              var field = event.target.name;
+              var value = "";
+
+              if(event.target.type === "checkbox")
+              {
+                value = event.target.checked;
+              }
+              else if(event.target.type == "textarea")
+              {
+                value = event.target.value;
+              }
+              else
+              {
+                  value = event.target.value;
+                  if(value)
+                  {
+                      value = value.toUpperCase();
+                  }
+              }
+
+              var key = field.toUpperCase();
+              this.state.data[key].value = value;
+
+              if(this.state.errMsg[key])
+              {
+                  this.state.errMsg[key] = "";
+              }
+              this.setState({data :this.state.data, errMsg: this.state.errMsg});
+          },
+          _updateFclId25: function(selectedFclId, isValid){
+            //this.state.data.fclId = selectedFclId;
+            this.state.data.F251.value = selectedFclId;
+            // if(!isValid){
+            //   this.state.errMsg.fclId = _xrxInvErrorMessages.Invalid;
+            // }
+            // else{
+            //   this.state.errMsg.fclId = "";
+            // }
+            this.setState({data : this.state.data});
+          },
+          _formatDateTimeHTML: function(datetime){
+              if(datetime)
+        		  {
+                return  moment.utc(datetime).format("YYYY-MM-DD");
+        	   	}
+        	    else
+        	    {
+        	    	return "";
+        	    }
+        	},
+          _formatDateTimeSQL: function(datetime){
+              if(datetime)
+        		  {
+                return  moment.utc(datetime).format("MM/DD/YYYY");
+        	   	}
+        	    else
+        	    {
+        	    	return "";
+        	    }
+        	},
+          _formatDateTimeWithTimeSQL: function(datetime) {
+              if(datetime){
+                  return moment.utc(datetime).format("MM/DD/YYYY h:mm:ss a");
+              }
+              else{
+                  return "";
+              }
+          },
+          _dateToSql : function(){
+
+            this.state.data.F131.value = this._formatDateTimeSQL(this.state.data.F131.value);
+            this.state.data.F14.value = this._formatDateTimeSQL(this.state.data.F14.value);
+            this.state.data.F151.value = this._formatDateTimeSQL(this.state.data.F151.value);
+            this.state.data.F252.value = this._formatDateTimeSQL(this.state.data.F252.value);
+            this.state.data.F262.value = this._formatDateTimeSQL(this.state.data.F262.value);
+            this.state.data.F263.value = this._formatDateTimeSQL(this.state.data.F263.value);
+            this.state.data.DATEOFHIRE.value = this._formatDateTimeSQL(this.state.data.DATEOFHIRE.value);
+            this.state.data.TETDATE.value = this._formatDateTimeSQL(this.state.data.TETDATE.value);
+            this.state.data.REGDATE.value = this._formatDateTimeSQL(this.state.data.REGDATE.value);
+            this.state.data.FDISDATE.value = this._formatDateTimeSQL(this.state.data.FDISDATE.value);
+            this.state.data.TDISDATE.value = this._formatDateTimeSQL(this.state.data.TDISDATE.value);
+            this.state.data.FMODDATE.value = this._formatDateTimeSQL(this.state.data.FMODDATE.value);
+            this.state.data.TMODDATE.value = this._formatDateTimeSQL(this.state.data.TMODDATE.value);
+            this.state.data.EMPCONTACTDATE.value = this._formatDateTimeSQL(this.state.data.EMPCONTACTDATE.value);
+            this.state.data.ENTRYDATE.value = this._formatDateTimeWithTimeSQL(this.state.data.ENTRYDATE.value);
+          },
+          _dateToHTML : function(record){
+
+            record.F131.value = this._formatDateTimeHTML(record.F131.value);
+            record.F14.value = this._formatDateTimeHTML(record.F14.value);
+            record.F151.value = this._formatDateTimeHTML(record.F151.value);
+            record.F252.value = this._formatDateTimeHTML(record.F252.value);
+            record.F262.value = this._formatDateTimeHTML(record.F262.value);
+            record.F263.value = this._formatDateTimeHTML(record.F263.value);
+            record.DATEOFHIRE.value = this._formatDateTimeHTML(record.DATEOFHIRE.value);
+            record.TETDATE.value = this._formatDateTimeHTML(record.TETDATE.value);
+            record.REGDATE.value = this._formatDateTimeHTML(record.REGDATE.value);
+            record.FDISDATE.value = this._formatDateTimeHTML(record.FDISDATE.value);
+            record.TDISDATE.value = this._formatDateTimeHTML(record.TDISDATE.value);
+            record.FMODDATE.value = this._formatDateTimeHTML(record.FMODDATE.value);
+            record.TMODDATE.value = this._formatDateTimeHTML(record.TMODDATE.value);
+            record.EMPCONTACTDATE.value = this._formatDateTimeHTML(record.EMPCONTACTDATE.value);
+
+            return record;
+
+          },
+          _save: function() {
+
+            this._dateToSql();
+
+            var self = this;
+            var data = this.state.data;
+
+            //Save
+            pr1Sql.pr1Save(data, function (err , record) {
+
+                if(err)
+                {
+                  console.log(err);
+                  alert('Error while saving data!');
+                }
+                else
+                {
+                  console.log("Saved Successfully!");
+                  self._close();
+
+                }
+            });
+
+          },
+          _loadParam : function(){
+
+              var self = this;
+
+              pr1Sql.xmlGetParam(function (err , record) {
+
+                  if (!err && record) {
+                    if (record.length > 0) {
+                      var parser = new DOMParser();
+                      var xmlDoc = parser.parseFromString(record[0].XMLTEXT.value, "text/xml");
+                      if (xmlDoc) {
+                        var rpFile = xmlDoc.getElementsByTagName('Pr1')[0];
+                        for (var i = 0; i < rpFile.childNodes.length; i++) {
+                          var node = rpFile.childNodes[i];
+                          if (node.nodeType === 1) {
+                            if (node.nodeName == "Template") {
+                              var template = node.childNodes[0].nodeValue;
+                              self.state.TEMPLATE = template;
+                            }
+
+                            self.setState({data: self.state.data});
+
+                          }
+
+                        }
+                      }
+
+                    }
+
+                  }
+                  else {
+                    console.log(err)
+                  }
+              });
+          },
+          _loadData : function(){
+
+            var patId = _patId;
+            var self= this;
+
+            pr1Sql.pr1Get(patId, function (err , record) {
+
+                if (!err && record) {
+                  if(record.length > 0)
+                  {
+                    if(record[0].RECNO)
+                    {
+
+                      var data = self._dateToHTML(record[0]);
+
+                      self.setState({data : data});
+                    }
+                    else if (record[0].CLAIMNO){
+
+                        console.log(record);
+                    }
+                  }
+                }
+                else {
+                  alert(err);
+                }
+            });
+
+          },
+          _saveParam : function(){
+
+              var xmlDocString = "<Pr1></Pr1>";
+              var parser = new DOMParser();
+              var xmlDoc = parser.parseFromString(xmlDocString,"text/xml");
+              var params = ["Template"];
+
+              for(var i = 0; i < params.length; i++)
+              {
+                var eleNew = xmlDoc.createElement(params[i]);
+                if(params[i] == "Template")
+                {
+                  var text = this.state.TEMPLATE;
+                }
+                var eleText= xmlDoc.createTextNode(text);
+                eleNew.appendChild(eleText);
+
+                xmlDoc.getElementsByTagName("Pr1")[0].appendChild(eleNew);
+              }
+
+              var rpFileString =	new XMLSerializer().serializeToString(xmlDoc);
+              var userId = _userId;
+
+              pr1Sql.xmlUpdateParam(rpFileString, userId, function (err , record) {
+                  if(err)
+                  {
+                    console.log(err);
+                  }
+                  else
+                  {
+                    console.log("Successfully updated param");
+                  }
+              });
+
+          },
+          _print: function(){
+
+            this._dateToSql();
+
+
+            var data = this.state.data;
+            var self = this;
+            pr1Sql.pr1Save(data, function (err , record) {
+
+                var data = self._dateToHTML(self.state.data);
+                self.setState({data : data});
+
+                if(err)
+                {
+                  console.log(err);
+                  alert('Error while saving before printing data!');
+                }
+                else
+                {
+                    console.log("Data Saved Successfully!");
+
+                    para = {
+                      COMPANYID : _companyId,
+                      COMPANYNAME : _companyName, // _companyName,
+                      PROVIDERNAME: _providerName,
+                      PATID: self.state.data.PATID.value,
+                      DATEOFEXAM:  self.state.data.F151.value, //_dateOfExam,
+                      COMPLETED: true,//self.state.data.COMPLETED.value,
+                      TEMPLATE : self.state.TEMPLATE
+                    };
+                    //console.log(para);
+                    pr1Sql.pr1Print(para, function (err , record) {
+
+                        if (!err && record) {
+                            console.log("Hey Successfully run script!")
+                            self._loadData();
+                        }
+                        else {
+                          console.log(err);
+                          alert("Error while printing.");
+                        }
+
+                    });
+                }
+            });
+
+
+           },
+          _close: function(){
+              window.close();
+          },
+          _keyDown: function(e) {
+
+              var self = this;
+
+              var F10 = 121;
+              var ESC = 27;
+              var ENTER = 13;
+              var PRINT = 114;
+              if(e.keyCode == F10) {
+                this._saveParam();
+              }
+              else if(e.keyCode == PRINT) {
+                this._print();
+              }
+              else if(e.keyCode == ESC) {
+                var allModals = document.getElementsByClassName("modal");
+                for (var i=0, max=allModals.length; i < max; i++) {
+
+                    if($(allModals[i]).hasClass('in'))
+                    {
+                      $(allModals[i]).modal('hide');
+                      return;
+                    }
+                }
+                this._close();
+              }
+              else if(e.keyCode == ENTER) {
+                  // Set self as the current item in focus
+                  var self = $(':focus'),
+                  // Set the form by the current item in focus
+                  form = self.parents('form:eq(0)'),
+                  focusable;
+
+                  // Array of Indexable/Tab-able items
+                  focusable = form.find('input,a,select,button,textarea,div[contenteditable=true]').filter(':visible');
+
+                  function enterKey(){
+                    if (e.which === 13 && !self.is('textarea')) { // [Enter] key
+
+                      // If not a regular hyperlink/button/textarea
+                      if ($.inArray(self, focusable) && (!self.is('a,button'))){
+                        // Then prevent the default [Enter] key behaviour from submitting the form
+                        e.preventDefault();
+                      } // Otherwise follow the link/button as by design, or put new line in textarea
+
+                      // Focus on the next item (either previous or next depending on shift)
+                      focusable.eq(focusable.index(self) + (e.shiftKey ? -1 : 1)).focus();
+
+                      return false;
+                    }
+                  }
+                  // We need to capture the [Shift] key and check the [Enter] key either way.
+                  if (e.shiftKey) { enterKey() } else { enterKey() }
+              }
+          },
+          render: function() {
+
+            return (
+               <div>
+                 <div className="top-menu-bar">
+                     <ul>
+                       <li onClick={this._print} style={{color : '#5bc0de'}}><i className="fa fa-print"></i> Print</li>
+                       <li onClick={this._save} style={{color : '#5cb85c'}}><i className="fa fa-floppy-o"></i> Save Data</li>
+                       <li onClick={this._saveParam} style={{color : '#428bca'}}><i className="fa fa-floppy-o"></i> Save Template</li>
+                       <li onClick={this._close} style={{color : '#d9534f'}}><i className="fa fa-times"></i> Close</li>
+                     </ul>
+                 </div>
+                 <div className="main-body">
+                   <div style={{marginTop: '10px', marginLeft: '10px'}}>
+                        <form id="pr1Form">
+                          <fieldset className="scheduler-border">
+                              <legend className="scheduler-border text-info">Print Template</legend>
+                              <div>
+                                <Lbl labelFor="template" width="100px" text="Template :&nbsp;" />
+                                <DropdownPlugin  name="template" value={this.state.TEMPLATE} dropdownOptions={this.state.templateOptions}  onChange={this._setTemplateState} error={""} />
+                              </div>
+                          </fieldset>
+                          <fieldset className="scheduler-border">
+                              <legend className="scheduler-border text-info">Info</legend>
+                              <div>
+                                <Lbl labelFor="caseNo" width="" text="Case # :&nbsp;" />
+                                <TxtInput width="100px" name="caseNo" value={this.state.data.CASENO.value} onChange={this._setDataState}  />
+                                <Lbl labelFor="dateOfHire" width="80px" text="Date of Hire :&nbsp;" />
+                                <DateInput width="130px"  name="dateOfHire" value={this.state.data.DATEOFHIRE.value}  onChange={this._setDataState}    />
+                                <Lbl labelFor="tetDate" width="150px" text="Date of last tetanus shot :&nbsp;" />
+                                <DateInput width="130px" name="tetDate" value={this.state.data.TETDATE.value}  onChange={this._setDataState}    />
+                                <Lbl labelFor="case" width="175px" text="Currently Taking medication? :&nbsp;" />
+                                <DropdownPlugin  name="takingMedication" value={""} dropdownOptions={this.props.yesAndNoOptions}  onChange={this._setDataState} error={""} />
+                              </div>
+                              <div>
+                                <Lbl labelFor="1-11" width="" text="1-11 Fields are picked up from registration and illness data.&nbsp;" />
+                                <Lbl labelFor="jobYears" width="100px" text="Years in Job? :&nbsp;" />
+                                <DropdownPlugin  name="jobYears" value={this.state.data.JOBYEARS.value} dropdownOptions={this.props.years}  onChange={this._setDataState} error={""} />
+                                <Lbl labelFor="jobMonths" width="100px" text="Months in Job? :&nbsp;" />
+                                <DropdownPlugin  name="jobMonths" value={this.state.data.JOBMONTHS.value} dropdownOptions={this.props.months}  onChange={this._setDataState} error={""} />
+                              </div>
+                              <div>
+                                <Lbl labelFor="121" width="" text="12. Injured at (The next three fields by default are picked from patient employer data) :&nbsp;" />
+                              </div>
+                              <div>
+                                <Lbl labelFor="f121" width="100px" text="Street :&nbsp;" />
+                                <TxtInput name="f121" value={this.state.data.F121.value} onChange={this._setDataState}  />
+                                <Lbl labelFor="f122" width="60px" text="City :&nbsp;" />
+                                <TxtInput name="f122" value={this.state.data.F122.value} onChange={this._setDataState}  />
+                                <Lbl labelFor="f123" width="60px" text="County :&nbsp;" />
+                                <TxtInput name="f123" value={this.state.data.F123.value} onChange={this._setDataState}  />
+                              </div>
+                              <div>
+                                <Lbl labelFor="f13" width="" text="13. Date and hour or onset of illness -&nbsp;" />
+                                <Lbl labelFor="f131" width="50px" text="Date :&nbsp;" />
+                                <DateInput name="f131" value={this.state.data.F131.value}  onChange={this._setDataState}    />
+                                <Lbl labelFor="f132" width="50px" text="Hour :&nbsp;" />
+                                <TxtInput width="80px" name="f132" value={this.state.data.F132.value} onChange={this._setDataState}  />
+                              </div>
+                              <div>
+                                <Lbl labelFor="f14" width="" text="14. Date last worked -&nbsp;" />
+                                <DateInput width="130px" name="f14" value={this.state.data.F14.value}  onChange={this._setDataState}    />
+                                <Lbl labelFor="F14s" width="" text="&nbsp;or you can specify in free format :&nbsp;" />
+                                <TxtInput width="" name="f14s" value={this.state.data.F14S.value} onChange={this._setDataState}  />
+                                <div style={{display: 'inline', marginLeft:"20px"}}>
+                                  <Lbl labelFor="firstAid" width="90px" text="First Aid Only :&nbsp;" />
+                                  <DropdownPlugin  name="firstAid" value={this.state.data.FIRSTAID.value} dropdownOptions={this.props.yesAndNoOptions}  onChange={this._setDataState} error={""} />
+                                  <Lbl labelFor="majorHand" width="90px" text="Major Hand :&nbsp;" />
+                                  <DropdownPlugin  name="majorHand" value={this.state.data.MAJORHAND.value} dropdownOptions={this.props.majorHandOptions}  onChange={this._setDataState} error={""} />
+                                </div>
+                              </div>
+                              <div>
+                                <Lbl labelFor="f151" width="" text="15. First exam - Date &nbsp;" />
+                                <DateInput name="f151" value={this.state.data.F151.value}  onChange={this._setDataState}    />
+                                <Lbl labelFor="f152" width="80px" text="Hour :&nbsp;" />
+                                <TxtInput name="f152" value={this.state.data.F152.value} onChange={this._setDataState}  />
+                                <Lbl labelFor="f16" width="150px" text="Previously treated patient :&nbsp;" />
+                                <DropdownPlugin  name="f16" value={this.state.data.F16.value} dropdownOptions={this.props.yesAndNoOptions}  onChange={this._setDataState} error={""} />
+                              </div>
+                              <div>
+                                <Lbl labelFor="allergies" width="" text="Allergies :&nbsp;" />
+                                <TxtInput width="815px" name="allergies" value={this.state.data.ALLERGIES.value} onChange={this._setDataState}  />
+                              </div>
+                          </fieldset>
+                          <fieldset className="scheduler-border">
+                            <legend className="scheduler-border text-info">Other Info</legend>
+                            <div>
+                              <Lbl labelFor="f17" width="" text="17. Describe how the accident or exposure happened :&nbsp;" />
+                            </div>
+                            <div>
+                              <TextAreaPlugin name="f17" value={this.state.data.F17.value} onChange={this._setDataState} width="950px" rows="3" />
+                            </div>
+                            <div>
+                              <Lbl labelFor="f18" width="" text="18. Subjective Complaints :&nbsp;" />
+                            </div>
+                            <div>
+                              <TextAreaPlugin name="f18" value={this.state.data.F18.value} onChange={this._setDataState} width="950px" rows="3"   />
+                            </div>
+                            <div>
+                              <Lbl labelFor="f191" width="" text="19 A. Physical Examination :&nbsp;" />
+                            </div>
+                            <div>
+                              <TextAreaPlugin name="f191" value={this.state.data.F191.value} onChange={this._setDataState}  width="950px"  rows="3" />
+                            </div>
+                            <div>
+                              <Lbl labelFor="f192" width="" text="19 B. X-Ray and Lab Results :&nbsp;" />
+                            </div>
+                            <div>
+                              <TextAreaPlugin name="f192" value={this.state.data.F192.value} onChange={this._setDataState} width="950px"  rows="3"   />
+                            </div>
+                            <div>
+                              <Lbl labelFor="f20" width="" text="Chemical or toxic?&nbsp;" />
+                              <DropdownPlugin  name="f20" value={this.state.data.F20.value} dropdownOptions={this.props.yesAndNoOptions}  onChange={this._setDataState} error={""} />
+                              <Lbl labelFor="f20" width="" text="&nbsp;&nbsp;Please enter Diagnosis at the bottom of this screen &nbsp;" />
+                            </div>
+                            <div>
+                              <Lbl labelFor="f211" width="" text="21. Your findings consistent?&nbsp;" />
+                              <DropdownPlugin  name="f211" value={this.state.data.F211.value} dropdownOptions={this.props.yesAndNoOptions}  onChange={this._setDataState} error={""} />
+                              <Lbl labelFor="f212" width="" text="&nbsp;Explanation" />
+                            </div>
+                            <div>
+                              <TextAreaPlugin name="f212" value={this.state.data.F212.value} onChange={this._setDataState} width="950px" rows="3" />
+                            </div>
+                            <div>
+                              <Lbl labelFor="f221" width="" text="22. Any other conditions?&nbsp;" />
+                              <DropdownPlugin  name="f221" value={this.state.data.F221.value} dropdownOptions={this.props.yesAndNoOptions}  onChange={this._setDataState} error={""} />
+                              <Lbl labelFor="f222" width="" text="&nbsp;Explanation" />
+                            </div>
+                            <div>
+                              <TextAreaPlugin name="f222" value={this.state.data.F222.value} onChange={this._setDataState} width="950px" rows="3" />
+                            </div>
+                            <div>
+                              <Lbl labelFor="f23" width="" text="23. Treatment Rendered :&nbsp;" />
+                            </div>
+                            <div>
+                              <TextAreaPlugin name="f23" value={this.state.data.F23.value} onChange={this._setDataState} width="950px" rows="3" />
+                            </div>
+                            <div>
+                              <Lbl labelFor="f241" width="" text="24. Futher Treatment :&nbsp;" />
+                              <TextAreaPlugin name="f241" value={this.state.data.F241.value} onChange={this._setDataState} width="950px" rows="2"  />
+                              <Lbl labelFor="f242" width="" text="&nbsp;&nbsp;Duration :&nbsp;" />
+                              <TxtInput name="f242" value={this.state.data.F242.value} onChange={this._setDataState}  />
+                            </div>
+                            <div>
+                              <Lbl labelFor="f251" width="" text="25. If Hospitalized as Inpatient,  Give Hospital Name and Location :&nbsp;" />
+                              <FclSearch width="80px" isRequired={false} fclId={this.state.data.F251.value} onSelect={this._updateFclId25} showSelectedInfoBox={false}></FclSearch>
+
+                              <Lbl labelFor="f252"  text="&nbsp;Date Admitted :&nbsp;" />
+                              <DateInput width="130px" name="f252" value={this.state.data.F252.value}  onChange={this._setDataState}    />
+
+                              <Lbl labelFor="f253" width="" text="&nbsp;Estimated Stay :&nbsp;" />
+                              <TxtInput width="125px" name="f253" value={this.state.data.F253.value} onChange={this._setDataState}  />
+
+                            </div>
+
+                            <div>
+                              <Lbl labelFor="f261" width="" text="26. WORK STATUS: Is Patient Able to Perform Usual Work?&nbsp;" />
+                              <DropdownPlugin  name="f261" value={this.state.data.F261.value} dropdownOptions={this.props.yesAndNoOptions}  onChange={this._setDataState} error={""} />
+                              <Lbl labelFor="f262" width="" text="&nbsp;If no, patient can return to regular work :&nbsp;" />
+                              <DateInput width="130px" name="f262" value={this.state.data.F262.value}  onChange={this._setDataState}    />
+                              <Lbl labelFor="f263" width="" text="&nbsp;Modified Work :&nbsp;" />
+                              <DateInput width="130px" name="f263" value={this.state.data.F263.value}  onChange={this._setDataState}    />
+                            </div>
+                          </fieldset>
+                          <fieldset className="scheduler-border">
+                            <legend className="scheduler-border text-info">Specify restrictions</legend>
+                            <div>
+                                <CheckboxInput width= "325px" name="limitsRestrictions1" labelName= "Not permitted to operate hazardous machinary" onChange={this._setDataState} checked={this.state.data.LIMITSRESTRICTIONS1.value}  />
+                                <CheckboxInput width= "325px" name="limitsRestrictions6" labelName= "No operating motor vehicles" onChange={this._setDataState} checked={this.state.data.LIMITSRESTRICTIONS6.value}  />
+                            </div>
+                            <div>
+                              <div style = {{display: 'inline-block', width: '325px'}}>
+                                <CheckboxInput name="limitsRestrictions2" labelName= "No lifting or carrying more than" onChange={this._setDataState} checked={this.state.data.LIMITSRESTRICTIONS2.value}  />
+                                <DropdownPlugin  name="limitsRestrictions2lbs" value={this.state.data.LIMITSRESTRICTIONS2LBS.value? this.state.data.LIMITSRESTRICTIONS2LBS.value.toString() : ""} dropdownOptions={this.props.limitsRestrictions2lbsOptions}  onChange={this._setDataState} error={""} />
+                                &nbsp;lbs
+                              </div>
+                              <div style = {{display: 'inline-block', width: '325px'}}>
+                                  <CheckboxInput name="limitsRestrictions3" labelName= "No working above ground level" onChange={this._setDataState} checked={this.state.data.LIMITSRESTRICTIONS3.value}  />
+                              </div>
+                            </div>
+                            <div>
+                              <CheckboxInput width="325px" name="limitsRestrictions7" labelName= "Keep affected area clean and dry" onChange={this._setDataState} checked={this.state.data.LIMITSRESTRICTIONS7.value}  />
+                              <CheckboxInput width="325px" name="limitsRestrictions8" labelName= "Avoid contact with solvents and other chemicals" onChange={this._setDataState} checked={this.state.data.LIMITSRESTRICTIONS8.value}  />
+                            </div>
+                            <div>
+                              <CheckboxInput name="limitsRestrictions4" labelName= "No walking or standing greater than" onChange={this._setDataState} checked={this.state.data.LIMITSRESTRICTIONS4.value}  />
+                              <DropdownPlugin  name="limitsRestrictions4gt" value={this.state.data.LIMITSRESTRICTIONS4GT.value? this.state.data.LIMITSRESTRICTIONS4GT.value.toString() : ""} dropdownOptions={this.props.limitsRestrictions4gtOptions}  onChange={this._setDataState} error={""} />
+                              &nbsp;% of the working period, or in excess of&nbsp;
+                              <DropdownPlugin  name="limitsRestrictions4ex" value={this.state.data.LIMITSRESTRICTIONS4EX.value? this.state.data.LIMITSRESTRICTIONS4EX.value.toString() : ""} dropdownOptions={this.props.limitsRestrictions4exOptions}  onChange={this._setDataState} error={""} />
+                              &nbsp;minutes or&nbsp;
+                              <DropdownPlugin  name="limitsRestrictions4Hrs" value={this.state.data.LIMITSRESTRICTIONS4HRS.value? this.state.data.LIMITSRESTRICTIONS4HRS.value.toString() : ""} dropdownOptions={this.props.limitsRestrictions4HrsOptions} onChange={this._setDataState} error={""} />
+                              &nbsp;hours
+                            </div>
+                            <div>
+                              <CheckboxInput name="limitsRestrictions5" labelName= "Avoid repetitive motions/awkward positions of" onChange={this._setDataState} checked={this.state.data.LIMITSRESTRICTIONS5.value}  />
+                              &nbsp;<TxtInput name="limitsRestrictions5PosVal" value={this.state.data.LIMITSRESTRICTIONS5POSVAL.value} onChange={this._setDataState}  />
+                            </div>
+                            <div>
+                              <Lbl labelFor="" width="" text="Other limitations or restrictions" />
+                            </div>
+                            <div>
+                              <TextAreaPlugin name="other" value={""}  onChange={this._setDataState} rows="3" width="950px" />
+                            </div>
+                            <div>
+                              <Lbl labelFor="empContacted" width="" text="Employer contact Spoke with&nbsp;" />
+                              <TxtInput name="empContacted" value={this.state.data.EMPCONTACTED.value} onChange={this._setDataState}  />
+                              <Lbl labelFor="empContactDate" width="" text="&nbsp;Date&nbsp;" />
+                              <DateInput name="empContactDate" value={this.state.data.EMPCONTACTDATE.value}  onChange={this._setDataState}    />
+                            </div>
+                          </fieldset>
+
+                        </form>
+                   </div>
+                </div>
+               </div>
+            );
+          },
+          componentDidMount : function() {
+
+                $(document.body).on('keydown', this._keyDown);
+
+                var self = this;
+
+
+                fs.readdir(_mainFolder + "rpt/pr1/", function(err, fileNames) { //C:/Calmed/rpt/pr1/
+
+                   if (err) {
+                     console.log(err);
+                     return;
+                   }
+                   var template = [];
+                   for(var i = 0; i<fileNames.length; i++) {
+                        var fName = fileNames[i].replace('.rpt', '').toUpperCase();
+                        var option = {value:fName, text:fName}
+                        template.push(option);
+                   }
+                   self.setState({templateOptions : template});
+                   self._loadParam();
+                });
+
+                this._loadData();
+          }
+      });
+
+      ReactDOM.render(
+
+          <Pr1Report  />,
+          document.getElementById('pr1Report')
+      );
+
+
+
+  </script>
+
+  <body>
+    <div id="pr1Report"></div>
+  </body>
+ </html>

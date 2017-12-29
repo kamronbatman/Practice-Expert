@@ -1,0 +1,515 @@
+<html>
+	<title>Deposit Ticket(web version)</title>
+	<head>
+		<link rel="stylesheet" type="text/css" href="../../public/bootstrap/css/bootstrap.min.css">
+		<link rel="stylesheet" type="text/css" href="../../public/font-awesome-4.5.0/css/font-awesome.min.css">
+		<link rel="stylesheet" type="text/css" href="../../node_modules/fixed-data-table/dist/fixed-data-table-base.min.css">
+		<link rel="stylesheet" type="text/css" href="../../node_modules/fixed-data-table/dist/fixed-data-table-style.min.css">
+		<link rel="stylesheet" type="text/css" href="../../node_modules/fixed-data-table/dist/fixed-data-table.min.css">
+		<link rel="stylesheet" type="text/css" href="../../public/stylesheets/calmed.css">
+
+		<script type="text/javascript">
+            var remote = require('electron').remote;
+            var nodeModulesPath = remote.getGlobal('nodeModulesPath');
+            var appPath = remote.getGlobal('appPath');
+			var $ = jQuery = require(nodeModulesPath + "jquery");
+			//React
+			var React = require(nodeModulesPath + 'react');
+			var ReactDOM = require(nodeModulesPath + "react-dom");
+			//Other
+			var moment = require(nodeModulesPath + 'moment');
+
+			var ipcRenderer = require('electron').ipcRenderer;
+			var cmGlb = remote.getGlobal('cmGlb');
+			var sqlDepositTicket = require(appPath + "/rp/rpDepositTicket/depositTicketSql.js");
+
+
+
+			var _userId = cmGlb.userId;
+			var _companyName = cmGlb.companyName;
+			var	_providerName = (cmGlb.providerName ? cmGlb.providerName : '');
+
+			//console.log(_userId);
+		</script>
+		<script src="../../public/bootstrap/js/bootstrap.min.js"></script>
+		<script src="../../public/javascripts/JSXTransformer.js"></script>
+		<!--Components -->
+		<script type="text/jsx" src="../../common/user_controls/lbl.jsx"></script>
+		<script type="text/jsx" src="../../common/user_controls/txtInput.jsx"></script>
+		<script type="text/jsx" src="../../common/user_controls/dateInput.jsx"></script>
+		<script type="text/jsx" src="../../dc/dcBllprv/BllPrvSearch.jsx"></script>
+		<script type="text/jsx" src="../../dc/dcIns/InsSearch.jsx"></script>
+
+
+
+			<script type="text/jsx">
+
+				var BankDeposit = React.createClass({
+
+								getInitialState: function() {
+
+											return {
+
+													data : {
+																USERID  : _userId,
+																COMPANYNAME : _companyName,
+																PROVIDERNAME : _providerName,
+																FROMDATE : moment().format('YYYY-MM-DD'),
+																TODATE : moment().format('YYYY-MM-DD'),
+																BLLPRV : '',
+																PAYERNAME : '',
+																BATCHNO : '',
+																USERIDFILTER : '',
+																CASH  : '0',
+																EFT : '0',
+																CHECKS : '0',
+																CREDITS : '0',
+																BULKPAY : '0',
+																AUTOREMITT : '0',
+																SHOWPAYERNAME : '0'
+														}
+											};
+								 },
+								_updateBllprvData: function(selectedBllprvData, isValid){
+										if(selectedBllprvData && isValid)
+										{
+											this.state.data.BLLPRV = selectedBllprvData.id;
+										}
+										else
+										{
+											this.state.data.BLLPRV = '';
+										}
+
+										this.setState({data : this.state.data});
+								},
+								_updateInsSearchData: function(selectedInsData, isValid){
+
+											if(selectedInsData && isValid)
+											{
+												this.state.data.PAYERNAME = selectedInsData.name;
+											}
+											else
+											{
+												this.state.data.PAYERNAME = '';
+											}
+											this.setState({data : this.state.data});
+								},
+							  _setDataState: function(event){
+
+										var field = event.target.name;
+												var value = "";
+
+
+												if(event.target.type === "checkbox"){
+													//For this project changed logic
+													//value = event.target.checked;
+													if(event.target.checked)
+													{
+														value = '1';
+													}
+													else
+													{
+														value = '0';
+													}
+
+												}
+												else
+												{
+													 value = event.target.value;
+
+													 if(value){
+														value = value.toUpperCase();
+													 }
+												}
+
+												var key = field.toUpperCase();
+												this.state.data[key] = value;
+												this.setState({data :this.state.data});
+								},
+								_print: function(event){
+
+									var para = this.state.data;
+
+									sqlDepositTicket.printBankDeposit(para, function (err , record) {
+											if (!err && record) {
+													console.log("Ran print script!")
+															//console.log(record[0]);
+											}
+											else {
+												alert("Error while printing.");
+											}
+									});
+
+
+								},
+								_close: function(){
+									window.close();
+								},
+								_saveParam : function(){
+
+									var xmlDocString = "<rp_file></rp_file>";
+									var parser = new DOMParser();
+									var xmlDoc = parser.parseFromString(xmlDocString,"text/xml");
+
+									var params = ["FromDate", "ToDate", "cash", "EFT", "checks", "credits", "autoRemitt", "BulkPay", "showPayerName"];
+
+									for(var i = 0; i < params.length; i++)
+									{
+										var eleNew = xmlDoc.createElement(params[i]);
+
+										if(params[i] == "FromDate")
+										{
+											var text = moment(this.state.data.FROMDATE).format('MM/DD/YYYY');
+										}
+										if(params[i] == "ToDate")
+										{
+											var text = moment(this.state.data.TODATE).format('MM/DD/YYYY');
+										}
+										if(params[i] == "cash")
+										{
+											var text = this.state.data.CASH;
+										}
+										if(params[i] == "EFT")
+										{
+											var text = this.state.data.EFT;
+
+										}
+										if(params[i] == "checks")
+										{
+											var text = this.state.data.CHECKS;
+
+										}
+										if(params[i] == "credits")
+										{
+											var text = this.state.data.CREDITS;
+
+										}
+										if(params[i] == "autoRemitt")
+										{
+											var text = this.state.data.AUTOREMITT;
+
+										}
+										if(params[i] == "BulkPay")
+										{
+											var text = this.state.data.BULKPAY;
+
+										}
+										if(params[i] == "showPayerName")
+										{
+											var text = this.state.data.SHOWPAYERNAME;
+
+										}
+
+										var eleText= xmlDoc.createTextNode(text);
+										eleNew.appendChild(eleText);
+
+										xmlDoc.getElementsByTagName("rp_file")[0].appendChild(eleNew);
+									}
+
+									var rpFileString =	new XMLSerializer().serializeToString(xmlDoc);
+									var userId = this.state.data.USERID;
+
+									sqlDepositTicket.xmlUpdateParam(rpFileString, userId, function (err , record) {
+
+											if(err)
+											{
+												console.log(err);
+											}
+											else
+											{
+												console.log("Successfully updated param");
+											}
+
+									})
+
+
+
+
+								},
+								_loadParam : function(){
+
+									var self = this;
+
+									sqlDepositTicket.xmlGetParam(function (err , record) {
+
+
+											if (!err && record)
+											{
+
+												if(record.length > 0)
+												{
+													  var parser = new DOMParser();
+														var xmlDoc = parser.parseFromString(record[0].XMLTEXT.value,"text/xml");
+														if(xmlDoc)
+														{
+															var rpFile  = xmlDoc.getElementsByTagName('rp_file')[0];
+															for(var i = 0; i< rpFile.childNodes.length; i++)
+              								{
+																var node = rpFile.childNodes[i];
+																if(node.nodeType === 1)
+																{
+																	// if(node.nodeName == "FromDate")
+                  								// {
+																	// 	var formDate = moment(new Date(node.childNodes[0].nodeValue)).format('YYYY-MM-DD');
+																	// 	self.state.data.FROMDATE  = formDate;
+																	// }
+																	// if(node.nodeName == "ToDate")
+																	// {
+																	// 	var toDate = moment(new Date(node.childNodes[0].nodeValue)).format('YYYY-MM-DD');
+																	// 	self.state.data.TODATE = toDate
+																	// }
+																	if(node.nodeName == "cash")
+																	{
+																			var cash = node.childNodes[0].nodeValue;
+																			self.state.data.CASH = cash;
+
+																			if(cash == 1)
+																			{
+																				var $chkBox = $(self.refs.cash);
+																				$chkBox.prop( "checked", true );
+																			}
+																	}
+																	if(node.nodeName == "EFT")
+																	{
+																		var EFT = node.childNodes[0].nodeValue;
+																		self.state.data.EFT = EFT;
+
+																		if(EFT == 1)
+																		{
+																			var $chkBox = $(self.refs.eft);
+																			$chkBox.prop( "checked", true );
+																		}
+
+
+																	}
+																	if(node.nodeName == "checks")
+																	{
+																		var checks = node.childNodes[0].nodeValue;
+																		self.state.data.CHECKS = checks;
+
+																		if(checks == 1)
+																		{
+																			var $chkBox = $(self.refs.checks);
+																			$chkBox.prop( "checked", true );
+																		}
+
+
+																	}
+																	if(node.nodeName == "credits")
+																	{
+																		var credits = node.childNodes[0].nodeValue;
+																		self.state.data.CREDITS = credits;
+
+																		if(credits == 1)
+																		{
+																			var $chkBox = $(self.refs.credits);
+																			$chkBox.prop( "checked", true );
+																		}
+
+																	}
+																	if(node.nodeName == "autoRemitt")
+																	{
+																		var autoRemitt = node.childNodes[0].nodeValue;
+																		self.state.data.AUTOREMITT = autoRemitt;
+
+																		if(autoRemitt == 1)
+																		{
+																			var $chkBox = $(self.refs.autoRemitt);
+																			$chkBox.prop( "checked", true );
+																		}
+
+																	}
+																	if(node.nodeName == "BulkPay")
+																	{
+																		var bulkPay = node.childNodes[0].nodeValue;
+																		self.state.data.BULKPAY = bulkPay;
+
+																		if(bulkPay == 1)
+																		{
+																			var $chkBox = $(self.refs.bulkPay);
+																			$chkBox.prop( "checked", true );
+																		}
+
+
+																	}
+																	if(node.nodeName == "showPayerName")
+																	{
+																		var showPayerName = node.childNodes[0].nodeValue;
+																		self.state.data.SHOWPAYERNAME = showPayerName;
+
+																		if(showPayerName == 1)
+																		{
+																			var $chkBox = $(self.refs.showPayerName);
+																			$chkBox.prop( "checked", true );
+																		}
+
+																	}
+
+																	self.setState({data : self.state.data});
+
+																}
+
+
+															}
+
+														}
+												}
+
+											}
+											else {
+
+													console.log(err)
+											}
+									});
+								},
+								_keyDown: function(e) {
+
+										var F10 = 121;
+										var ESC = 27;
+										var ENTER = 13;
+										var PRINT = 114;
+										if(e.keyCode == F10) {
+											this._saveParam();
+										}
+										else if(e.keyCode == PRINT) {
+											this._print();
+										}
+										else if(e.keyCode == ESC) {
+											this._close();
+										}
+										else if(e.keyCode == ENTER) {
+												// Set self as the current item in focus
+												var self = $(':focus'),
+												// Set the form by the current item in focus
+												form = self.parents('form:eq(0)'),
+												focusable;
+
+												// Array of Indexable/Tab-able items
+												focusable = form.find('input,a,select,button,textarea,div[contenteditable=true]').filter(':visible');
+
+												function enterKey(){
+													if (e.which === 13 && !self.is('textarea')) { // [Enter] key
+
+														// If not a regular hyperlink/button/textarea
+														if ($.inArray(self, focusable) && (!self.is('a,button'))){
+															// Then prevent the default [Enter] key behaviour from submitting the form
+															e.preventDefault();
+														} // Otherwise follow the link/button as by design, or put new line in textarea
+
+														// Focus on the next item (either previous or next depending on shift)
+														focusable.eq(focusable.index(self) + (e.shiftKey ? -1 : 1)).focus();
+
+														return false;
+													}
+												}
+												// We need to capture the [Shift] key and check the [Enter] key either way.
+												if (e.shiftKey) { enterKey() } else { enterKey() }
+										}
+								},
+
+								render: function(){
+
+										var bllprvData = { recno:'', id: this.state.data.BLLPRV, name:''};
+										var insSearchData = { recno:'', name:this.state.data.PAYERNAME, shortCode:''};
+
+										return (
+												<div>
+													<div className="top-menu-bar">
+														<ul>
+														 <li onClick={this._print} style={{color : '#5bc0de'}}><i className="fa fa-print"></i> Print</li>
+														 <li onClick={this._saveParam} style={{color : '#5cb85c'}}><i className="fa fa-floppy-o"></i> Save Parameters</li>
+														 <li onClick={this._close} style={{color : '#d9534f'}}><i className="fa fa-times"></i> Close</li>
+												 		</ul>
+													</div>
+													<div className="main-body">
+														<input type="hidden" id="Recno" name="Recno" value="" />
+														<div style={{marginTop: '30px', marginLeft: '20px'}}>
+															<form ref="bankDepositForm" id="bankDepositForm">
+																	<fieldset className="scheduler-border">
+																		<legend className="scheduler-border text-info">Deposit Dates</legend>
+																			<div>
+																				<Lbl labelFor="fromDate" width="120px" text="Deposit Dates From :&nbsp;" />
+																				<DateInput width="130px" name="fromDate" value={this.state.data.FROMDATE}   onChange={this._setDataState}    />
+																				<Lbl labelFor="toDate" width="60px" text="To :&nbsp;" />
+																				<DateInput width="130px" name="toDate" value={this.state.data.TODATE} onChange={this._setDataState}    />
+																			</div>
+																	</fieldset>
+																	<fieldset className="scheduler-border">
+																		<legend className="scheduler-border text-info">Include Payment Types</legend>
+																			<div>
+																				<div style={{marginLeft: '10px'}}>
+																					<input type="checkbox" ref="cash" id="cash" name="cash"  value={this.state.data.CASH} onChange={this._setDataState} style={{margin:'0px'}} /> Cash <br/>
+																					<input type="checkbox" ref="checks" id="checks" name="checks"  value={this.state.data.CHECKS} onChange={this._setDataState} style={{margin:'0px'}} /> Insurance & Patient Checks<br/>
+																					<input type="checkbox" ref="credits" id="credits" name="credits" value={this.state.data.CREDITS} onChange={this._setDataState} style={{margin:'0px'}} /> Credit Cards<br />
+																					<input type="checkbox" ref="eft" id="eft" name="eft" value={this.state.data.EFT} onChange={this._setDataState} style={{margin:'0px'}} /> EFT<br />
+																					<input type="checkbox" ref="bulkPay" id="bulkPay" name="bulkPay"  value={this.state.data.BULKPAY} onChange={this._setDataState} style={{margin:'0px'}} /> Bulk Payment Checks posted Manually<br />
+																					<input type="checkbox" ref="autoRemitt" id="autoRemitt" name="autoRemitt" value={this.state.data.AUTOREMITT} onChange={this._setDataState} style={{margin:'0px'}} /> Bulk Payment Checks posted via Remittance Advice (ERA) <br />
+																					<input type="checkbox" ref="showPayerName" id="showPayerName" name="showPayerName" value={this.state.data.SHOWPAYERNAME} onChange={this._setDataState} style={{margin:'0px'}} /> Payer Name
+																				</div>
+																			</div>
+																	</fieldset>
+																	<fieldset className="scheduler-border">
+																		<legend className="scheduler-border text-info">Filters</legend>
+																			<div>
+																					<Lbl labelFor="batchNo" width="120px" text="Batch No :&nbsp;" />
+																					<TxtInput name="batchNo" width="130px" value={this.state.data.BATCHNO}   onChange={this._setDataState}  />
+																					<Lbl labelFor="userIdFilter" width="60px" text="User ID :&nbsp;" />
+																					<TxtInput name="userIdFilter" width="130px" value={this.state.data.USERIDFILTER}   onChange={this._setDataState}  />
+																			</div>
+																			<div>
+																					<Lbl labelFor="bllPrv" width="120px" text="Billing Provider :&nbsp;" />
+																					<BllPrvSearch width="74px"  bllprvData={bllprvData} colName={"BLLPRV"}  onSelect={this._updateBllprvData} showSelectedInfoBox={false} />
+																					<Lbl labelFor="payer" width="60px" text="Payer :&nbsp;" />
+																					<InsSearch  width="280px"  insSearchData={insSearchData} onSelect={this._updateInsSearchData} showSelectedInfoBox={false} />
+																			 </div>
+																	</fieldset>
+															</form>
+														</div>
+													</div>
+												</div>
+										);
+							 },
+							 componentDidMount : function() {
+
+								 $(document.body).on('keydown', this._keyDown);
+								 $('#fromDate').focus();;
+
+								 this._loadParam();
+
+									var self = this;
+
+									ipcRenderer.on('get-components-data', function (event, data){
+
+											if(data.bllprvData && data.colName){
+
+												self.state.data.BLLPRV  = data.bllprvData.BLLPRVID.value;
+
+												console.log(self.state.data.BLLPRV);
+
+												self.setState({data: self.state.data});
+											}
+									});
+
+							 }
+
+
+
+					});
+
+					ReactDOM.render(
+								 <BankDeposit  />,
+								 document.getElementById('divBllPrv')
+					);
+
+			</script>
+
+
+
+	</head>
+  <body>
+	<div id="divBllPrv">
+	</div>
+
+
+  </body>
+</html>

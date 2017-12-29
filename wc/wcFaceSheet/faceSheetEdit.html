@@ -1,0 +1,669 @@
+<html>
+<head>
+	<title>Patient Letter(web version)</title>
+	<style>
+		.lbl {
+			display: inline-block;
+			font-family: Segoe UI;
+			font-weight: lighter;
+			font-size: 12px;
+			text-align: right;
+		}
+
+		.txt {
+			display: inline-block;
+			font-family: Segoe UI;
+			font-weight: normal;
+			font-size: 12px;
+			text-align: left;
+		}
+		.hdr {
+			display: inline-block;
+			font-family: Segoe UI;
+			font-weight: normal;
+			width:100%;
+			text-align: center;
+		}
+	</style>
+	<script type="text/javascript">
+        var remote = require('electron').remote;
+        var nodeModulesPath = remote.getGlobal('nodeModulesPath');
+        var $ = jQuery = require(nodeModulesPath + "jquery");
+	</script>
+	<script type="text/javascript" src="faceSheetedit.js"></script>
+	<script type="text/x-handlebars-template" id="nppTemplate">
+		<div class="container">
+			<form id="nppForm" class="form-horizontal">
+				<div >
+					<button type="button" id="btnPrint" name="btnPrint" style="background-color:PaleGreen;" onclick="clickPrint()"> Print</button>
+					<button type="button" id="btnClose" name="btnClose" style="background-color:#FA8072;" onclick="clickClose()"> Close</button>
+				</div>
+				<div id="formContent">
+					<div>
+						<label class="hdr">{{providerName}}</label>
+					</div>
+					{{#if providerStreet}}
+					<div>
+						<label class="hdr">{{providerStreet}}</label>
+					</div>
+					{{/if}}
+					{{#if providerCityStateZip}}
+					<div>
+						<label class="hdr">{{providerCityStateZip}}</label>
+					</div>
+					{{/if}}
+					{{#if providerPhoneFax}}
+					<div>
+						<label class="hdr">{{providerPhoneFax}}</label>
+					</div>
+					{{/if}}
+					{{#with npp}}
+					<fieldset style="background-color:#F0F8FF; border-color:#004080;">
+						<legend style="color:#004080; font-family:Segoe UI;">Demographics</legend>
+						<div>
+							<div style="width:30%; float:left">
+								<label class="lbl" style="width:50px">Pat Id:</label>
+								<label class="txt">{{PATID.value}}</label>
+							</div>
+							<div style="width:30%; float:left">
+								<label class="lbl" style="width:50px">Prim Id:</label>
+								<label class="txt">{{PRIMARYID.value}}</label>
+							</div>
+							<div style="width:40%; float:left">
+								<label class="lbl" style="width:50px">Claim No:</label>
+								<label class="txt">{{CLAIMNO.value}}</label>
+								<label class="lbl" style="width:50px">Chart#:</label>
+								<label class="txt">{{CHARTNO.value}}</label>
+							</div>
+						</div>
+						<div>
+							<div style="width:30%; float:left">
+								<label class="lbl" style="width:50px">Last:</label>
+								<label class="txt">{{LASTNAME.value}}</label>
+							</div>
+							<div style="width:30%; float:left">
+								<label class="lbl" style="width:50px">First:</label>
+								<label class="txt">{{FIRSTNAME.value}}</label>
+							</div>
+							<div style="width:40%; float:left">
+								<label class="lbl" style="width:50px">MI:</label>
+								<label class="txt" style="width:50px">{{MI.value}}</label>
+								<label class="lbl" style="display: inline-block; width:50px; text-align:right">Title:</label>
+								<label class="txt">{{TITLE.value}}</label>
+							</div>
+						</div>
+						<div>
+							<div style="width:30%; float:left">
+								<label class="lbl" style="width:50px">Street:</label>
+								<label class="txt">{{STREET.value}}</label>
+							</div>
+							<div style="width:30%; float:left">
+								<label class="lbl" style="width:50px">City:</label>
+								<label class="txt">{{CITY.value}}</label>
+							</div>
+							<div style="width:40%; float:left">
+								<label class="lbl" style="width:50px">State:</label>
+								<label class="txt" style="width:50px">{{STATE.value}}</label>
+								<label class="lbl" style="display: inline-block; width:50px; text-align:right">Zip:</label>
+								<label class="txt">{{ZIP.value}}</label>
+							</div>
+						</div>
+						<div>
+							<div style="width:30%; float:left">
+								<label class="lbl" style="width:50px">DOB:</label>
+								<label class="txt" style="width:70px">{{BIRTHDATE.value}}</label>
+								<label class="lbl" style="display: inline-block; width:20px; text-align:right">Age:</label>
+								<label class="txt" style="width:20px">{{AGE.value}}</label>
+							</div>
+							<div style="width:30%; float:left">
+								<label class="lbl" style="width:50px">Sex:</label>
+								<label class="txt" style="width:20px">{{SEX.value}}</label>
+								<label class="lbl" style="width:50px">Marital:</label>
+								<label class="txt">{{MARITAL.value}}</label>
+							</div>
+							<div style="width:40%; float:left">
+								<label class="lbl" style="width:50px">Phone:</label>
+								<label class="txt" style="width:80px">{{HOMEPHONE.value}}</label>
+								<label class="lbl" style="width:20px">Cell:</label>
+								<label class="txt">{{CELLPHONE.value}}</label>
+							</div>
+						</div>
+						<div>
+							<div style="width:30%; float:left">
+								<label class="lbl" style="width:50px">Alias:</label>
+								<label class="txt">{{ALIAS.value}}</label>
+							</div>
+							<div style="width:30%; float:left">
+								<label class="lbl" style="width:50px">Class:</label>
+								<label class="txt">{{CLASS.value}}</label>
+							</div>
+							<div style="width:40%; float:left">
+								<label class="lbl" style="width:50px">Drv Lic:</label>
+								<label class="txt">{{DRIVERLIC.value}}</label>
+							</div>
+						</div>
+						<div>
+							<div style="width:30%; float:left">
+								<label class="lbl" style="width:50px">Race:</label>
+								<label class="txt">{{RACE.value}}</label>
+							</div>
+							<div style="width:30%; float:left">
+								<label class="lbl" style="width:50px">Latino:</label>
+								<label class="txt">{{LATINO.value}}</label>
+							</div>
+							<div style="width:40%; float:left">
+								<label class="lbl" style="width:50px">Language:</label>
+								<label class="txt">{{LANGUAGE.value}}</label>
+							</div>
+						</div>
+					</fieldset>
+					<fieldset style="background-color:#F0F8FF; border-color:#004080;">
+						<legend style="color:#004080; font-family:Segoe UI;">Employer</legend>
+						<div>
+							<div style="width:40%; float:left">
+								<label class="lbl" style="width:50px">Name:</label>
+								<label class="txt">{{EMPLOYER.value}}</label>
+							</div>
+							<div style="width:30%; float:left">
+								<label class="lbl" style="width:50px">Occup:</label>
+								<label class="txt">{{OCCUPATION.value}}</label>
+							</div>
+							<div style="width:30%; float:left">
+								<label class="lbl" style="width:50px">Phone:</label>
+								<label class="txt">{{EMPPHONE.value}}</label>
+							</div>
+						</div>
+						<div>
+							<div style="width:40%; float:left">
+								<label class="lbl" style="width:50px">Street:</label>
+								<label class="txt">{{EMPSTREET.value}}</label>
+							</div>
+							<div style="width:30%; float:left">
+								<label class="lbl" style="width:50px">City:</label>
+								<label class="txt">{{EMPCITY.value}}</label>
+							</div>
+							<div style="width:30%; float:left">
+								<label class="lbl" style="width:50px">State:</label>
+								<label class="txt" style="width:20px">{{EMPSTATE.value}}</label>
+								<label class="lbl" style="display: inline-block; width:20px; text-align:right">Zip:</label>
+								<label class="txt">{{EMPZIP.value}}</label>
+							</div>
+						</div>
+					</fieldset>
+					{{#if COEMPLOYER.value}}
+					<fieldset style="background-color:#F0F8FF; border-color:#004080;">
+						<legend style="color:#004080; font-family:Segoe UI;">Co-Employer</legend>
+						<div>
+							<div style="width:40%; float:left">
+								<label class="lbl" style="width:50px">Name:</label>
+								<label class="txt">{{COEMPLOYER.value}}</label>
+							</div>
+							<div style="width:30%; float:left">
+								<label class="lbl" style="width:50px">Phone:</label>
+								<label class="txt">{{COEMPPHONE.value}}</label>
+							</div>
+						</div>
+						<div>
+							<div style="width:40%; float:left">
+								<label class="lbl" style="width:50px">Street:</label>
+								<label class="txt">{{COEMPSTREET.value}}</label>
+							</div>
+							<div style="width:30%; float:left">
+								<label class="lbl" style="width:50px">City:</label>
+								<label class="txt">{{COEMPCITY.value}}</label>
+							</div>
+							<div style="width:30%; float:left">
+								<label class="lbl" style="width:50px">State:</label>
+								<label class="txt" style="width:20px">{{COEMPSTATE.value}}</label>
+								<label class="lbl" style="display: inline-block; width:20px; text-align:right">Zip:</label>
+								<label class="txt">{{COEMPZIP.value}}</label>
+							</div>
+						</div>
+					</fieldset>
+					{{/if}}
+
+					<fieldset style="background-color:#F0F8FF; border-color:#004080;">
+						<legend style="color:#004080; font-family:Segoe UI;">WC</legend>
+						<div>
+							<div style="width:50%; float:left">
+								<label class="lbl" style="width:30px">D.O.I.:</label>
+								<label class="txt">{{INJDATES.value}}</label>
+							</div>
+							<div style="width:50%; float:left">
+								<label class="lbl" style="width:50px">WCAB:</label>
+								<label class="txt">{{WCAB.value}}</label>
+							</div>
+						</div>
+					</fieldset>
+					<fieldset style="background-color:#F0F8FF; border-color:#004080;">
+						<legend style="color:#004080; font-family:Segoe UI;">Primary Insurance</legend>
+						<div>
+							<div style="width:33%; float:left">
+								<label class="lbl" style="width:50px">Name:</label>
+								<label class="txt">{{PRMINSURANCE.value}}</label>
+							</div>
+							<div style="width:33%; float:left">
+								<label class="lbl" style="width:50px">Phone:</label>
+								<label class="txt">{{PRMINSPHONE.value}}</label>
+							</div>
+							<div style="width:33%; float:left">
+								<label class="lbl" style="width:50px">Fax:</label>
+								<label class="txt">{{PRMINSFAX.value}}</label>
+							</div>
+						</div>
+						<div>
+							<div style="width:33%; float:left">
+								<label class="lbl" style="width:50px">Street:</label>
+								<label class="txt">{{PRMINSSTREET.value}}</label>
+							</div>
+							<div style="width:33%; float:left">
+								<label class="lbl" style="width:50px">City:</label>
+								<label class="txt">{{PRMINSCITY.value}}</label>
+							</div>
+							<div style="width:33%; float:left">
+								<label class="lbl" style="width:50px">State:</label>
+								<label class="txt" style="width:20px">{{PRMINSSTATE.value}}</label>
+								<label class="lbl" style="display: inline-block; width:30px; text-align:right">Zip:</label>
+								<label class="txt">{{PRMINSZIP.value}}</label>
+							</div>
+						</div>
+					</fieldset>
+					<fieldset style="background-color:#F0F8FF; border-color:#004080;">
+						<legend style="color:#004080; font-family:Segoe UI;">Adjustor</legend>
+						<div>
+							<div style="width:33%; float:left">
+								<label class="lbl" style="width:50px">Name:</label>
+								<label class="txt">{{ADJUSTOR.value}}</label>
+							</div>
+							<div style="width:33%; float:left">
+								<label class="lbl" style="width:50px">Phone:</label>
+								<label class="txt">{{ADJUSTORPHONE.value}}</label>
+							</div>
+							<div style="width:33%; float:left">
+								<label class="lbl" style="width:50px">Fax:</label>
+								<label class="txt">{{ADJUSTORFAX.value}}</label>
+							</div>
+						</div>
+						<div>
+							<div style="width:33%; float:left">
+								<label class="lbl" style="width:50px">Street:</label>
+								<label class="txt">{{ADJUSTORSTREET.value}}</label>
+							</div>
+							<div style="width:33%; float:left">
+								<label class="lbl" style="width:50px">City:</label>
+								<label class="txt">{{ADJUSTORCITY.value}}</label>
+							</div>
+							<div style="width:33%; float:left">
+								<label class="lbl" style="width:50px">State:</label>
+								<label class="txt" style="width:20px">{{ADJUSTORSTATE.value}}</label>
+								<label class="lbl" style="display: inline-block; width:30px; text-align:right">Zip:</label>
+								<label class="txt">{{ADJUSTORZIP.value}}</label>
+							</div>
+						</div>
+					</fieldset>
+					{{#if SECINSURANCE.value}}
+					<fieldset style="background-color:#F0F8FF; border-color:#004080;">
+						<legend style="color:#004080; font-family:Segoe UI;">Secondary Insurance</legend>
+						<div>
+							<div style="width:33%; float:left">
+								<label class="lbl" style="width:50px">Name:</label>
+								<label class="txt">{{SECINSURANCE.value}}</label>
+							</div>
+							<div style="width:33%; float:left">
+								<label class="lbl" style="width:50px">Phone:</label>
+								<label class="txt">{{SECINSPHONE.value}}</label>
+							</div>
+							<div style="width:33%; float:left">
+								<label class="lbl" style="width:50px">Fax:</label>
+								<label class="txt">{{SECINSFAX.value}}</label>
+							</div>
+						</div>
+						<div>
+							<div style="width:33%; float:left">
+								<label class="lbl" style="width:50px">Street:</label>
+								<label class="txt">{{SECINSSTREET.value}}</label>
+							</div>
+							<div style="width:33%; float:left">
+								<label class="lbl" style="width:50px">City:</label>
+								<label class="txt">{{SECINSCITY.value}}</label>
+							</div>
+							<div style="width:33%; float:left">
+								<label class="lbl" style="width:50px">State:</label>
+								<label class="txt" style="width:20px">{{SECINSSTATE.value}}</label>
+								<label class="lbl" style="display: inline-block; width:30px; text-align:right">Zip:</label>
+								<label class="txt" >{{SECINSZIP.value}}</label>
+							</div>
+						</div>
+					</fieldset>
+					{{/if}}
+					<fieldset style="background-color:#F0F8FF; border-color:#004080;">
+						<legend style="color:#004080; font-family:Segoe UI;">Attorney</legend>
+						<div>
+							<label class="lbl" style="width:50px">Law Firm:</label>
+							<label class="txt" >{{LAWFIRM.value}}</label>
+						</div>
+						<div>
+							<div style="width:33%; float:left">
+								<label class="lbl" style="width:50px">Name:</label>
+								<label class="txt" >{{ATTORNEY.value}}</label>
+							</div>
+							<div style="width:33%; float:left">
+								<label class="lbl" style="width:50px">Phone:</label>
+								<label class="txt" >{{ATTPHONE.value}}</label>
+							</div>
+							<div style="width:33%; float:left">
+								<label class="lbl" style="width:50px">Fax:</label>
+								<label class="txt" >{{ATTFAX.value}}</label>
+							</div>
+						</div>
+						<div>
+							<div style="width:33%; float:left">
+								<label class="lbl" style="width:50px">Street:</label>
+								<label class="txt" >{{ATTSTREET.value}}</label>
+							</div>
+							<div style="width:33%; float:left">
+								<label class="lbl" style="width:50px">City:</label>
+								<label class="txt" >{{ATTCITY.value}}</label>
+							</div>
+							<div style="width:33%; float:left">
+								<label class="lbl" style="width:50px">State:</label>
+								<label class="txt" style="width:30px">{{ATTSTATE.value}}</label>
+								<label class="lbl" style="width:30px">Zip:</label>
+								<label class="txt" >{{ATTZIP.value}}</label>
+							</div>
+						</div>
+					</fieldset>
+					{{#if DEFATTORNEY.value}}
+					<fieldset style="background-color:#F0F8FF; border-color:#004080;">
+						<legend style="color:#004080; font-family:Segoe UI;">Defense Attorney</legend>
+						<div>
+							<label class="lbl" style="width:50px">Law Firm:</label>
+							<label class="txt" >{{DEFATTLAWFIRM.value}}</label>
+						</div>
+						<div>
+							<div style="width:33%; float:left">
+								<label class="lbl" style="width:50px">Name:</label>
+								<label class="txt" >{{DEFATTORNEY.value}}</label>
+							</div>
+							<div style="width:33%; float:left">
+								<label class="lbl" style="width:50px">Phone:</label>
+								<label class="txt" >{{DEFATTPHONE.value}}</label>
+							</div>
+							<div style="width:33%; float:left">
+								<label class="lbl" style="width:50px">Fax:</label>
+								<label class="txt" >{{DEFATTFAX.value}}</label>
+							</div>
+						</div>
+						<div>
+							<div style="width:33%; float:left">
+								<label class="lbl" style="width:50px">Street:</label>
+								<label class="txt" >{{DEFATTSTREET.value}}</label>
+							</div>
+							<div style="width:33%; float:left">
+								<label class="lbl" style="width:50px">City:</label>
+								<label class="txt" >{{DEFATTCITY.value}}</label>
+							</div>
+							<div style="width:33%; float:left">
+								<label class="lbl" style="width:50px">State:</label>
+								<label class="txt" style="width:30px">{{DEFATTSTATE.value}}</label>
+								<label class="lbl" style="width:30px">Zip:</label>
+								<label class="txt" >{{DEFATTZIP.value}}</label>
+							</div>
+						</div>
+					</fieldset>
+					{{/if}}
+					{{#if CODEFATTORNEY.value}}
+					<fieldset style="background-color:#F0F8FF; border-color:#004080;">
+						<legend style="color:#004080; font-family:Segoe UI;">Co-Defense Attorney</legend>
+						<div>
+							<label class="lbl" style="width:50px">Law Firm:</label>
+							<label class="txt" >{{CODEFATTLAWFIRM.value}}</label>
+						</div>
+						<div>
+							<div style="width:33%; float:left">
+								<label class="lbl" style="width:50px">Name:</label>
+								<label class="txt" >{{CODEFATTORNEY.value}}</label>
+							</div>
+							<div style="width:33%; float:left">
+								<label class="lbl" style="width:50px">Phone:</label>
+								<label class="txt" >{{CODEFATTPHONE.value}}</label>
+							</div>
+							<div style="width:33%; float:left">
+								<label class="lbl" style="width:50px">Fax:</label>
+								<label class="txt" >{{CODEFATTFAX.value}}</label>
+							</div>
+						</div>
+						<div>
+							<div style="width:33%; float:left">
+								<label class="lbl" style="width:50px">Street:</label>
+								<label class="txt" >{{CODEFATTSTREET.value}}</label>
+							</div>
+							<div style="width:33%; float:left">
+								<label class="lbl" style="width:50px">City:</label>
+								<label class="txt" >{{CODEFATTCITY.value}}</label>
+							</div>
+							<div style="width:33%; float:left">
+								<label class="lbl" style="width:50px">State:</label>
+								<label class="txt" style="width:30px">{{CODEFATTSTATE.value}}</label>
+								<label class="lbl" style="width:30px">Zip:</label>
+								<label class="txt" >{{CODEFATTZIP.value}}</label>
+							</div>
+						</div>
+					</fieldset>
+					{{/if}}
+					<fieldset style="background-color:#F0F8FF; border-color:#004080;">
+						<legend style="color:#004080; font-family:Segoe UI;">Body Parts</legend>
+						<div>
+							{{#if BODYPART1.value}}
+							<div style="width:50%; float:left">
+								<label class="lbl" style="display: inline-block; width:15px; text-align:right">1:</label>
+								<label class="txt">{{BODYPART1.value}}</label>
+							</div>
+							{{/if}}
+							{{#if BODYPART2.value}}
+							<div style="width:50%; float:left">
+								<label class="lbl" style="display: inline-block; width:15px; text-align:right">2:</label>
+								<label class="txt">{{BODYPART2.value}}</label>
+							</div>
+							{{/if}}
+						</div>
+						<div>
+							{{#if BODYPART3.value}}
+							<div style="width:50%; float:left">
+								<label class="lbl" style="display: inline-block; width:15px; text-align:right">3:</label>
+								<label class="txt">{{BODYPART3.value}}</label>
+							</div>
+							{{/if}}
+							{{#if BODYPART4.value}}
+							<div style="width:50%; float:left">
+								<label class="lbl" style="display: inline-block; width:15px; text-align:right">4:</label>
+								<label class="txt">{{BODYPART4.value}}</label>
+							</div>
+							{{/if}}
+						</div>
+						<div>
+							{{#if BODYPART5.value}}
+							<div style="width:50%; float:left">
+								<label class="lbl" style="display: inline-block; width:15px; text-align:right">5:</label>
+								<label class="txt">{{BODYPART5.value}}</label>
+							</div>
+							{{/if}}
+							{{#if BODYPART6.value}}
+							<div style="width:50%; float:left">
+								<label class="lbl" style="display: inline-block; width:15px; text-align:right">6:</label>
+								<label class="txt">{{BODYPART6.value}}</label>
+							</div>
+							{{/if}}
+						</div>
+						<div>
+							{{#if BODYPART7.value}}
+							<div style="width:50%; float:left">
+								<label class="lbl" style="display: inline-block; width:15px; text-align:right">7:</label>
+								<label class="txt">{{BODYPART7.value}}</label>
+							</div>
+							{{/if}}
+							{{#if BODYPART8.value}}
+							<div style="width:50%; float:left">
+								<label class="lbl" style="display: inline-block; width:15px; text-align:right">8:</label>
+								<label class="txt">{{BODYPART8.value}}</label>
+							</div>
+							{{/if}}
+						</div>
+						<div>
+							{{#if BODYPART9.value}}
+							<div style="width:50%; float:left">
+								<label class="lbl" style="display: inline-block; width:15px; text-align:right">9:</label>
+								<label class="txt">{{BODYPART9.value}}</label>
+							</div>
+							{{#if BODYPART10.value}}
+							{{/if}}
+							<div style="width:50%; float:left">
+								<label class="lbl" style="display: inline-block; width:15px; text-align:right">10:</label>
+								<label class="txt">{{BODYPART10.value}}</label>
+							</div>
+							{{/if}}
+						</div>
+						<div>
+							{{#if BODYPART11.value}}
+							<div style="width:50%; float:left">
+								<label class="lbl" style="display: inline-block; width:15px; text-align:right">11:</label>
+								<label class="txt">{{BODYPART11.value}}</label>
+							</div>
+							{{/if}}
+							{{#if BODYPART12.value}}
+							<div style="width:50%; float:left">
+								<label class="lbl" style="display: inline-block; width:15px; text-align:right">12:</label>
+								<label class="txt">{{BODYPART12.value}}</label>
+							</div>
+							{{/if}}
+						</div>
+					</fieldset>
+					<fieldset style="background-color:#F0F8FF; border-color:#004080;">
+						<legend style="color:#004080; font-family:Segoe UI;">ICD Codes</legend>
+						{{#if ICDA.value}}
+						<div>
+							<label class="lbl" style="display: inline-block; width:15px; text-align:right">A:</label>
+							<label class="txt"  style="width:70px">{{ICDA.value}}</label>
+							<label class="txt">{{ICDDESCA.value}}</label>
+						</div>
+						{{/if}}
+						{{#if ICDB.value}}
+						<div>
+							<label class="lbl" style="display: inline-block; width:15px; text-align:right">B:</label>
+							<label class="txt"  style="width:70px">{{ICDB.value}}</label>
+							<label class="txt">{{ICDDESCB.value}}</label>
+						</div>
+						{{/if}}
+						{{#if ICDC.value}}
+						<div>
+							<label class="lbl" style="display: inline-block; width:15px; text-align:right">C:</label>
+							<label class="txt"  style="width:70px">{{ICDC.value}}</label>
+							<label class="txt">{{ICDDESCC.value}}</label>
+						</div>
+						{{/if}}
+						{{#if ICDD.value}}
+						<div>
+							<label class="lbl" style="display: inline-block; width:15px; text-align:right">D:</label>
+							<label class="txt"  style="width:70px">{{ICDD.value}}</label>
+							<label class="txt">{{ICDDESCD.value}}</label>
+						</div>
+						{{/if}}
+						{{#if ICDE.value}}
+						<div>
+							<label class="lbl" style="display: inline-block; width:15px; text-align:right">E:</label>
+							<label class="txt"  style="width:70px">{{ICDE.value}}</label>
+							<label class="txt">{{ICDDESCE.value}}</label>
+						</div>
+						{{/if}}
+						{{#if ICDF.value}}
+						<div>
+							<label class="lbl" style="display: inline-block; width:15px; text-align:right">F:</label>
+							<label class="txt"  style="width:70px">{{ICDF.value}}</label>
+							<label class="txt">{{ICDDESCF.value}}</label>
+						</div>
+						{{/if}}
+						{{#if ICDG.value}}
+						<div>
+							<label class="lbl" style="display: inline-block; width:15px; text-align:right">G:</label>
+							<label class="txt"  style="width:70px">{{ICDG.value}}</label>
+							<label class="txt">{{ICDDESCG.value}}</label>
+						</div>
+						{{/if}}
+						{{#if ICDH.value}}
+						<div>
+							<label class="lbl" style="display: inline-block; width:15px; text-align:right">H:</label>
+							<label class="txt"  style="width:70px">{{ICDH.value}}</label>
+							<label class="txt">{{ICDDESCH.value}}</label>
+						</div>
+						{{/if}}
+						{{#if ICDI.value}}
+						<div>
+							<label class="lbl" style="display: inline-block; width:15px; text-align:right">I:</label>
+							<label class="txt"  style="width:70px">{{ICDI.value}}</label>
+							<label class="txt">{{ICDDESCI.value}}</label>
+						</div>
+						{{/if}}
+						{{#if ICDJ.value}}
+						<div>
+							<label class="lbl" style="display: inline-block; width:15px; text-align:right">J:</label>
+							<label class="txt"  style="width:70px">{{ICDJ.value}}</label>
+							<label class="txt">{{ICDDESCJ.value}}</label>
+						</div>
+						{{/if}}
+						{{#if ICDK.value}}
+						<div>
+							<label class="lbl" style="display: inline-block; width:15px; text-align:right">K:</label>
+							<label class="txt"  style="width:70px">{{ICDK.value}}</label>
+							<label class="txt">{{ICDDESCK.value}}</label>
+						</div>
+						{{/if}}
+						{{#if ICDL.value}}
+						<div>
+							<label class="lbl" style="display: inline-block; width:15px; text-align:right">L:</label>
+							<label class="txt"  style="width:70px">{{ICDL.value}}</label>
+							<label class="txt">{{ICDDESCL.value}}</label>
+						</div>
+						{{/if}}
+					</fieldset>
+					<fieldset style="background-color:#F0F8FF; border-color:#004080;">
+						<legend style="color:#004080; font-family:Segoe UI;"></legend>
+						<div>
+							<div style="width:20%; float:left">
+								<label class="lbl" style="width:50px">Entered:</label>
+								<label class="txt">{{USERID.value}}</label>
+							</div>
+							<div style="width:20%; float:left">
+								<label class="lbl" style="width:50px">Date:</label>
+								<label class="txt">{{ENTRYDATE.value}}</label>
+							</div>
+							<div style="width:20%; float:left">
+								<label class="lbl" style="width:50px">Modified:</label>
+								<label class="txt">{{MODIFYUSERID.value}}</label>
+							</div>
+							<div style="width:20%; float:left">
+								<label class="lbl" style="width:50px">Date:</label>
+								<label class="txt">{{MODIFYDATE.value}}</label>
+							</div>
+						</div>
+					</fieldset>
+					{{/with}}
+					</fieldset>
+					<fieldset style="background-color:#F0F8FF; border-color:#004080;">
+						<legend style="color:#004080; font-family:Segoe UI;"></legend>
+						<div>
+							<div style="width:50%; float:left">
+								<label class="lbl" style="width:100px">Signature:</label>
+							</div>
+							<div style="width:50%; float:left">
+								<label class="lbl" style="width:150px">Driver License No:</label>
+							</div>
+						</div>
+					</fieldset>
+				</div>
+			</form>
+		</div>
+	</script>
+</head>
+ <body>
+ </body>
+</html>

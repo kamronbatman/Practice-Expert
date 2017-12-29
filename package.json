@@ -1,0 +1,33 @@
+{
+  "name": "Practice-Expert",
+  "version": "1.0.0",
+  "description": "Practice Expert",
+  "main": "app.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "base64-arraybuffer": "^0.1.5",
+    "blobinfo": "^0.1.2",
+    "bootbox": "^4.4.0",
+    "bootstrap": "^3.3.7",
+    "bootstrap-switch": "^3.3.2",
+    "camelcase": "^3.0.0",
+    "electron-prebuilt": "^1.3.3",
+    "electron-reload": "^1.0.2",
+    "encodeurl": "^1.0.1",
+    "fixed-data-table": "^0.6.0",
+    "handlebars": "^4.0.5",
+    "interfax": "^0.8.0",
+    "jquery": "^3.1.0",
+    "lodash": "^4.5.0",
+    "moment": "^2.14.1",
+    "nodemailer": "^3.0.2",
+    "react": "^0.14.7",
+    "react-dom": "^0.14.7",
+    "tedious": "^1.14.0",
+    "toastr": "^2.1.2"
+  }
+}

@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Add/Edit Zip Code(web version)</title>
+    <link rel="stylesheet" type="text/css" href="../../public/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="../../public/font-awesome-4.5.0/css/font-awesome.min.css">
+    <link rel="stylesheet" type="text/css" href="../../public/stylesheets/calmed.css">
+    <script type="text/javascript">
+        var remote = require('electron').remote;
+        var nodeModulesPath = remote.getGlobal('nodeModulesPath');
+        var appPath = remote.getGlobal('appPath');
+        var $ = jQuery = require(nodeModulesPath + "jquery");
+        //React
+        var React = require(nodeModulesPath + "react");
+        var ReactDOM = require(nodeModulesPath + "react-dom");
+        //Other
+        var ipcRenderer = require('electron').ipcRenderer;
+        var cmGlb = remote.getGlobal('cmGlb');
+        var moment = require(nodeModulesPath + 'moment');
+        var bootbox = require(nodeModulesPath + 'bootbox');
+        //other
+        var errorMessages = require(appPath + '/common/global/error-messages.js');
+        var zipSql = require(appPath + "/dc/dcZip/zipSql.js");
+    </script>
+    <script src="../../public/bootstrap/js/bootstrap.min.js"></script>
+    <script src="../../public/javascripts/JSXTransformer.js"></script>
+    <!--Components -->
+	  <script type="text/jsx" src="../../common/user_controls/txtInput.jsx"></script>
+    <script type="text/jsx" src="../../common/user_controls/lbl.jsx"></script>
+    <script type="text/jsx">
+
+        var ZipEdit = React.createClass ({
+
+              getInitialState : function(){
+                  return {
+                    data : {
+                          RECNO : {value : ''},
+                          ZIPCODE : {value : ''},
+                          SHORTCODE : {value : ''},
+                          CITY : {value : ''},
+                          STATE : {value : ''},
+                          PHONE : {value : ''},
+                          TAXCODE : {value : ''},
+                          TAX : {value : ''},
+                          ENTRYDATE: {value: moment().format('L')},
+                          USERID: {value: cmGlb.userId}
+                    },
+                    errMsg : {
+                        ZIPCODE : "", CITY :  "", SHORTCODE : ""
+                    },
+                    dirty : false,
+                    parentWindowID : null,
+                    isComponent : false,
+                    colName: ""
+                  };
+              },
+              _promiseSave: function(){
+
+                this._uiValidation();
+                var validateUniqueZipCode = this._validateUniqueZipCode();
+                var validateUniqueShortCode = this._validateUniqueShortCode()
+
+                var self = this;
+
+                  Promise.all([
+
+                    validateUniqueZipCode,
+                    validateUniqueShortCode
+                  ]).then(function(values){
+
+                      console.log(values);
+                      self._save();
+                  }).catch(function(err){
+
+                  //We are not using catch/err right now.
+                  //We are only using Reslove right now.
+                  //Its useful when we throw error using Reject.
+                  //For future use.
+                  console.error('Promise ERR : ', err);
+                });
+              },
+              _save: function()
+              {
+                if(this.state.errMsg.ZIPCODE ||  this.state.errMsg.CITY || this.state.errMsg.SHORTCODE)
+                {
+                  bootbox.alert("Please fix the errors.", function () {});
+                }
+                else
+                {
+                    var self = this;
+
+                    if(self.state.data.TAX.value)
+                    {
+                      self.state.data.TAX.value =  Math.round(self.state.data.TAX.value * 100) / 100;
+                    }
+
+                    self.setState({data : self.state.data})
+
+                    console.log(self.state.data.TAX.value);
+
+                    zipSql.zipSave(self.state.data, function(err, record) {
+
+                        if(err)
+                        {
+                            alert("Error while Saving Data.")
+                        }
+                        else
+                        {
+                          var parentWindowID = self.state.parentWindowID;
+
+                          if(parentWindowID)
+                          {
+                            const BrowserWindow = require('electron').remote.BrowserWindow;
+                            const fromWindow = BrowserWindow.fromId(parentWindowID);
+
+                            if(self.state.isComponent)
+                            {
+                              var data = {zipData : self.state.data, colName: self.state.colName};
+                              fromWindow.webContents.send('get-components-data', data);
+                            }
+                            else
+                            {
+                              var data = self.state.data;
+
+                              if(self.state.data.RECNO.value)
+                              {
+                                fromWindow.webContents.send('get-edit-data', data);
+                              }
+                              else
+                              {
+                                fromWindow.webContents.send('refresh-data');
+                              }
+                            }
+                            window.close();
+                          }
+                        }
+
+                    });
+                }
+              },
+              _close: function(event)
+               {
+
+                 var self=  this;
+
+                if(this.state.dirty) {
+
+                  bootbox.confirm("You will lose your changes please save before close", function (result) {
+                      if(result)
+                      {}
+                      else {
+                        self._windowClose();
+                      }
+                  });
+
+                }
+                else {
+                    self._windowClose();
+                }
+
+              },
+              _windowClose(){
+
+                  var varClose = setInterval(function(){
+                  if(!this.state.isWaitToClose)
+                  {
+                    window.close();
+                    clearInterval(varClose);
+                  }
+
+                }, 200);
+              },
+              _delete: function() {
+
+                var recordnumber = this.state.data.RECNO.value;
+                var self = this;
+                if(recordnumber){
+                  bootbox.confirm("This ZipCdoe will be permanently deleted and cannot be recovered. Are you sure?", function (result) {
+                    if(result){
+                      zipSql.zipDelete(recordnumber, function(err, record){
+
+                          if(err){
+                              bootbox.alert("Error while deleting record.", function () {
+                              });
+                          }
+                          else{
+
+                            var parentWindowID = self.state.parentWindowID;
+                            const BrowserWindow = require('electron').remote.BrowserWindow;
+                            const fromWindow = BrowserWindow.fromId(parentWindowID);
+                            fromWindow.webContents.send('refresh-data');
+
+                            window.close();
+                          }
+                      });
+                    }
+                  });
+                }
+
+              },
+              _validateUniqueZipCode: function()
+              {
+                  this.state.isWaitToClose =  true;
+
+                  var self = this;
+                  return  new Promise(function(resolve, reject){
+
+                      self.state.errMsg.ZIPCODE = "";
+                      var zipCode  = self.state.data.ZIPCODE.value;
+                      if(!zipCode){
+                          self.state.errMsg.ZIPCODE = errorMessages.messages.Required;
+                          self.setState({errMsg: self.state.errMsg});
+                          resolve("Validate ZipCdoe");
+                      }
+                      else
+                      {
+                          var recNo =   self.state.data.RECNO.value;
+                          zipSql.zipExists(zipCode, recNo, function (err , record) {
+
+                                this.state.isWaitToClose = false;
+
+
+                                if (record && record.length > 0)
+                                {
+                                  self.state.errMsg.ZIPCODE = errorMessages.messages.Exists;
+                                }
+                                else if(err)
+                                {
+                                  alert(err);
+                                }
+                                else
+                                {
+                                  self.state.errMsg.ZIPCODE = "";
+
+                                }
+
+                                self.setState({errMsg: self.state.errMsg});
+                                resolve("Validated Unique Id");
+                          });
+                      }
+                });
+
+              },
+              _validateUniqueShortCode: function()
+              {
+                this.state.isWaitToClose =  true;
+
+                var self = this;
+                return  new Promise(function(resolve, reject){
+
+                      self.state.errMsg.SHORTCODE = "";
+                      var shortCode  = self.state.data.SHORTCODE.value;
+                      if(shortCode)
+                      {
+                          var recNo =   self.state.data.RECNO.value;
+                        zipSql.zipShortCodeExsists(shortCode, recNo, function (err , record) {
+
+                                this.state.isWaitToClose = false;
+
+                                if (record && record.length > 0)
+                                {
+                                  self.state.errMsg.SHORTCODE = errorMessages.messages.Exists;
+                                }
+                                else if(err)
+                                {
+                                  alert(err);
+                                }
+
+                                self.setState({errMsg: self.state.errMsg});
+                                resolve("Validated Unique Id");
+                          });
+                      }
+                      else
+                      {
+                        self.setState({errMsg: self.state.errMsg});
+                        resolve("Validated Unique ShortCode");
+                      }
+                });
+
+
+              },
+              _uiValidation: function()
+              {
+                  var city  = this.state.data.CITY.value;
+                  if(!city)
+                  {
+                    this.state.errMsg.CITY = errorMessages.messages.Required;
+                    this.setState({errMsg: this.state.errMsg});
+                  }
+              },
+              _setDataState: function(event)
+              {
+                  this.state.dirty = true;
+                  var field = event.target.name;
+                  var value = "";
+
+                  if(event.target.type === "checkbox")
+                  {
+                    value = event.target.checked;
+                  }
+                  else
+                  {
+                      value = event.target.value;
+                      if(value)
+                      {
+                          value = value.toUpperCase();
+                      }
+                  }
+
+                  var key = field.toUpperCase();
+
+                  this.state.data[key].value = value;
+                  if(this.state.errMsg[key])
+                  {
+                      this.state.errMsg[key] = "";
+                  }
+                  this.setState({data :this.state.data, errMsg: this.state.errMsg});
+              },
+              _keyDown: function(e) {
+
+                  var F10 = 121;
+                  var ESC = 27;
+                  var ENTER = 13;
+                  if(e.keyCode == F10) {
+                      this._promiseSave();
+                  }
+                  else if(e.keyCode == ESC) {
+                      this._close();
+                  }
+                  else if(e.keyCode == ENTER) {
+                      e.preventDefault();
+                      // Set self as the current item in focus
+                      var self = $(':focus'),
+                      // Set the form by the current item in focus
+                      form = self.parents('form:eq(0)'),
+                      focusable;
+
+                      // Array of Indexable/Tab-able items
+                      focusable = form.find('input,a,select,button,textarea,div[contenteditable=true]').filter(':visible');
+
+                      function enterKey(){
+                        if (e.which === 13 && !self.is('textarea')) { // [Enter] key
+
+                          // If not a regular hyperlink/button/textarea
+                          if ($.inArray(self, focusable) && (!self.is('a,button'))){
+                            // Then prevent the default [Enter] key behaviour from submitting the form
+                            e.preventDefault();
+                          } // Otherwise follow the link/button as by design, or put new line in textarea
+
+                          // Focus on the next item (either previous or next depending on shift)
+                          focusable.eq(focusable.index(self) + (e.shiftKey ? -1 : 1)).focus();
+
+                          return false;
+                        }
+                      }
+                      // We need to capture the [Shift] key and check the [Enter] key either way.
+                      if (e.shiftKey) { enterKey() } else { enterKey() }
+                  }
+              },
+              render: function(){
+
+                var isDeleteButtonDisplay = false;
+                if(this.state.data.RECNO.value && !this.state.isComponent){
+                    isDeleteButtonDisplay =  true;
+                }
+
+                  return (
+
+                    <div>
+                        <div className="top-menu-bar">
+                          <ul>
+                             <li onClick={this._promiseSave} style={{color : '#5cb85c'}}><i className="fa fa-floppy-o"></i> Save</li>
+                             {isDeleteButtonDisplay ? <li onClick={this._delete} style={{color : '#d9534f'}}><i className="fa fa-minus-circle"></i> Delete</li> : null}
+                             <li onClick={this._close} style={{color : '#f0ad4e'}}><i className="fa fa-times"></i> Close</li>
+                          </ul>
+                        </div>
+                        <div className="main-body">
+                          <div style={{marginTop : '25px'}}>
+                            <form ref="zipForm" id="zipForm">
+                                  <div>
+                                    <Lbl labelFor="zipCode" width="90px" text="* Zip Code :&nbsp;" />
+                                    <TxtInput name="zipCode" width='100px' value={this.state.data.ZIPCODE.value} tabIndex="1" maxLength="11" onChange={this._setDataState}  onBlur={this._validateUniqueZipCode} error={this.state.errMsg.ZIPCODE}  />
+                                    <Lbl labelFor="shortCode" width="90px" text="Short Code :&nbsp;" />
+                                    <TxtInput name="shortCode" width='60px' value={this.state.data.SHORTCODE.value} tabIndex="2" maxLength="5" onChange={this._setDataState}  onBlur={this._validateUniqueShortCode} error={this.state.errMsg.SHORTCODE}  />
+                                  </div>
+                                  <div>
+                                    <Lbl labelFor="city" width="90px" text="* City :&nbsp;" />
+                                    <TxtInput name="city" width='250px' value={this.state.data.CITY.value} tabIndex="3" maxLength="25" onChange={this._setDataState}  onBlur={this._uiValidation} error={this.state.errMsg.CITY}  />
+                                  </div>
+                                  <div>
+                                    <Lbl labelFor="state" width="90px" text="State :&nbsp;" />
+                                    <TxtInput name="state" width='30px' value={this.state.data.STATE.value} tabIndex="4" maxLength="2" onChange={this._setDataState}  />
+                                    <Lbl labelFor="phone" width="170px" text="Phone :&nbsp;" />
+                                    <TxtInput name="phone" width='50px' value={this.state.data.PHONE.value} tabIndex="5" maxLength="4" onChange={this._setDataState}  />
+                                  </div>
+                                  <div>
+                                    <Lbl labelFor="taxCode" width="90px" text="Tax Code :&nbsp;" />
+                                    <TxtInput name="taxCode" width='110px' value={this.state.data.TAXCODE.value} tabIndex="6" maxLength="13" onChange={this._setDataState}  />
+                                    <Lbl labelFor="tax" width="100px" text="Tax% :&nbsp;" />
+                                    <TxtInput name="tax" width='40px' value={this.state.data.TAX.value} tabIndex="7" onChange={this._setDataState}  />
+                                  </div>
+                                  <hr  />
+                                  <div>
+                                    <label style={{marginLeft : '30px'}} className="text-muted">Date Entered : {this.state.data.ENTRYDATE.value}</label>
+                                    <label style={{marginLeft : '30px'}} className="text-muted">By Whom : {this.state.data.USERID.value}</label>
+                                  </div>
+                              </form>
+                            </div>
+                        </div>
+                    </div>
+
+                  );
+
+
+              },
+              componentDidMount : function() {
+
+                $(document.body).on('keydown', this._keyDown);
+                $("#zipCode").focus();
+
+                var self = this;
+
+                ipcRenderer.on('get-data', function (event, parentWindowID, data, colName) {
+                  // console.log(data);
+                  // console.log(colName);
+                  self.setState({parentWindowID : parentWindowID, colName: colName});
+
+                  if(data.recNo)
+                  {
+                    zipSql.zipRowRecNo(data.recNo, function(err, record){
+                        if(err)
+                        {
+                            alert("Error while getting Data.")
+                        }
+                        else
+                        {
+                            if(record)
+                            {
+
+                              if(record.ENTRYDATE.value) {
+                                  var entryDate = moment(record.ENTRYDATE.value);
+                                  entryDate.utc();
+                                  record.ENTRYDATE.value = entryDate.format('L');
+                              }
+
+                              if(record.TAX.value)
+                              {
+                                record.TAX.value = (Math.round(record.TAX.value * 100) / 100).toString();
+
+                              }
+
+
+                              self.setState({data : record})
+                            }
+                        }
+                    });
+                  }
+                  if(data.searchType){
+
+                    console.log(data);
+                    console.log(colName);
+                    self.setState({isComponent : data.isComponent});
+                    if(data.searchText){
+                      zipSql.zipRowZipCode(data.searchText.trim(), function(err, record){
+                          if(err){
+                              alert("Error while getting Data.")
+                          }
+                          else{
+                              if(record){
+
+                                if(record.ENTRYDATE.value){
+
+                                    var entryDate = moment(record.ENTRYDATE.value);
+                                    entryDate.utc();
+                                    record.ENTRYDATE.value = entryDate.format('L');
+                                  }
+                                self.setState({data : record})
+                              }
+                              else{
+                                self.state.data.ZIPCODE.value = data.searchText.trim();
+                                self.setState({data : self.state.data})
+                              }
+                          }
+                      });
+                    }
+                  }
+                });
+
+              }
+
+
+        });
+
+
+
+        ReactDOM.render(
+               <ZipEdit  />,
+               document.getElementById('divZipEdit')
+        );
+
+    </script>
+
+
+  </head>
+  <body>
+
+      <div id="divZipEdit">
+      </div>
+  </body>
+</html>

@@ -1,0 +1,65 @@
+<html>
+	<head>
+    <title>ONC data(web version)</title>
+		<script type="text/javascript">
+            var remote = require('electron').remote;
+            var nodeModulesPath = remote.getGlobal('nodeModulesPath');
+			var $ = jQuery = require(nodeModulesPath + "jquery");
+		</script>
+		<script type="text/javascript" src="oncEdit.js"></script>
+        <script type="text/x-handlebars-template" id="oncTemplate">
+            <div class="container">
+                {{#with onc}}
+                <form id="oncForm" class="form-horizontal">
+                    <div >
+                    	<button type="button" id="btnSave" name="btnSave" style="background-color:PaleGreen;" onclick="clickSave()"> Save</button>
+                        <button type="button" id="btnClose" name="btnClose" style="background-color:#FA8072;" onclick="clickClose()"> Close</button>
+                        <input type="hidden" id="Recno" name="Recno" value="{{RECNO.value}}" >
+                    </div>
+
+					<fieldset style="background-color:#F0F8FF; border-color:#004080;">
+						<legend style="color:#004080; font-family:Segoe UI";></legend>
+						<div>
+							<label for="BirthSex" style="font-weight: normal; width:150px; float:left">Birth Sex:</label>
+							<select id="BirthSex" name="BirthSex" class="dropdown form-control input-sm" maxlength="2" tabindex="1" style="background-color:#FCF5D8; font-size:12px; width:300px" >
+								<option value="" {{edithelper_selected BIRTHSEX.value ""}}>N/A</option>
+								<option value="M" {{edithelper_selected BIRTHSEX.value "M"}}>M</option>
+								<option value="F" {{edithelper_selected BIRTHSEX.value "F"}}>F</option>
+								<option value="U" {{edithelper_selected BIRTHSEX.value "U"}}>U</option>
+							</select>
+						</div>
+						<div>
+							<label for="SexualOrientation" style="font-weight: normal; width:150px; float:left">Sexual Orientation:</label>
+							<select id="SexualOrientation" name="SexualOrientation" class="dropdown form-control input-sm" maxlength="50" tabindex="2" style="background-color:#FCF5D8; font-size:12px; width:300px" >
+								<option value="" {{edithelper_selected SEXUALORIENTATION.value ""}}>N/A</option>
+								<option value="38628009" {{edithelper_selected SEXUALORIENTATION.value "38628009"}}>Lesbian, gay or homosexual(38628009)</option>
+								<option value="20430005" {{edithelper_selected SEXUALORIENTATION.value "20430005"}}>Straight or heterosexual(20430005)</option>
+								<option value="42035005" {{edithelper_selected SEXUALORIENTATION.value "42035005"}}>Bisexual(42035005)</option>
+								<option value="OTH" {{edithelper_selected SEXUALORIENTATION.value "OTH"}}>Other</option>
+								<option value="UNK" {{edithelper_selected SEXUALORIENTATION.value "UNK"}}>Unknown</option>
+								<option value="ASKU" {{edithelper_selected SEXUALORIENTATION.value "ASKU"}}>Choose not to disclose</option>
+							</select>
+						</div>
+						<div>
+							<label for="GenderIdentity" style="font-weight: normal; width:150px; float:left">Gender Identiry:</label>
+							<select id="GenderIdentity" name="GenderIdentity" class="dropdown form-control input-sm" maxlength="50" tabindex="3" style="background-color:#FCF5D8; font-size:12px; width:300px" >
+								<option value="" {{edithelper_selected GENDERIDENTITY.value ""}}>N/A</option>
+								<option value="446151000124109" {{edithelper_selected GENDERIDENTITY.value "446151000124109"}}>Identifies as Male(446151000124109)</option>
+								<option value="446141000124107" {{edithelper_selected GENDERIDENTITY.value "446141000124107"}}>Identifies as Female(446141000124107)</option>
+								<option value="407377005" {{edithelper_selected GENDERIDENTITY.value "407377005"}}>Female-to-Male(FTM)/Transgender Male(407377005)</option>
+								<option value="407376001" {{edithelper_selected GENDERIDENTITY.value "407376001"}}>Male-to-Female(MTF)/Transgender Female(407376001)</option>
+								<option value="446131000124102" {{edithelper_selected GENDERIDENTITY.value "446131000124102"}}>Genderqueer, not male or female(446131000124102)</option>
+								<option value="OTH" {{edithelper_selected GENDERIDENTITY.value "OTH"}}>Other</option>
+								<option value="ASKU" {{edithelper_selected GENDERIDENTITY.value "ASKU"}}>Choose not to disclose</option>
+							</select>
+						</div>
+					</fieldset>
+
+                </form>
+                {{/with}}
+            </div>
+        </script>
+	</head>
+  <body>
+  </body>
+</html>

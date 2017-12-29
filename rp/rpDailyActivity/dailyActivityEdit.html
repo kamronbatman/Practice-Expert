@@ -1,0 +1,564 @@
+<html>
+<title>Daily Activity Report(web version)</title>
+<head>
+	<link rel="stylesheet" type="text/css" href="../../public/bootstrap/css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="../../public/font-awesome-4.5.0/css/font-awesome.min.css">
+	<link rel="stylesheet" type="text/css" href="../../node_modules/fixed-data-table/dist/fixed-data-table-base.min.css">
+	<link rel="stylesheet" type="text/css" href="../../node_modules/fixed-data-table/dist/fixed-data-table-style.min.css">
+	<link rel="stylesheet" type="text/css" href="../../node_modules/fixed-data-table/dist/fixed-data-table.min.css">
+	<link rel="stylesheet" type="text/css" href="../../public/stylesheets/calmed.css">
+
+	<script type="text/javascript">
+        var remote = require('electron').remote;
+        var nodeModulesPath = remote.getGlobal('nodeModulesPath');
+        var appPath = remote.getGlobal('appPath');
+		var $ = jQuery = require(nodeModulesPath + "jquery");
+		//React
+		var React = require(nodeModulesPath + 'react');
+		var ReactDOM = require(nodeModulesPath + "react-dom");
+		//Other
+		var moment = require(nodeModulesPath + 'moment');
+
+		var ipcRenderer = require('electron').ipcRenderer;
+		var cmGlb = remote.getGlobal('cmGlb');
+		var dailyActivitySql = require(appPath + "/rp/rpDailyActivity/dailyActivitySql.js");
+		var _userId = cmGlb.userId;
+		var _companyName = cmGlb.companyName;
+		var	_providerName = (cmGlb.providerName ? cmGlb.providerName : '');
+
+		//console.log(_userId);
+	</script>
+	<script src="../../public/bootstrap/js/bootstrap.min.js"></script>
+	<script src="../../public/javascripts/JSXTransformer.js"></script>
+	<!--Components -->
+	<script type="text/jsx" src="../../common/user_controls/lbl.jsx"></script>
+	<script type="text/jsx" src="../../common/user_controls/txtInput.jsx"></script>
+	<script type="text/jsx" src="../../common/user_controls/dateInput.jsx"></script>
+	<script type="text/jsx" src="../../dc/dcBllprv/BllPrvSearch.jsx"></script>
+	<script type="text/jsx" src="../../dc/dcIns/InsSearch.jsx"></script>
+
+	<script type="text/jsx">
+		var _reportType = [
+			{value:"2", text:'Bal Forward/Post Date'},
+			{value:"1", text:'Open Item/Serv Date'}
+		];
+		var _groupCriteria = [
+			{value:"0", text:'DO NOT USE GROUPING'},
+			{value:"1", text:'PROVIDER'},
+			{value:"2", text:'ASSISTING PROVIDER'},
+			{value:"3", text:'FACILITY'},
+			{value:"4", text:'PRIMARY INSURANCE'},
+			{value:"5", text:'SECONDARY INSURANCE'},
+			{value:"6", text:'REFERRING DOCTOR'},
+			{value:"7", text:'REFERRING PARTY'},
+			{value:"8", text:'EMPLOYER'},
+			{value:"9", text:'ATTORNEY'},
+			{value:"10", text:'PATIENT CLASSIFICATION'},
+			{value:"11", text:'COVERAGE TYPE'},
+			//{value:"12", text:'CPT CODE'},
+			//{value:"13", text:'CPT CLASSIFICATION'},
+			{value:"14", text:'COLLECTION AGENCY'},
+			{value:"15", text:'PROVIDER SPECIALTY'},
+			{value:"16", text:'STATE'},
+			{value:"17", text:'ZIP CODE'}
+		];
+
+		var DailyActivity = React.createClass({
+				getInitialState: function() {
+					return {
+						data : {
+							USERID  : _userId,
+							USERIDFILTER : '',
+							FROMDATE : moment().format('YYYY-MM-DD'),
+							TODATE : moment().format('YYYY-MM-DD'),
+							COMPANYNAME : _companyName,
+							PROVIDERNAME : _providerName,
+							REPORTTYPE : '',
+							COVERAGE : '',
+							PRMINSID : '',
+							SECINSID : '',
+							EMPID : '',
+							REFPERSON : '',
+							ATTID : '',
+							PATCLASS : '',
+							CPTCODE : '',
+							STATE : '',
+							CPTCLASS : '',
+							DCTCLASS : '',
+							DCTID : '',
+							ASTID : '',
+							RFDID : '',
+							FCLID : '',
+							BLLPRVID : '',
+							GROUP1BY : '',
+							GROUP2BY : '',
+							BATCHNO : '',
+							SUPERBILLNO : '',
+							ICF : '0',
+							PARAMCHARGES : '0',
+							PARAMCLAIMS : '0',
+							PARAMPAYMENTS : '0',
+							PARAMWRITEOFFS : '0',
+							PARAMADJUSTMENTS : '0',
+							PARAMREFUNDS : '0',
+							PARAMSTATEMENTS : '0',
+							PAGEBREAKBETDAY : '0',
+							USEDEPOSITDATE : '0',
+							CALCHIST : '0',
+							PARAMCHARGESONLY : '0'
+						}
+					};
+				},
+				_updateBllprvData: function(selectedBllprvData, isValid){
+					if(selectedBllprvData && isValid)
+					{
+						this.state.data.BLLPRV = selectedBllprvData.id;
+					}
+					else
+					{
+						this.state.data.BLLPRV = '';
+					}
+					this.setState({data : this.state.data});
+				},
+				_updateInsSearchData: function(selectedInsData, isValid){
+					if(selectedInsData && isValid)
+					{
+						this.state.data.PAYERNAME = selectedInsData.name;
+					}
+					else
+					{
+						this.state.data.PAYERNAME = '';
+					}
+					this.setState({data : this.state.data});
+				},
+				_setDataState: function(event){
+					var field = event.target.name;
+					var value = "";
+					if(event.target.type === "checkbox"){
+						//For this project changed logic
+						//value = event.target.checked;
+						if(event.target.checked)
+						{
+							value = '1';
+						}
+						else
+						{
+							value = '0';
+						}
+					}
+					else
+					{
+						value = event.target.value;
+						if(value){
+							value = value.toUpperCase();
+						}
+					}
+					var key = field.toUpperCase();
+					this.state.data[key] = value;
+					this.setState({data :this.state.data});
+				},
+				_print: function(event){
+					var para = this.state.data;
+					dailyActivitySql.printDailyActivity(para, function (err , record) {
+						if (!err && record) {
+							console.log("Ran print script!")
+							//console.log(record[0]);
+						}
+						else {
+							alert("Error while printing.");
+						}
+					});
+				},
+				_close: function(){
+					window.close();
+				},
+				_saveParam : function(){
+					var xmlDocString = "<rp_file></rp_file>";
+					var parser = new DOMParser();
+					var xmlDoc = parser.parseFromString(xmlDocString,"text/xml");
+					var params = ["FromDate", "ToDate", "cash", "EFT", "checks", "credits", "autoRemitt", "BulkPay", "showPayerName"];
+					for(var i = 0; i < params.length; i++)
+					{
+						var eleNew = xmlDoc.createElement(params[i]);
+						if(params[i] == "FromDate")
+						{
+							var text = moment(this.state.data.FROMDATE).format('MM/DD/YYYY');
+						}
+						if(params[i] == "ToDate")
+						{
+							var text = moment(this.state.data.TODATE).format('MM/DD/YYYY');
+						}
+						if(params[i] == "ICF")
+						{
+							var text = this.state.data.ICF;
+
+						}
+						if(params[i] == "ParamCharges")
+						{
+							var text = this.state.data.CHECKS;
+
+						}
+						if(params[i] == "ParamClaims")
+						{
+							var text = this.state.data.PARAMCLAIMS;
+
+						}
+						if(params[i] == "ParamPayments")
+						{
+							var text = this.state.data.PARAMPAYMENTS;
+
+						}
+						if(params[i] == "ParamWriteoffs")
+						{
+							var text = this.state.data.PARAMWRITEOFFS;
+
+						}
+						if(params[i] == "ParamAdjustments")
+						{
+							var text = this.state.data.PARAMADJUSTMENTS;
+
+						}
+						if(params[i] == "ParamRefunds")
+						{
+							var text = this.state.data.PARAMREFUNDS;
+
+						}
+						if(params[i] == "ParamStatements")
+						{
+							var text = this.state.data.PARAMSTATEMENTS;
+
+						}
+						if(params[i] == "PageBreakBetDay")
+						{
+							var text = this.state.data.pagebreakbetday;
+
+						}
+						if(params[i] == "UseDepositDate")
+						{
+							var text = this.state.data.USEDEPOSITDATE;
+
+						}
+						if(params[i] == "CalcHist")
+						{
+							var text = this.state.data.CALCHIST;
+
+						}
+						if(params[i] == "ParamChargesOnly")
+						{
+							var text = this.state.data.PARAMCHARGESONLY;
+
+						}
+						var eleText= xmlDoc.createTextNode(text);
+						eleNew.appendChild(eleText);
+						xmlDoc.getElementsByTagName("rp_file")[0].appendChild(eleNew);
+					}
+
+					var rpFileString =	new XMLSerializer().serializeToString(xmlDoc);
+					var userId = this.state.data.USERID;
+
+					dailyActivitySql.xmlUpdateParam(rpFileString, userId, function (err , record) {
+
+						if(err)
+						{
+							console.log(err);
+						}
+						else
+						{
+							console.log("Successfully updated param");
+						}
+
+					})
+				},
+				_loadParam : function(){
+					var self = this;
+					dailyActivitySql.xmlGetParam(function (err , record) {
+						if (!err && record)
+						{
+							if(record.length > 0)
+							{
+								var parser = new DOMParser();
+								var xmlDoc = parser.parseFromString(record[0].XMLTEXT.value,"text/xml");
+								if(xmlDoc)
+								{
+									var rpFile  = xmlDoc.getElementsByTagName('rp_file')[0];
+									for(var i = 0; i< rpFile.childNodes.length; i++)
+									{
+										var node = rpFile.childNodes[i];
+										if(node.nodeType === 1)
+										{
+											if(node.nodeName == "ICF")
+											{
+												var ICF = node.childNodes[0].nodeValue;
+												self.state.data.ICF = ICF;
+												if(ICF == 1)
+												{
+													var $chkBox = $(self.refs.ICF);
+													$chkBox.prop( "checked", true );
+												}
+											}
+											if(node.nodeName == "ParamCharges")
+											{
+												var ParamCharges = node.childNodes[0].nodeValue;
+												self.state.data.PARAMCHARGES = ParamCharges;
+												if(ParamCharges == 1)
+												{
+													var $chkBox = $(self.refs.ParamCharges);
+													$chkBox.prop( "checked", true );
+												}
+											}
+											if(node.nodeName == "ParamClaims")
+											{
+												var ParamClaims = node.childNodes[0].nodeValue;
+												self.state.data.PARAMCLAIMS = ParamClaims;
+												if(ParamClaims == 1)
+												{
+													var $chkBox = $(self.refs.ParamClaims);
+													$chkBox.prop( "checked", true );
+												}
+											}
+											if(node.nodeName == "ParamPayments")
+											{
+												var ParamPayments = node.childNodes[0].nodeValue;
+												self.state.data.PARAMPAYMENTS = ParamPayments;
+												if(ParamPayments == 1)
+												{
+													var $chkBox = $(self.refs.ParamPayments);
+													$chkBox.prop( "checked", true );
+												}
+											}
+											if(node.nodeName == "ParamWriteoffs")
+											{
+												var ParamWriteoffs = node.childNodes[0].nodeValue;
+												self.state.data.PARAMWRITEOFFS = ParamWriteoffs;
+												if(ParamWriteoffs == 1)
+												{
+													var $chkBox = $(self.refs.ParamWriteoffs);
+													$chkBox.prop( "checked", true );
+												}
+											}
+											if(node.nodeName == "ParamAdjustments")
+											{
+												var ParamAdjustments = node.childNodes[0].nodeValue;
+												self.state.data.PARAMADJUSTMENTS = ParamAdjustments;
+												if(ParamAdjustments == 1)
+												{
+													var $chkBox = $(self.refs.ParamAdjustments);
+													$chkBox.prop( "checked", true );
+												}
+											}
+											if(node.nodeName == "ParamRefunds")
+											{
+												var ParamRefunds = node.childNodes[0].nodeValue;
+												self.state.data.PARAMREFUNDS = ParamRefunds;
+												if(ParamRefunds == 1)
+												{
+													var $chkBox = $(self.refs.ParamRefunds);
+													$chkBox.prop( "checked", true );
+												}
+											}
+											if(node.nodeName == "ParamStatements")
+											{
+												var ParamStatements = node.childNodes[0].nodeValue;
+												self.state.data.PARAMSTATEMENTS = ParamStatements;
+												if(ParamStatements == 1)
+												{
+													var $chkBox = $(self.refs.ParamStatements);
+													$chkBox.prop( "checked", true );
+												}
+											}
+											if(node.nodeName == "PageBreakBetDay")
+											{
+												var PageBreakBetDay = node.childNodes[0].nodeValue;
+												self.state.data.PAGEBREAKBETDAY = PageBreakBetDay;
+												if(PageBreakBetDay == 1)
+												{
+													var $chkBox = $(self.refs.PageBreakBetDay);
+													$chkBox.prop( "checked", true );
+												}
+											}
+											if(node.nodeName == "UseDepositDate")
+											{
+												var UseDepositDate = node.childNodes[0].nodeValue;
+												self.state.data.USEDEPOSITDATE = UseDepositDate;
+												if(UseDepositDate == 1)
+												{
+													var $chkBox = $(self.refs.UseDepositDate);
+													$chkBox.prop( "checked", true );
+												}
+											}
+											if(node.nodeName == "CalcHist")
+											{
+												var CalcHist = node.childNodes[0].nodeValue;
+												self.state.data.CALCHIST = CalcHist;
+												if(CalcHist == 1)
+												{
+													var $chkBox = $(self.refs.CalcHist);
+													$chkBox.prop( "checked", true );
+												}
+											}
+											if(node.nodeName == "ParamChargesOnly")
+											{
+												var ParamChargesOnly = node.childNodes[0].nodeValue;
+												self.state.data.PARAMCHARGESONLY = ParamChargesOnly;
+												if(ParamChargesOnly == 1)
+												{
+													var $chkBox = $(self.refs.ParamChargesOnly);
+													$chkBox.prop( "checked", true );
+												}
+											}
+											self.setState({data : self.state.data});
+										}
+									}
+								}
+							}
+						}
+						else {
+							console.log(err)
+						}
+					});
+				},
+				_keyDown: function(e) {
+					var F10 = 121;
+					var ESC = 27;
+					var ENTER = 13;
+					var PRINT = 114;
+					if(e.keyCode == F10) {
+						this._saveParam();
+					}
+					else if(e.keyCode == PRINT) {
+						this._print();
+					}
+					else if(e.keyCode == ESC) {
+						this._close();
+					}
+					else if(e.keyCode == ENTER) {
+						// Set self as the current item in focus
+						var self = $(':focus'),
+						// Set the form by the current item in focus
+								form = self.parents('form:eq(0)'),
+								focusable;
+
+						// Array of Indexable/Tab-able items
+						focusable = form.find('input,a,select,button,textarea,div[contenteditable=true]').filter(':visible');
+
+						function enterKey(){
+							if (e.which === 13 && !self.is('textarea')) { // [Enter] key
+
+								// If not a regular hyperlink/button/textarea
+								if ($.inArray(self, focusable) && (!self.is('a,button'))){
+									// Then prevent the default [Enter] key behaviour from submitting the form
+									e.preventDefault();
+								} // Otherwise follow the link/button as by design, or put new line in textarea
+
+								// Focus on the next item (either previous or next depending on shift)
+								focusable.eq(focusable.index(self) + (e.shiftKey ? -1 : 1)).focus();
+
+								return false;
+							}
+						}
+						// We need to capture the [Shift] key and check the [Enter] key either way.
+						if (e.shiftKey) { enterKey() } else { enterKey() }
+					}
+				},
+				render: function(){
+					var bllprvData = { recno:'', id: this.state.data.BLLPRV, name:''};
+					var insSearchData = { recno:'', name:this.state.data.PAYERNAME, shortCode:''};
+
+					return (
+							<div>
+								<div className="top-menu-bar">
+									<ul>
+										<li onClick={this._print} style={{color : '#5bc0de'}}><i className="fa fa-print"></i> Print</li>
+										<li onClick={this._saveParam} style={{color : '#5cb85c'}}><i className="fa fa-floppy-o"></i> Save Parameters</li>
+										<li onClick={this._close} style={{color : '#d9534f'}}><i className="fa fa-times"></i> Close</li>
+									</ul>
+								</div>
+								<div className="main-body">
+									<input type="hidden" id="Recno" name="Recno" value="" />
+									<div style={{marginTop: '30px', marginLeft: '20px'}}>
+										<form ref="dailyActivityForm" id="dailyActivityForm">
+											<fieldset className="scheduler-border">
+												<legend className="scheduler-border text-info"></legend>
+												<div>
+													<Lbl labelFor="fromDate" width="120px" text="Deposit Dates From :&nbsp;" />
+													<DateInput width="130px" name="fromDate" value={this.state.data.FROMDATE}   onChange={this._setDataState}    />
+													<Lbl labelFor="toDate" width="60px" text="To :&nbsp;" />
+													<DateInput width="130px" name="toDate" value={this.state.data.TODATE} onChange={this._setDataState}    />
+													<Lbl labelFor="reportType" width="120px" text="Report Type:&nbsp;" />
+													<DropdownPlugin name="reportType" width="140px"  onChange={this._setDataState} onBlur={this._validate} value={this.state.data.REPORTTYPE.value} dropdownOptions={_reportType} />
+												</div>
+												<div>
+													<input type="checkbox" ref="calcHist" id="calcHist" name="calcHist"  value={this.state.data.CALCHIST} onChange={this._setDataState} style={{margin:'0px'}} /> Calculate Previous Balances <br/>
+													<input type="checkbox" ref="pageBreakBetDay" id="pageBreakBetDay" name="PageBreakBetDay"  value={this.state.data.PAGEBREAKBETDAY} onChange={this._setDataState} style={{margin:'0px'}} />Page Break Between Each Day<br/>
+												</div>
+											</fieldset>
+											<fieldset className="scheduler-border">
+												<div>
+													<legend className="scheduler-border text-info">Groupings</legend>
+													<Lbl labelFor="firstGroupCriteria" width="120px" text="First Group Criteria:&nbsp;" />
+													<DropdownPlugin name="firstGroupCriteria" width="140px"  onChange={this._setDataState} onBlur={this._validate} value={this.state.data.GROUP1BY.value} dropdownOptions={_groupCriteria} />
+													<Lbl labelFor="secondGroupCriteria" width="120px" text="Second Group Criteria:&nbsp;" />
+													<DropdownPlugin name="secondGroupCriteria" width="140px"  onChange={this._setDataState} onBlur={this._validate} value={this.state.data.GROUP2BY.value} dropdownOptions={_groupCriteria} />
+												</div>
+											</fieldset>
+											<fieldset className="scheduler-border">
+												<div>
+													<legend className="scheduler-border text-info">Groupings</legend>
+													<Lbl labelFor="firstGroupCriteria" width="120px" text="First Group Criteria:&nbsp;" />
+													<DropdownPlugin name="firstGroupCriteria" width="140px"  onChange={this._setDataState} onBlur={this._validate} value={this.state.data.GROUP1BY.value} dropdownOptions={_groupCriteria} />
+													<Lbl labelFor="secondGroupCriteria" width="120px" text="Second Group Criteria:&nbsp;" />
+													<DropdownPlugin name="secondGroupCriteria" width="140px"  onChange={this._setDataState} onBlur={this._validate} value={this.state.data.GROUP2BY.value} dropdownOptions={_groupCriteria} />
+												</div>
+											</fieldset>
+											<fieldset className="scheduler-border">
+												<div>
+													<legend className="scheduler-border text-info">Patient options</legend>
+													<div>
+														<input type="checkbox" ref="calcHist" id="calcHist" name="calcHist"  value={this.state.data.CALCHIST} onChange={this._setDataState} style={{margin:'0px'}} /> Calculate Previous Balances <br/>
+													</div>
+													<Lbl labelFor="firstGroupCriteria" width="120px" text="First Group Criteria:&nbsp;" />
+													<DropdownPlugin name="firstGroupCriteria" width="140px"  onChange={this._setDataState} onBlur={this._validate} value={this.state.data.GROUP1BY.value} dropdownOptions={_groupCriteria} />
+													<Lbl labelFor="secondGroupCriteria" width="120px" text="Second Group Criteria:&nbsp;" />
+													<DropdownPlugin name="secondGroupCriteria" width="140px"  onChange={this._setDataState} onBlur={this._validate} value={this.state.data.GROUP2BY.value} dropdownOptions={_groupCriteria} />
+												</div>
+											</fieldset>
+										</form>
+									</div>
+								</div>
+							</div>
+					);
+				},
+				componentDidMount : function() {
+					$(document.body).on('keydown', this._keyDown);
+					$('#fromDate').focus();;
+
+					this._loadParam();
+
+					var self = this;
+
+					ipcRenderer.on('get-components-data', function (event, data){
+
+						if(data.bllprvData && data.colName){
+
+							self.state.data.BLLPRV  = data.bllprvData.BLLPRVID.value;
+
+							console.log(self.state.data.BLLPRV);
+
+							self.setState({data: self.state.data});
+						}
+					});
+
+				}
+			});
+			ReactDOM.render(
+					<DailyActivity  />,
+					document.getElementById('divBllPrv')
+			);
+	</script>
+</head>
+<body>
+<div id="divBllPrv">
+</div>
+</body>
+</html>
+

@@ -1,0 +1,752 @@
+<html>
+  <head></head>
+  <title>PR2 Report(web version)</title>
+  <link rel="stylesheet" type="text/css" href="../../public/bootstrap/css/bootstrap.min.css" />
+  <link rel="stylesheet" type="text/css" href="../../public/font-awesome-4.5.0/css/font-awesome.min.css" />
+  <link rel="stylesheet" type="text/css" href="../../public/stylesheets/calmed.css" />
+
+  <script type="text/javascript">
+    //Jquer-Bootsrap
+    var remote = require('electron').remote;
+    var nodeModulesPath = remote.getGlobal('nodeModulesPath');
+    var appPath = remote.getGlobal('appPath');
+    var $ = jQuery = require(nodeModulesPath + "jquery");
+  </script>
+  <script src="../../public/bootstrap/js/bootstrap.min.js"></script>
+  <script type="text/javascript">
+    var bootbox = require(nodeModulesPath + "bootbox");
+    //React
+    var React = require(nodeModulesPath + "react");
+    var ReactDOM = require(nodeModulesPath + "react-dom");
+
+    //Other
+    var moment = require(nodeModulesPath + 'moment');
+    var fs = require('fs');
+    //var camelCase = require('camelcase');
+
+    //Electron
+    var errorMessages = require(appPath + '/common/global/error-messages.js');
+    //Electron
+    var cmGlb = remote.getGlobal('cmGlb');
+
+
+    var _userId = cmGlb.userId;
+    var _dctId = cmGlb.dctId;
+    var _fclId =  cmGlb.fclId;
+    var _companyId = cmGlb.companyId;
+    var _companyName = cmGlb.companyName;
+    var	_providerName = (cmGlb.providerName ? cmGlb.providerName : '');
+    var _mainFolder = cmGlb.mainFolder;
+
+    var _patId = cmGlb.patId;
+    var _dateOfExam = cmGlb.dateOfVisit;
+
+    var pr2Sql = require(appPath + "/wc/pr2/pr2Sql.js");
+
+  </script>
+
+  <script src="../../public/javascripts/JSXTransformer.js"></script>
+  <!-- Components -->
+  <script type="text/jsx" src="../../common/user_controls/lbl.jsx"></script>
+  <script type="text/jsx" src="../../common/user_controls/txtInput.jsx"></script>
+  <script type="text/jsx" src="../../common/user_controls/dropdownPlugin.jsx"></script>
+  <script type="text/jsx" src="../../common/user_controls/checkboxInput.jsx"></script>
+  <script type="text/jsx" src="../../common/user_controls/dateInput.jsx"></script>
+  <script type="text/jsx" src="../../common/user_controls/textAreaPlugin.jsx"></script>
+
+  <script type="text/jsx">
+
+    var Pr2Report = React.createClass ({
+
+          getInitialState : function(){
+            return {
+              templateOptions : [{value:'', text:''}],
+              TEMPLATE: 'STANDARD1PG',
+              data : {
+                    RECNO:{value: ''},
+                    PATID:{value: _patId},
+                    DATEOFEXAM:{value: _dateOfExam},
+                    DCTID: {value: _dctId},
+                    FCLID: {value: _fclId},
+                    INJDATE : {value : ''},
+                    CLAIMNO : {value : ''},
+                    PERIODICREP : {value : null},
+                    CHANGEINTRTPLAN : {value : null},
+                    DISCHARGED : {value : null},
+                    CHANGEINWRKSTATUS : {value : null},
+                    NEEDREFORCONS : {value : null},
+                    ISINFOREQUESTED : {value : null},
+                    INFOREQUESTEDBY :{value : ''},
+                    CHANGEINPATCOND :{value : null},
+                    NEEDSRGHOSP :{value: null},
+                    REQUESTFORAUTHORIZATION :{value : null},
+                    ISOTHER :{value : null},
+                    OTHER :{value : ''},
+                    REMAINOFFWORKUNTIL :{value : null},
+                    REMAINOFFWORKUNTILDATE :{value : ''},
+                    RETURNONMODIFWORK :{value : null},
+                    RETURNONMODIFWORKDATE :{value : ''},
+                    LIMITSRESTRICTIONS1 :{value : null},
+                    LIMITSRESTRICTIONS6 :{value : null},
+                    LIMITSRESTRICTIONS2 :{value : null},
+                    LIMITSRESTRICTIONS2LBS : {value : ''},
+                    LIMITSRESTRICTIONS3 :{value : null},
+                    LIMITSRESTRICTIONS7 :{value : null},
+                    LIMITSRESTRICTIONS8 :{value : null},
+                    LIMITSRESTRICTIONS4 :{value : null},
+                    LIMITSRESTRICTIONS4GT :{value : ''},
+                    LIMITSRESTRICTIONS4EX :{value : ''},
+                    LIMITSRESTRICTIONS4HRS: {value : ''},
+                    LIMITSRESTRICTIONS5: {value : null},
+                    LIMITSRESTRICTIONS5POSVAL: {value : ''},
+                    LIMITSRESTRICTIONS5POS: {value: ''},
+                    LIMITSRESTRICTIONS: {value : ''},
+                    RETURNTOUSUALWORK: {value : null},
+                    RETURNTOUSUALWORKDATE: {value : ''},
+                    NEXTVISIT: {value : ''},
+                    EMPCONTACTED: {value : ''},
+                    EMPCONTACTDATE: {value : ''},
+                    SUBJECTIVECOMPLAINTS: {value : ''},
+                    OBJECTIVEFINDINGS:{value : ''},
+                    TREATMENTPLAN: {value : ''},
+                    ISDMESUBJECTIVECOMPLAINTS: {value : null},
+                    ISDMEOBJECTIVEFINDINGS: {value : null},
+                    ISDMETREATMENTPLAN: {value : null},
+                    ENTRYDATE : {value : ''},
+                    USERID: {value : _userId}
+
+              },
+              subCmpDisabled : false,
+              objFindingsDisabled  : false,
+              treatMentPlanDisabled : false,
+              errMsg : {}
+            };
+          },
+          getDefaultProps : function(){
+              return {
+
+                limitsRestrictions2lbsOptions : [
+                  {value:'', text:'N/A'},
+                  {value:'5', text:'5'},
+                  {value:'10', text:'10'},
+                  {value:'15', text:'15'},
+                  {value:'20', text:'20'},
+                  {value:'25', text:'25'},
+                  {value:'30', text:'30'},
+                  {value:'35', text:'35'},
+                  {value:'40', text:'40'},
+                  {value:'45', text:'45'},
+                  {value:'50', text:'50'}
+                ],
+                limitsRestrictions4gtOptions : [
+                  {value:'', text:'N/A'},
+                  {value:'10', text:'10'},
+                  {value:'25', text:'25'},
+                  {value:'50', text:'50'},
+                  {value:'75', text:'75'}
+                ],
+                limitsRestrictions4exOptions : [
+                  {value:'', text:'N/A'},
+                  {value:'5', text:'5'},
+                  {value:'10', text:'10'},
+                  {value:'15', text:'15'},
+                  {value:'20', text:'20'},
+                  {value:'25', text:'25'},
+                  {value:'30', text:'30'},
+                  {value:'45', text:'45'}
+                ],
+                limitsRestrictions4HrsOptions : [
+                  {value:'', text:'N/A'},
+                  {value:'1', text:'1'},
+                  {value:'2', text:'2'},
+                  {value:'3', text:'3'},
+                  {value:'4', text:'4'},
+                  {value:'5', text:'5'}
+
+                ],
+                defaultText : "From EMR"
+
+
+              };
+          },
+          _setTemplateState: function(event){
+
+            var field = event.target.name;
+            var value = event.target.value;
+            var key = field.toUpperCase();
+            this.state[key] = value;
+            this.setState({data :this.state.data});
+
+          },
+          _setDataState: function(event){
+
+              var field = event.target.name;
+              var value = "";
+
+              if(event.target.type === "checkbox")
+              {
+                  value = event.target.checked;
+
+                  if(field == "isDmeSubjectiveComplaints") {
+                    this.state.subCmpDisabled = value;
+                    if(value){
+                      this.state.data.SUBJECTIVECOMPLAINTS.value =  this.props.defaultText;
+                    }
+                    else {
+                      this.state.data.SUBJECTIVECOMPLAINTS.value = "";
+                    }
+                  }
+                  else if(field == "isDmeObjectiveFindings") {
+
+
+                      this.state.objFindingsDisabled = value;
+                      if(value){
+                        this.state.data.OBJECTIVEFINDINGS.value = this.props.defaultText;
+                      }
+                      else {
+                        this.state.data.OBJECTIVEFINDINGS.value = "";
+                      }
+
+                  }
+                  else if(field == "isDmeTreatmentPlan") {
+
+                    this.state.treatMentPlanDisabled = value;
+                    if(value){
+                      this.state.data.TREATMENTPLAN.value = this.props.defaultText;
+                    }
+                    else {
+                      this.state.data.TREATMENTPLAN.value = "";
+                    }
+
+
+                  }
+
+              }
+              else
+              {
+                  value = event.target.value;
+                  if(value)
+                  {
+                      value = value.toUpperCase();
+                  }
+              }
+
+              var key = field.toUpperCase();
+              this.state.data[key].value = value;
+              if(this.state.errMsg[key])
+              {
+                  this.state.errMsg[key] = "";
+              }
+              this.setState({data :this.state.data, errMsg: this.state.errMsg});
+          },
+
+        _setDataStateForTextArea: function(event){
+
+            var field = event.target.name;
+            var value = "";
+            value = event.target.value;
+            var key = field.toUpperCase();
+            this.state.data[key].value = value;
+            if(this.state.errMsg[key])
+            {
+                this.state.errMsg[key] = "";
+            }
+            this.setState({data :this.state.data, errMsg: this.state.errMsg});
+        },
+
+          _formatDateTimeHTML: function(datetime){
+              if(datetime)
+        		  {
+                return  moment.utc(datetime).format("YYYY-MM-DD");
+        	   	}
+        	    else
+        	    {
+        	    	return "";
+        	    }
+        	},
+          _formatDateTimeSQL: function(datetime){
+              if(datetime)
+        		  {
+                return  moment.utc(datetime).format("MM/DD/YYYY");
+        	   	}
+        	    else
+        	    {
+        	    	return "";
+        	    }
+        	},
+          _formatDateTimeWithTimeSQL: function(datetime) {
+              if(datetime){
+                  return moment.utc(datetime).format("MM/DD/YYYY h:mm:ss a");
+              }
+              else{
+                  return "";
+              }
+          },
+          _save: function(){
+
+              var self = this;
+              var data = this.state.data;
+
+              this.state.data.DATEOFEXAM.value = this._formatDateTimeWithTimeSQL(this.state.data.DATEOFEXAM.value);
+              this.state.data.INJDATE.value = this._formatDateTimeSQL(this.state.data.INJDATE.value);
+              this.state.data.REMAINOFFWORKUNTILDATE.value = this._formatDateTimeSQL(this.state.data.REMAINOFFWORKUNTILDATE.value);
+              this.state.data.RETURNONMODIFWORKDATE.value = this._formatDateTimeSQL(this.state.data.RETURNONMODIFWORKDATE.value);
+              this.state.data.RETURNTOUSUALWORKDATE.value = this._formatDateTimeSQL(this.state.data.RETURNTOUSUALWORKDATE.value);
+              this.state.data.NEXTVISIT.value = this._formatDateTimeSQL(this.state.data.NEXTVISIT.value);
+              this.state.data.EMPCONTACTDATE.value =  this._formatDateTimeSQL(this.state.data.EMPCONTACTDATE.value);
+              this.state.data.ENTRYDATE.value = this._formatDateTimeWithTimeSQL(this.state.data.ENTRYDATE.value);
+
+              pr2Sql.pr2Save(data, function (err , record) {
+                  if(err)
+                  {
+                    console.log(err);
+                    alert('Error while saving data!');
+                  }
+                  else
+                  {
+                    console.log("Saved Successfully!");
+                    self._close();
+
+                  }
+              });
+          },
+          _loadParam : function(){
+
+            var self = this;
+
+            pr2Sql.xmlGetParam(function (err , record) {
+              if (!err && record) {
+                if (record.length > 0) {
+                  var parser = new DOMParser();
+                  var xmlDoc = parser.parseFromString(record[0].XMLTEXT.value, "text/xml");
+                  if (xmlDoc) {
+                    var rpFile = xmlDoc.getElementsByTagName('Pr2')[0];
+                    for (var i = 0; i < rpFile.childNodes.length; i++) {
+                      var node = rpFile.childNodes[i];
+                      if (node.nodeType === 1) {
+                        if (node.nodeName == "Template") {
+                          var template = node.childNodes[0].nodeValue;
+                          self.state.TEMPLATE = template;
+                        }
+
+                        self.setState({data: self.state.data});
+
+                      }
+
+                    }
+                  }
+
+                }
+                else {
+
+                  console.log(err)
+                }
+              }
+            });
+          },
+          _loadData : function(){
+
+              var self= this;
+
+              var patId = _patId;
+              var dateOfExam = _dateOfExam;
+              pr2Sql.pr2Get(patId, dateOfExam, function (err , record) {
+                  if (!err && record) {
+
+                      if(record.length > 0)
+                      {
+                          record[0].DATEOFEXAM.value = self._formatDateTimeWithTimeSQL(record[0].DATEOFEXAM.value);
+
+                          record[0].INJDATE.value = self._formatDateTimeHTML(record[0].INJDATE.value);
+                          record[0].REMAINOFFWORKUNTILDATE.value = self._formatDateTimeHTML(record[0].REMAINOFFWORKUNTILDATE.value);
+                          record[0].RETURNONMODIFWORKDATE.value = self._formatDateTimeHTML(record[0].RETURNONMODIFWORKDATE.value);
+                          record[0].RETURNTOUSUALWORKDATE.value = self._formatDateTimeHTML(record[0].RETURNTOUSUALWORKDATE.value);
+                          record[0].NEXTVISIT.value = self._formatDateTimeHTML(record[0].NEXTVISIT.value);
+                          record[0].EMPCONTACTDATE.value = self._formatDateTimeHTML(record[0].EMPCONTACTDATE.value);
+
+
+
+
+                          self.state.subCmpDisabled = record[0].ISDMESUBJECTIVECOMPLAINTS.value;
+                        self.state.objFindingsDisabled = record[0].ISDMEOBJECTIVEFINDINGS.value;
+                        self.state.treatMentPlanDisabled = record[0].ISDMETREATMENTPLAN.value;
+
+
+                        if(self.state.subCmpDisabled)
+                        {
+                          record[0].SUBJECTIVECOMPLAINTS.value = self.props.defaultText;
+                        }
+
+                        if(self.state.objFindingsDisabled)
+                        {
+                          record[0].OBJECTIVEFINDINGS.value = self.props.defaultText;
+                        }
+
+                        if(self.state.treatMentPlanDisabled)
+                        {
+                          record[0].TREATMENTPLAN.value = self.props.defaultText;
+                        }
+
+
+                        self.setState({data : record[0]});
+                      }
+
+
+                  }
+                  else {
+                    alert(err);
+                  }
+              });
+
+
+          },
+          _saveParam : function(){
+
+            var xmlDocString = "<Pr2></Pr2>";
+            var parser = new DOMParser();
+            var xmlDoc = parser.parseFromString(xmlDocString,"text/xml");
+            var params = ["Template"];
+            for(var i = 0; i < params.length; i++)
+            {
+              var eleNew = xmlDoc.createElement(params[i]);
+              if(params[i] == "Template")
+              {
+                var text = this.state.TEMPLATE;
+              }
+              var eleText= xmlDoc.createTextNode(text);
+              eleNew.appendChild(eleText);
+
+              xmlDoc.getElementsByTagName("Pr2")[0].appendChild(eleNew);
+            }
+
+            var rpFileString =	new XMLSerializer().serializeToString(xmlDoc);
+            var userId = _userId;
+
+            pr2Sql.xmlUpdateParam(rpFileString, userId, function (err , record) {
+
+              if(err)
+              {
+                console.log(err);
+              }
+              else
+              {
+                console.log("Successfully updated param");
+              }
+
+            });
+
+
+
+
+          },
+          _print: function(){
+
+              this.state.data.DATEOFEXAM.value = this._formatDateTimeWithTimeSQL(this.state.data.DATEOFEXAM.value);
+              this.state.data.INJDATE.value = this._formatDateTimeSQL(this.state.data.INJDATE.value);
+              this.state.data.REMAINOFFWORKUNTILDATE.value = this._formatDateTimeSQL(this.state.data.REMAINOFFWORKUNTILDATE.value);
+              this.state.data.RETURNONMODIFWORKDATE.value = this._formatDateTimeSQL(this.state.data.RETURNONMODIFWORKDATE.value);
+              this.state.data.RETURNTOUSUALWORKDATE.value = this._formatDateTimeSQL(this.state.data.RETURNTOUSUALWORKDATE.value);
+              this.state.data.NEXTVISIT.value = this._formatDateTimeSQL(this.state.data.NEXTVISIT.value);
+              this.state.data.EMPCONTACTDATE.value =  this._formatDateTimeSQL(this.state.data.EMPCONTACTDATE.value);
+
+              this.state.data.ENTRYDATE.value = this._formatDateTimeWithTimeSQL(this.state.data.ENTRYDATE.value);
+
+
+              var data = this.state.data;
+            var self = this;
+            pr2Sql.pr2Save(data, function (err , record) {
+                if(err)
+                {
+                  alert('Error while saving before printing data!');
+                }
+                else
+                {
+                   //console.log("Data Saved Successfully!");
+
+                    para = {
+                      COMPANYID : _companyId,
+                      COMPANYNAME : _companyName,
+                      PROVIDERNAME: _providerName,
+                      PATID: self.state.data.PATID.value,
+                      DATEOFEXAM: self.state.data.DATEOFEXAM.value,
+                      TEMPLATE : self.state.TEMPLATE
+                    };
+                    //console.log(para);
+
+                    pr2Sql.pr2Print(para, function (err , record) {
+                        if (!err && record) {
+                            console.log("Hey Successfully run script!");
+                            //console.log(record[0]);
+                        }
+                        else {
+                          console.log(err);
+                          alert("Error while printing.");
+                        }
+                        self._loadData();
+                    });
+                }
+            });
+          },
+          _close: function(){
+              window.close();
+          },
+          _keyDown: function(e) {
+
+              var self = this;
+
+              var F10 = 121;
+              var ESC = 27;
+              var ENTER = 13;
+              var PRINT = 114;
+              if(e.keyCode == F10) {
+                this._saveParam();
+              }
+              else if(e.keyCode == PRINT) {
+                this._print();
+              }
+              else if(e.keyCode == ESC) {
+                var allModals = document.getElementsByClassName("modal");
+                for (var i=0, max=allModals.length; i < max; i++) {
+
+                    if($(allModals[i]).hasClass('in'))
+                    {
+                      $(allModals[i]).modal('hide');
+                      return;
+                    }
+                }
+                this._close();
+              }
+              else if(e.keyCode == ENTER) {
+                  // Set self as the current item in focus
+                  var self = $(':focus'),
+                  // Set the form by the current item in focus
+                  form = self.parents('form:eq(0)'),
+                  focusable;
+
+                  // Array of Indexable/Tab-able items
+                  focusable = form.find('input,a,select,button,textarea,div[contenteditable=true]').filter(':visible');
+
+                  function enterKey(){
+                    if (e.which === 13 && !self.is('textarea')) { // [Enter] key
+
+                      // If not a regular hyperlink/button/textarea
+                      if ($.inArray(self, focusable) && (!self.is('a,button'))){
+                        // Then prevent the default [Enter] key behaviour from submitting the form
+                        e.preventDefault();
+                      } // Otherwise follow the link/button as by design, or put new line in textarea
+
+                      // Focus on the next item (either previous or next depending on shift)
+                      focusable.eq(focusable.index(self) + (e.shiftKey ? -1 : 1)).focus();
+
+                      return false;
+                    }
+                  }
+                  // We need to capture the [Shift] key and check the [Enter] key either way.
+                  if (e.shiftKey) { enterKey() } else { enterKey() }
+              }
+          },
+          render: function() {
+
+              if(!this.state.data.REMAINOFFWORKUNTIL.value)
+              {
+                this.state.data.REMAINOFFWORKUNTILDATE.value = "";
+              }
+
+              if(!this.state.data.RETURNONMODIFWORK.value)
+              {
+                this.state.data.RETURNONMODIFWORKDATE.value = "";
+              }
+
+              return (
+
+                <div>
+                  <div className="top-menu-bar">
+                      <ul>
+                        <li onClick={this._print} style={{color : '#5bc0de'}}><i className="fa fa-print"></i> Print</li>
+                        <li onClick={this._save} style={{color : '#5cb85c'}}><i className="fa fa-floppy-o"></i> Save Data</li>
+                        <li onClick={this._saveParam} style={{color : '#428bca'}}><i className="fa fa-floppy-o"></i> Save Template</li>
+                        <li onClick={this._close} style={{color : '#d9534f'}}><i className="fa fa-times"></i> Close</li>
+                      </ul>
+                  </div>
+                  <div className="main-body">
+                      <div style={{marginTop: '10px', marginLeft: '10px'}}>
+                          <form id="pr2Form">
+                            <fieldset className="scheduler-border">
+                              <legend className="scheduler-border text-info">Print Template</legend>
+                              <div>
+                                <Lbl labelFor="template" width="100px" text="Template :&nbsp;" />
+                                <DropdownPlugin  name="template" value={this.state.TEMPLATE}  onChange={this._setTemplateState} dropdownOptions={this.state.templateOptions} error={""} />
+                              </div>
+                            </fieldset>
+                            <fieldset className="scheduler-border">
+                              <legend className="scheduler-border text-info">Info from Workers Comp data</legend>
+                              <div>
+                                <Lbl labelFor="dateOfInjury" width="100px" text="Date Of Injury :&nbsp;" />
+                                <DateInput name="injDate" value={this.state.data.INJDATE.value}  onChange={this._setDataState}    />
+                                <Lbl labelFor="claimNo" width="70px" text="Claim No :&nbsp;" />
+                                <TxtInput name="claimNo" value={this.state.data.CLAIMNO.value} onChange={this._setDataState}  />
+                              </div>
+                            </fieldset>
+                            <fieldset className="scheduler-border">
+                              <legend className="scheduler-border text-info">PR2 Info</legend>
+                              <div>
+                                <CheckboxInput width= "130px" name="periodicRep" labelName= "Periodic Report" onChange={this._setDataState} checked={this.state.data.PERIODICREP.value}  />
+                                <CheckboxInput width= "190px" name="changeInTrtPlan" labelName= "Change in Treatment Plan" onChange={this._setDataState} checked={this.state.data.CHANGEINTRTPLAN.value}  />
+                                <CheckboxInput width= "160px" name="discharged" labelName= "Released From Care" onChange={this._setDataState} checked={this.state.data.DISCHARGED.value}  />
+                                <CheckboxInput width= "180px" name="requestForAuthorization" labelName= "Request for Authorization" onChange={this._setDataState} checked={this.state.data.REQUESTFORAUTHORIZATION.value}  />
+                              </div>
+                              <div>
+                                <CheckboxInput width="150px" name="changeInWrkStatus" labelName= "Change in Work Status" onChange={this._setDataState} checked={this.state.data.CHANGEINWRKSTATUS.value}  />
+                                <CheckboxInput width="210px" name="needRefOrCons" labelName= "Need for Referral or Consultation" onChange={this._setDataState} checked={this.state.data.NEEDREFORCONS.value}  />
+                                <CheckboxInput width="120px" name="isInfoRequested" labelName= "Info Requested by" onChange={this._setDataState} checked={this.state.data.ISINFOREQUESTED.value}  />
+                                <TxtInput width="160px" name="infoRequestedBy" value={this.state.data.INFOREQUESTEDBY.value} onChange={this._setDataState}  />
+                              </div>
+                              <div>
+                                <CheckboxInput width= "200px" name="changeInPatCond" labelName= "Change in Patient's Condition" onChange={this._setDataState} checked={this.state.data.CHANGEINPATCOND.value}  />
+                                <CheckboxInput width= "220px" name="needSrgHosp" labelName= "Need for Surgery or Hospitalization" onChange={this._setDataState} checked={this.state.data.NEEDSRGHOSP.value}  />
+                              </div>
+                              <div>
+                                <CheckboxInput name="isOther" labelName= "Other" onChange={this._setDataState} checked={this.state.data.ISOTHER.value}  />
+                              </div>
+                              <div>
+                                <TextAreaPlugin name="other" value={this.state.data.OTHER.value} onChange={this._setDataStateForTextArea} rows="1"  width="650px" />
+                              </div>
+                            </fieldset>
+                            <fieldset className="scheduler-border">
+                                <legend className="scheduler-border text-info">Work Status</legend>
+                                <div>
+                                  <CheckboxInput width= "150px" name="remainOffWorkUntil" labelName= "Remain Off-work until" onChange={this._setDataState} checked={this.state.data.REMAINOFFWORKUNTIL.value}  />
+                                  <DateInput name="remainOffWorkUntilDate" value={this.state.data.REMAINOFFWORKUNTILDATE.value}  onChange={this._setDataState}    />
+                                  &nbsp;Next Visit:&nbsp;
+                                  <DateInput name="nextVisit" value={this.state.data.NEXTVISIT.value}  onChange={this._setDataState}    />
+                                </div>
+                                <div>
+                                  <CheckboxInput width= "150px" name="returnOnModifWork" labelName= "Return to Modified work" onChange={this._setDataState} checked={this.state.data.RETURNONMODIFWORK.value}  />
+                                  <DateInput name="returnOnModifWorkDate" value={this.state.data.RETURNONMODIFWORKDATE.value}  onChange={this._setDataState}    />
+                                  &nbsp;With the following limitations or restrictions :
+                                </div>
+                                <div>
+                                  <CheckboxInput width= "325px" name="limitsRestrictions1" labelName= "Not permitted to operate hazardous machinary" onChange={this._setDataState} checked={this.state.data.LIMITSRESTRICTIONS1.value}  />
+                                  <CheckboxInput width= "325px" name="limitsRestrictions6" labelName= "No operating motor vehicles" onChange={this._setDataState} checked={this.state.data.LIMITSRESTRICTIONS6.value}  />
+                                </div>
+                                <div>
+                                  <div style = {{display: 'inline-block', width: '325px'}}>
+                                    <CheckboxInput name="limitsRestrictions2" labelName= "No lifting or carrying more than" onChange={this._setDataState} checked={this.state.data.LIMITSRESTRICTIONS2.value}  />
+                                    <DropdownPlugin  name="limitsRestrictions2lbs" value={this.state.data.LIMITSRESTRICTIONS2LBS.value? this.state.data.LIMITSRESTRICTIONS2LBS.value.toString() : "" } dropdownOptions={this.props.limitsRestrictions2lbsOptions}  onChange={this._setDataState} error={""} />
+                                     &nbsp;lbs
+                                  </div>
+                                  <div style = {{display: 'inline-block', width: '325px'}}>
+                                    <CheckboxInput name="limitsRestrictions3" labelName= "No working above ground level" onChange={this._setDataState} checked={this.state.data.LIMITSRESTRICTIONS3.value}  />
+                                  </div>
+                                </div>
+                                <div>
+                                  <CheckboxInput width="325px" name="limitsRestrictions7" labelName= "Keep affected area clean and dry" onChange={this._setDataState} checked={this.state.data.LIMITSRESTRICTIONS7.value}  />
+                                  <CheckboxInput width="325px" name="limitsRestrictions8" labelName= "Avoid contact with solvents and other chemicals" onChange={this._setDataState} checked={this.state.data.LIMITSRESTRICTIONS8.value}  />
+                                </div>
+                                <div>
+                                  <CheckboxInput name="limitsRestrictions4" labelName= "No walking or standing greater than" onChange={this._setDataState} checked={this.state.data.LIMITSRESTRICTIONS4.value}  />
+                                  <DropdownPlugin  name="limitsRestrictions4gt" value={this.state.data.LIMITSRESTRICTIONS4GT.value? this.state.data.LIMITSRESTRICTIONS4GT.value.toString() : ""} dropdownOptions={this.props.limitsRestrictions4gtOptions}  onChange={this._setDataState} error={""} />
+                                  &nbsp;% of the working period, or in excess of&nbsp;
+                                  <DropdownPlugin  name="limitsRestrictions4ex" value={this.state.data.LIMITSRESTRICTIONS4EX.value? this.state.data.LIMITSRESTRICTIONS4EX.value.toString() : ""} dropdownOptions={this.props.limitsRestrictions4exOptions}  onChange={this._setDataState} error={""} />
+                                  &nbsp;minutes or&nbsp;
+                                  <DropdownPlugin  name="limitsRestrictions4Hrs" value={this.state.data.LIMITSRESTRICTIONS4HRS.value? this.state.data.LIMITSRESTRICTIONS4HRS.value.toString() : "" } dropdownOptions={this.props.limitsRestrictions4HrsOptions}  onChange={this._setDataState} error={""} />
+                                  &nbsp;hours
+                                </div>
+                                <div>
+                                  <CheckboxInput name="limitsRestrictions5" labelName= "Avoid repetitive motions/awkward positions of" onChange={this._setDataState} checked={this.state.data.LIMITSRESTRICTIONS5.value}  />
+                                  &nbsp;<TxtInput name="limitsRestrictions5PosVal" value={this.state.data.LIMITSRESTRICTIONS5POSVAL.value} onChange={this._setDataState}  />
+                                </div>
+                                <div>
+                                  Other limitations or restrictions
+                                </div>
+                                <div>
+                                  <TextAreaPlugin name="limitsRestrictions" value={this.state.data.LIMITSRESTRICTIONS.value} onChange={this._setDataStateForTextArea} rows="3" width="650px"   />
+                                </div>
+                                <div>
+                                  <CheckboxInput name="returnToUsualWork" labelName= "Return to full duty " onChange={this._setDataState} checked={this.state.data.RETURNTOUSUALWORK.value}  />
+                                  <DateInput name="returnToUsualWorkDate" value={this.state.data.RETURNTOUSUALWORKDATE.value}  onChange={this._setDataState}    />
+                                  &nbsp;With no limitations or restrictions
+                                </div>
+                                <div>
+                                  Employer contact Spoke with :&nbsp;
+                                  <TxtInput name="empContacted" value={this.state.data.EMPCONTACTED.value} onChange={this._setDataState} />
+                                  &nbsp;Date :&nbsp;
+                                  <DateInput name="empContactDate" value={this.state.data.EMPCONTACTDATE.value}  onChange={this._setDataState} />
+                                </div>
+                            </fieldset>
+                            <fieldset className="scheduler-border" style={{display : 'none'}}>
+                                <legend className="scheduler-border text-info">Other Info</legend>
+                                  <div>
+                                    <CheckboxInput name="isDmeSubjectiveComplaints" labelName= "Subjective Complains From EMR" onChange={this._setDataState} checked={this.state.data.ISDMESUBJECTIVECOMPLAINTS.value}  />
+                                  </div>
+                                  <div>
+                                    <TextAreaPlugin name="subjectiveComplaints" value={this.state.data.SUBJECTIVECOMPLAINTS.value} onChange={this._setDataState} rows="3" width="650px"  disabled={this.state.subCmpDisabled} />
+                                  </div>
+                                  <div>
+                                    <CheckboxInput name="isDmeObjectiveFindings" labelName= "Objective Findings From EMR" onChange={this._setDataState} checked={this.state.data.ISDMEOBJECTIVEFINDINGS.value}  />
+                                  </div>
+                                  <div>
+                                    <TextAreaPlugin name="objectiveFindings" value={this.state.data.OBJECTIVEFINDINGS.value} onChange={this._setDataState}  rows="3" width="650px" disabled={this.state.objFindingsDisabled} />
+                                  </div>
+                                  <div>
+                                    <CheckboxInput name="isDmeTreatmentPlan" labelName= "Treatment Plan From EMR" onChange={this._setDataState} checked={this.state.data.ISDMETREATMENTPLAN.value}  />
+                                  </div>
+                                  <div>
+                                    <TextAreaPlugin name="treatmentPlan" value={this.state.data.TREATMENTPLAN.value} onChange={this._setDataState}  rows="3" width="650px" disabled={this.state.treatMentPlanDisabled} />
+                                  </div>
+                            </fieldset>
+                          </form>
+                      </div>
+                  </div>
+                </div>
+
+              );
+          },
+          componentDidMount : function() {
+
+            $(document.body).on('keydown', this._keyDown);
+
+
+            var self= this;
+
+            //cmGlb.mainFolder = "C:/Calmed/";
+
+            fs.readdir(cmGlb.mainFolder + "rptNew/pr2/", function(err, fileNames) {
+
+               if (err) {
+                console.log(err);
+                return;
+               }
+               var template = [];
+               for(var i = 0; i<fileNames.length; i++) {
+                    var fName = fileNames[i].replace('.rpt', '').toUpperCase();
+                    var option = {value:fName, text:fName}
+                    template.push(option);
+               }
+               self.setState({templateOptions : template});
+               self._loadParam();
+            });
+
+            this._loadData();
+
+
+
+          }
+
+
+      });
+
+    ReactDOM.render(
+
+        <Pr2Report  />,
+        document.getElementById('pr2Report')
+    );
+
+
+  </script>
+
+
+ <body>
+      <div id="pr2Report"></div>
+ </body>
+</html>

@@ -1,0 +1,204 @@
+
+<div class="container-fluid">
+
+  <input type="hidden" id="inputRecno" >
+  <div class="formcontainer">
+    {{#with record}}
+    <form class="form-vertical" role="form" id="formEdit">
+    <fieldset>
+      <!-- <legend><%= record.RECNO === '' ? 'ADD' : 'EDIT'  %></legend> -->
+
+      <div class="row form-group col-xs-24 btn-group" >
+        <a href="list.html" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-circle-arrow-left"></span>Back</a>
+        <button type="button" id="btnsave" class="btn btn-success btn-lg" onclick="clickSave()">
+          <span class="glyphicon glyphicon-floppy-save" ></span>Save</button>
+        <button type="button" id="btnDelete" class="btn btn-danger btn-lg" onclick="clickDelete('{{edithelper_getValue RECNO RECNO.value}}')"
+          style="{{edithelper_deleteVisibility RECNO}}" >
+          <span class="glyphicon glyphicon-minus-sign" ></span>Delete</button>
+      </div>
+
+      <div class="row form-group hidden col-xs-24">
+        <label id="labelValidationError" class="label label-danger"></label>
+      </div>
+
+      <div class="panel panel-primary row form-group col-xs-24">
+          <div class="panel-heading">
+              <h3 class="panel-title">
+                      <strong>Assigned To</strong>
+              </h3>
+          </div>
+
+          <div class="panel-body">
+
+            <div  class="row form-group"  id="divDoctor">
+              <label for="record" class="col-xs-4 control-label">Doctor:</label>
+              <div class="col-xs-15">
+                <xrx-dc-dct dctid="{{edithelper_getValue RECNO DCTID.value}}" selected-info-visibility="visible" is-required-field="required"></xrx-dc-dct>
+              </div>
+              <div class="col-xs-15">
+                <span id="errDct" class="text-danger"></span>
+              </div>
+            </div>
+
+            <div  class="row form-group">
+              <label for="record" class="col-xs-4 control-label">Facility:</label>
+              <div class="col-xs-15">
+                <xrx-dc-fcl fclid="{{edithelper_getValue RECNO FCLID.value}}" selected-info-visibility="visible">
+              </div>
+              <div class="col-xs-15">
+                <span id="errFcl" class="text-danger"></span>
+              </div>
+            </div>
+
+          </div>
+      </div>
+
+      <div class="panel panel-primary row form-group col-xs-24">
+          <div class="panel-heading">
+              <h3 class="panel-title">
+                <strong>Inventory Item</strong>
+              </h3>
+          </div>
+
+          <div class="panel-body">
+            <div  class="row col-xs-24 form-group" id="divPartNumber">
+              <label for="record" class="col-xs-4 control-label">Part Number:</label>
+              <div class="col-xs-15">
+                <input id="inputPartNumber" type="text" maxlength="50" value="{{edithelper_getValue RECNO PARTNUMBER.value}}" class="form-control input-sm" required>
+              </div>
+              <div class="help-block with-errors col-xs-5">
+                <span id="errPartNumber" class="text-danger"></span>
+              </div>
+            </div>
+
+            <div  class="row form-group" id="divDescription">
+              <label for="record" class="col-xs-4 control-label">Description:</label>
+              <div class="col-xs-15">
+                <input id="inputDescription" type="text" maxlength="200" value="{{edithelper_getValue RECNO DESCRIPTION.value}}" class="form-control input-sm" required>
+              </div>
+              <div class="help-block with-errors col-xs-5">
+                <span id="errDescription" class="text-danger"></span>
+              </div>
+            </div>
+
+            <div  class="row form-group" id="divCptCode">
+              <label for="record" class="col-xs-4  control-label">Cpt Code:</label>
+              <div class="col-xs-15">
+                <input id="inputCptCode" type="text" maxlength="20" value="{{edithelper_getValue RECNO CPTCODE.value}}" class="form-control input-sm" required>
+              </div>
+              <div class="help-block with-errors col-xs-5">
+                <span id="errCptCode" class="text-danger"></span>
+              </div>
+            </div>
+
+            <div  class="row form-group"  id="divSerialNumber">
+              <label for="record" class="col-xs-4  control-label">Serial Number:</label>
+              <div class="col-xs-15">
+                <input id="inputSerialNumber" type="text" maxlength="50" value="{{edithelper_getValue RECNO SERIALNUMBER.value}}" class="form-control input-sm" required onblur="alreadyExistsSerialNumber()">
+              </div>
+              <div class="help-block with-errors col-xs-5">
+                <span id="errSerialNumber" class="text-danger"></span>
+              </div>
+            </div>
+
+            <div  class="row form-group"  id="divCost">
+              <label for="record" class="col-xs-4  control-label">Cost:</label>
+              <div class="col-xs-15">
+                <input id="inputCost" type="number" maxlength="11" value="{{edithelper_getValue RECNO COST.value}}" class="form-control input-sm" required
+                min="1" step="0.0001">
+              </div>
+              <div class="help-block with-errors col-xs-5">
+                <span id="errCost" class="text-danger"></span>
+              </div>
+            </div>
+
+            <div  class="row form-group">
+              <label for="record" class="col-xs-4  control-label">Orig. Service Date:</label>
+              <div class="col-xs-15">
+                <input id="inputOrigServiceDate" type="date" value="{{edithelper_datetimeOrigDateFormat RECNO ORIGSERVICEDATE.value}}"
+                class="form-control input-sm" onchange="calcAmortizeEndDate()" required>
+              </div>
+              <div class="help-block with-errors col-xs-5">
+                <span id="errOrigServiceDate" class="text-danger"></span>
+              </div>
+            </div>
+
+            <div  class="row form-group">
+              <label for="record" class="col-xs-4  control-label">Status:</label>
+              <div class="col-xs-15">
+                <select id="inputStatus" class="dropdown form-control input-sm">
+                  <option value="Available" {{edithelper_isStatusSelected RECNO STATUS.value "Available"}}>Available</option>
+                  <option value="Rented" {{edithelper_isStatusSelected RECNO STATUS.value "Rented"}}>Rented</option>
+                  <option value="Transit" {{edithelper_isStatusSelected RECNO STATUS.value "Transit"}}>Transit</option>
+                  <option value="PT Direct Inv" {{edithelper_isStatusSelected RECNO STATUS.value "PT Direct Inv"}}>PT Direct Inv</option>
+                  <option value="Repair" {{edithelper_isStatusSelected RECNO STATUS.value "Repair"}}>Repair</option>
+                  <option value="Disposed" {{edithelper_isStatusSelected RECNO STATUS.value "Disposed"}}>Disposed</option>
+                </select>
+              </div>
+              <div class="col-xs-15">
+                <span id="errStatus" class="text-danger"></span>
+              </div>
+            </div>
+
+            <div  class="row form-group">
+              <label for="record" class="col-xs-4  control-label">RMA:</label>
+              <div class="col-xs-15">
+                <input id="inputRMA" type="text" maxlength="50" value="{{edithelper_getValue RECNO RMA.value}}" class="form-control input-sm">
+              </div>
+              <div class="col-xs-15">
+                <span id="errRMA" class="text-danger"></span>
+              </div>
+            </div>
+
+          </div>
+      </div>
+
+      <div class="panel panel-primary row form-group col-xs-24">
+          <div class="panel-heading">
+              <h3 class="panel-title">
+                <strong>Amortization</strong>
+              </h3>
+          </div>
+
+          <div class="panel-body">
+
+            <div  class="row form-group">
+              <label for="record" class="col-xs-4  control-label">Amortize:</label>
+              <div class="col-xs-15">
+                <input id="inputAmortize" type="checkbox" {{edithelper_isAmortize RECNO AMORTIZE.value}}>
+              </div>
+              <div class="col-xs-15">
+                <span id="errAmortize" class="text-danger"></span>
+              </div>
+            </div>
+
+            <div  class="row form-group">
+              <label for="record" class="col-xs-4  control-label">Amortization Period (months):</label>
+              <div class="col-xs-15">
+                <input id="inputAmortizationPeriod" type="number" maxlength="11" value="{{edithelper_getValue RECNO AMORTIZATIONPERIOD.value}}" class="form-control input-sm" min="0"
+                onchange="calcAmortizeEndDate()">
+              </div>
+              <div class="help-block with-errors col-xs-5">
+                <span id="errAmortizationPeriod" class="text-danger"></span>
+              </div>
+            </div>
+
+            <div  class="row form-group">
+              <label for="record" class="col-xs-4  control-label">Amortization End Date:</label>
+              <div class="col-xs-15">
+                <input id="inputAmortizeEndDate" type="date" class="form-control input-sm"
+                value="{{edithelper_datetimeFormat RECNO AMORTIZATIONENDDATE.value}}" disabled>
+              </div>
+              <div class="col-xs-15">
+                <span id="errAmortizeEndDate" class="text-danger"></span>
+              </div>
+            </div>
+
+          </div>
+      </div>
+
+    </fieldset>
+    </form>
+    {{/with}}
+  </div>
+</div>

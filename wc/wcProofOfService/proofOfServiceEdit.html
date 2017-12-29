@@ -1,0 +1,556 @@
+<html>
+	<head>
+			<title>Proof of Service(web version)</title>
+      <link rel="stylesheet" type="text/css" href="../../public/bootstrap/css/bootstrap.min.css" />
+			<link rel="stylesheet" type="text/css" href="../../public/font-awesome-4.5.0/css/font-awesome.min.css">
+
+			<link rel="stylesheet" type="text/css" href="../../node_modules/fixed-data-table/dist/fixed-data-table-base.min.css">
+			<link rel="stylesheet" type="text/css" href="../../node_modules/fixed-data-table/dist/fixed-data-table-style.min.css">
+			<link rel="stylesheet" type="text/css" href="../../node_modules/fixed-data-table/dist/fixed-data-table.min.css">
+
+			<link rel="stylesheet" type="text/css" href="../../public/stylesheets/calmed.css">
+
+      <script type="text/javascript">
+        //Jquer-Bootsrap
+        var remote = require('electron').remote;
+        var nodeModulesPath = remote.getGlobal('nodeModulesPath');
+        var appPath = remote.getGlobal('appPath');
+        var $ = jQuery = require(nodeModulesPath + "jquery");
+      </script>
+      <script src="../../public/bootstrap/js/bootstrap.min.js"></script>
+      <script type="text/javascript">
+        var bootbox = require(nodeModulesPath + "bootbox");
+        //React
+        var React = require(nodeModulesPath + "react");
+        var ReactDOM = require(nodeModulesPath + "react-dom");
+        //Other
+        var moment = require(nodeModulesPath + 'moment');
+				var fs = require('fs');
+				//var camelCase = require('camelcase');
+
+        //Electron
+
+				var cmGlb = remote.getGlobal('cmGlb');
+				var _userId = cmGlb.userId;
+				var _patId = cmGlb.patId;
+				var _companyId = cmGlb.companyId;
+        var _companyName = cmGlb.companyName;
+				var	_providerName = (cmGlb.providerName ? cmGlb.providerName : '');
+        var _mainFolder = cmGlb.mainFolder;
+
+				var xrxStr = require(appPath + "/xrx_modules/xrx-str");
+        //Sql
+				var sqlWcProofOfService = require(appPath + "/wc/wcProofOfService/proofOfServiceSql.js");
+				//other
+				var errorMessages = require(appPath + '/common/global/error-messages.js');
+
+			</script>
+
+      <script src="../../public/javascripts/JSXTransformer.js"></script>
+      <!-- Components -->
+
+			<script type="text/jsx" src="../../common/user_controls/SearchSelectButton.jsx"></script>
+			<script type="text/jsx" src="../../common/user_controls/lbl.jsx"></script>
+			<script type="text/jsx" src="../../common/user_controls/txtInput.jsx"></script>
+      <script type="text/jsx" src="../../common/user_controls/dropdownPlugin.jsx"></script>
+      <script type="text/jsx" src="../../common/user_controls/checkboxInput.jsx"></script>
+      <script type="text/jsx" src="../../common/user_controls/dateInput.jsx"></script>
+			<script type="text/jsx" src="../../dc/dcCls/ClsSearch.jsx"></script>
+			<script type="text/jsx" src="../../pt/PtSearch/PtSearch.jsx"></script>
+			<script type="text/jsx" src="../../common/user_controls/textAreaPlugin.jsx"></script>
+
+      <script type="text/jsx">
+
+
+
+          var ProofOfService = React.createClass ({
+
+						getInitialState : function(){
+									return {
+
+										template : [{value:'', text:''}],
+										medicalReport : [
+											{value:'', text:''},
+											{value:'Initial Report', text:'1- Initial Report'},
+											{value:'PR2 Report', text:'2- PR2 Report'},
+											{value:'Interim Report', text:'3- Interim Report'},
+											{value:'P & S Report', text:'4- P & S Report'},
+											{value:'Final', text:'5- Final'},
+											{value:'Med-Legal Report', text:'6- Med-Legal Report'},
+											{value:'Surgery OP Report', text:'7- Surgery OP Report'},
+											{value:'EMG Report', text:'8- EMG Report'},
+											{value:'Supplemental Report', text:'9- Supplemental Report'},
+											{value:'Diagnostic Report', text:'10- Diagnostic Report'}
+										],
+										data : {
+
+											USERID : _userId,
+											COMPANYID : _companyId,
+                      COMPANYNAME : _companyName,
+											PROVIDERNAME : _providerName,
+											PATID  : '',
+											DCTID  : '',
+											COMPANYNAME : '',
+											STREET1 : '',
+											STREET2 : '',
+											CITY : '',
+											STATE : '',
+											COUNTY : '',
+											ZIP : '',
+											TEMPLATE : '',
+											PRMINSURANCE: false,
+											ITEMIZEDSTATEMENT : false,
+											SECINSURANCE: false,
+											MEDICALREPORT : '',
+											PLAINTIFFATTORNEY: false,
+											REVIEWOFRECORDS : false,
+											DEFENSEATTORNEY: false,
+											CODEFENSEATTORNEY: false,
+											MEDICATION : false,
+											REFPHYSICIAN : false,
+											OTHER : '',
+											PATIENT: false,
+											EMPLOYER: false,
+											DEUOFFICE: '',
+											PERSONSERVING : '',
+
+											PREVDATE: '',
+											ITEMIZEDSTATEMENTDATE : '',
+											INITIALREPORTDATE: '',
+											DISPENSEDATE: ''
+
+										},
+										errMsg : {
+											PATID : '',
+											DEUOFFICE : ''
+										}
+									};
+							},
+						_setDataState: function(event){
+
+									console.log(event.target.type);
+
+									//this.state.dirty = true;
+                  var field = event.target.name;
+                  var value = "";
+                  if(event.target.type === "checkbox"){
+                    value = event.target.checked;
+                  }
+									else if(event.target.type == "select-one")
+									{
+										value = event.target.value;
+                    if(value) {
+                      value = value;
+                    }
+									}
+									else if(event.target.type == "textarea")
+									{
+										value = event.target.value;
+									}
+                  else
+									{
+                    value = event.target.value;
+                    if(value){
+                      value = value.toUpperCase();
+                    }
+                  }
+                  var key = field.toUpperCase();
+
+                  this.state.data[key] = value;
+                  if(this.state.errMsg[key]){
+                    this.state.errMsg[key] = "";
+                  }
+
+                  this.setState({data :this.state.data, errMsg: this.state.errMsg});
+            },
+						_loadParam : function() {
+							var self = this;
+							sqlWcProofOfService.xmlGetParam(function (err , record) {
+									if (!err && record)
+									{
+										if(record.length > 0)
+										{
+												var parser = new DOMParser();
+												var xmlDoc = parser.parseFromString(record[0].XMLTEXT.value,"text/xml");
+												if(xmlDoc)
+												{
+													var pos  = xmlDoc.getElementsByTagName('Pos')[0];
+													for(var i = 0; i< pos.childNodes.length; i++)
+													{
+															var node = pos.childNodes[i];
+															if(node.nodeType === 1)
+															{
+																var nodeName = node.nodeName.toUpperCase()
+																if(self.state.data.hasOwnProperty(nodeName))
+																{
+																	if(node.childNodes[0])
+																	{
+
+																		if(nodeName == "PRMINSURANCE" || nodeName == "ITEMIZEDSTATEMENT" || nodeName == "SECINSURANCE" ||
+																		nodeName == "PLAINTIFFATTORNEY" || nodeName == "REVIEWOFRECORDS" || nodeName == "DEFENSEATTORNEY" ||
+																		nodeName == "CODEFENSEATTORNEY" || nodeName == "MEDICATION" || nodeName == "REFPHYSICIAN" ||
+																		nodeName == "PATIENT" || nodeName == "EMPLOYER")
+																		{
+																			if(node.childNodes[0].nodeValue == 'Y')
+																			{
+																				self.state.data[nodeName] = true;
+																			}
+																			else
+																			{
+																					self.state.data[nodeName] = false;
+																			}
+																		}
+																		else
+																		{
+																			self.state.data[nodeName] = node.childNodes[0].nodeValue;
+																		}
+																	}
+																}
+															}
+													}
+												}
+										}
+
+										self.setState({data : self.state.data});
+
+
+									}
+									else
+									{
+										console.log(err)
+									}
+							});
+						 },
+					  _saveParam : function(){
+
+								var xmlDocString = "<Pos></Pos>";
+								var parser = new DOMParser();
+								var xmlDoc = parser.parseFromString(xmlDocString,"text/xml");
+
+								var params = ["DctId", "CompanyName", "Street1", "Street2", "City", "State",
+															"County", "Zip", "Template", "ItemizedStatement", "MedicalReport",
+															"ReviewOfRecords", "Medication", "Other", "PrmInsurance", "SecInsurance",
+															"PlaintiffAttorney", "DefenseAttorney", "CoDefenseAttorney", "RefPhysician",
+															"Employer", "Patient", "DEUOffice", "PersonServing"
+														];
+								for(var i = 0; i < params.length; i++)
+								{
+									var eleNew = xmlDoc.createElement(params[i]);
+
+									if(params[i] == "PrmInsurance" || params[i] == "ItemizedStatement" || params[i] == "SecInsurance" ||
+										 params[i] == "PlaintiffAttorney" || params[i] == "ReviewOfRecords" || params[i] == "DefenseAttorney" ||
+										 params[i] == "CoDefenseAttorney" || params[i] == "Medication" || params[i] == "RefPhysician" ||
+										 params[i] == "Patient" || params[i] == "Employer")
+									{
+										if(this.state.data[params[i].toUpperCase()])
+										{
+											var text = 'Y';
+										}
+										else
+										{
+											var text = '';
+										}
+									}
+									else
+									{
+
+										if(this.state.data[params[i].toUpperCase()].trim())
+										{
+											var text = xrxStr.strClean((this.state.data[params[i].toUpperCase()]));
+										}
+										else
+										{
+											var text = '';
+										}
+
+									}
+
+
+								var eleText= xmlDoc.createTextNode(text);
+								eleNew.appendChild(eleText);
+
+								xmlDoc.getElementsByTagName("Pos")[0].appendChild(eleNew);
+
+							}
+
+							var posFileString =	new XMLSerializer().serializeToString(xmlDoc);
+							var userId = this.state.data.USERID;
+
+							sqlWcProofOfService.xmlUpdateParam(posFileString, userId, function (err , record) {
+
+									if(err)
+									{
+										console.log(err);
+									}
+									else
+									{
+											console.log("Successfully updated param");
+									}
+
+							});
+						},
+						_print: function(event){
+								if((_patId == "All") || (_patId == "One" && this.state.data.PATID))
+								{
+
+									var para = this.state.data;
+
+									sqlWcProofOfService.printProofOfService(para, function (err , record) {
+											if (!err && record) {
+													console.log("Hey Successfully run script!")
+															//console.log(record[0]);
+											}
+											else {
+												alert("Error while printing.");
+											}
+									});
+								}
+								else
+								{
+									bootbox.alert("Please Select Patient Id", function() {});
+								}
+						},
+            _close: function(){
+                window.close();
+            },
+            _keyDown: function(e) {
+
+                  var self = this;
+
+                  var F10 = 121;
+                  var ESC = 27;
+                  var ENTER = 13;
+                  var PRINT = 114;
+
+									if(e.keyCode == F10) {
+                      this._saveParam();
+                  }
+                  else if(e.keyCode == PRINT) {
+                      this._print();
+                  }
+                  else if(e.keyCode == ESC) {
+                      var allModals = document.getElementsByClassName("modal");
+                      for (var i=0, max=allModals.length; i < max; i++) {
+
+                          if($(allModals[i]).hasClass('in'))
+                          {
+                              $(allModals[i]).modal('hide');
+                              return;
+                          }
+                      }
+                      this._close();
+                  }
+                  else if(e.keyCode == ENTER) {
+										// Set self as the current item in focus
+										var self = $(':focus'),
+										// Set the form by the current item in focus
+										form = self.parents('form:eq(0)'),
+										focusable;
+
+										// Array of Indexable/Tab-able items
+										focusable = form.find('input,a,select,button,textarea,div[contenteditable=true]').filter(':visible');
+
+										function enterKey(){
+											if (e.which === 13 && !self.is('textarea')) { // [Enter] key
+
+												// If not a regular hyperlink/button/textarea
+												if ($.inArray(self, focusable) && (!self.is('a,button'))){
+													// Then prevent the default [Enter] key behaviour from submitting the form
+													e.preventDefault();
+												} // Otherwise follow the link/button as by design, or put new line in textarea
+
+												// Focus on the next item (either previous or next depending on shift)
+												focusable.eq(focusable.index(self) + (e.shiftKey ? -1 : 1)).focus();
+
+												return false;
+											}
+										}
+										// We need to capture the [Shift] key and check the [Enter] key either way.
+										if (e.shiftKey) { enterKey() } else { enterKey() }
+                  }
+              },
+						_updateClsData: function(cls, isValid){
+								this.state.errMsg.DEUOFFICE = "";
+								if(cls && isValid){
+									this.state.data.DEUOFFICE = cls;
+								}
+								else if(cls && !isValid){
+									this.state.data.DEUOFFICE = "";
+									this.state.errMsg.DEUOFFICE = errorMessages.messages.Invalid;
+								}
+								else{
+									this.state.data.DEUOFFICE = "";
+								}
+								this.setState({data : this.state.data, errMsg: this.state.errMsg});
+						},
+						_updatePatId: function(selectedPattId, isValid){
+				      this.state.data.PATID = selectedPattId;
+				      if(!isValid) {
+				        this.state.errMsg.PATID = errorMessages.messages.Invalid;
+				      }
+				      else {
+				        this.state.errMsg.PATID = "";
+				      }
+				      this.setState({data : this.state.data, errMsg: this.state.errMsg});
+				    },
+             render: function() {
+
+								var showPatSearch = "";
+								var showPrevDate = "";
+
+                //console.log(_patId);
+								if(_patId == "All")
+								{
+									showPatSearch = "collapse";
+								}
+								else {
+									showPrevDate ="collapse";
+								}
+
+								return (
+
+	                    <div>
+												<div className="top-menu-bar">
+												 	<ul>
+														<li onClick={this._print} style={{color : '#5bc0de'}}><i className="fa fa-print"></i> Print</li>
+													 	<li onClick={this._saveParam} style={{color : '#5cb85c'}}><i className="fa fa-floppy-o"></i> Save Parameters</li>
+													 	<li onClick={this._close} style={{color : '#d9534f'}}><i className="fa fa-times"></i> Close</li>
+													</ul>
+												</div>
+												<div className="main-body">
+														<div  style={{marginTop: '30px', marginLeft: '20px'}}>
+			                          <form ref="proofOfServiceForm" id="proofOfServiceForm">
+			                            <fieldset className={showPatSearch +" " + "scheduler-border"}>
+																		<input type="hidden" id="Recno" name="Recno" value="" />
+			                              <legend className="scheduler-border text-info">Patient</legend>
+			                              <div>
+																				<Lbl labelFor="PtSearch" width="250px" text="Proof of Service for one patient -Patient ID :&nbsp;" />
+			                              		<PtSearch width="120px" infoWidth="280px" isRequired={true} patId={this.state.data.PATID} onSelect={this._updatePatId}></PtSearch>
+																		</div>
+			                            </fieldset>
+																	<fieldset className={showPrevDate  +" " + "scheduler-border"}>
+			                              <legend className="scheduler-border text-info">Previous Date</legend>
+			                              <div>
+																			<Lbl labelFor="prevDate" width="450px" text="Proof of Service for all WC patients that their claims were generated on this date :&nbsp;" />
+																			<DateInput name="prevDate" value={this.state.data.PREVDATE}  onChange={this._setDataState}    />
+																		</div>
+			                            </fieldset>
+			                            <fieldset className="scheduler-border">
+			                              <legend className="scheduler-border text-info">Info</legend>
+			                              <div>
+																			<Lbl labelFor="template" width="70px" text="Template :&nbsp;" />
+																			<DropdownPlugin name="template" width="300px" onChange={this._setDataState} value={this.state.data.TEMPLATE} dropdownOptions={this.state.template}   error={""} />
+																		</div>
+			                              <div>
+																			<Lbl labelFor="companyName" width="70px" text="Company :&nbsp;" />
+			                                <TxtInput width="300px" name="companyName" value={this.state.data.COMPANYNAME} onChange={this._setDataState} onBlur={this._validate} maxLength="50" />
+																		</div>
+			                              <div>
+																			<Lbl labelFor="street1" width="70px" text="Street 1 :&nbsp;" />
+																			<TxtInput width="300px"  name="street1" value={this.state.data.STREET1} onChange={this._setDataState} onBlur={this._validate} maxLength="50" />
+																			<Lbl labelFor="street2" width="70px" text="Street 2 :&nbsp;" />
+																			<TxtInput width="300px"  name="street2" value={this.state.data.STREET2} onChange={this._setDataState} onBlur={this._validate} maxLength="50" />
+			                              </div>
+																		<div>
+																			<Lbl labelFor="city" width="70px" text="City :&nbsp;" />
+			                                <TxtInput width="300px" name="city" value={this.state.data.CITY} onChange={this._setDataState} onBlur={this._validate} maxLength="50" />
+																			<Lbl labelFor="county" width="70px" text="County :&nbsp;" />
+																			<TxtInput width="300px" id="county" name="county" value={this.state.data.COUNTY} onChange={this._setDataState} onBlur={this._validate} maxLength="50" />
+			                              </div>
+																		<div>
+			                              	<Lbl labelFor="state" width="70px" text="State :&nbsp;" />
+																			<TxtInput width="140px"  name="state" value={this.state.data.STATE} onChange={this._setDataState} onBlur={this._validate} maxLength="2" />
+																			<Lbl labelFor="zip" width="40px" text="Zip :&nbsp;" />
+																			<TxtInput width="120px" id="zip" name="zip" value={this.state.data.ZIP} onChange={this._setDataState} onBlur={this._validate} maxLength="50" />
+																		</div>
+																	</fieldset>
+																	<fieldset className="scheduler-border">
+																		<legend  className="scheduler-border text-info">To the following recipients</legend>
+																			<CheckboxInput width= "200px" name="prmInsurance" labelName= "Primary Insurance" onChange={this._setDataState} checked={this.state.data.PRMINSURANCE} />
+			                                <CheckboxInput width= "200px" name="secInsurance" labelName= "Secondary Insurance" onChange={this._setDataState} checked={this.state.data.SECINSURANCE}  />
+			                              	<CheckboxInput width= "200px" name="plaintiffAttorney" labelName= "Plaintiff Attorney" onChange={this._setDataState} checked={this.state.data.PLAINTIFFATTORNEY}  />
+																			<CheckboxInput width= "200px" name="defenseAttorney" labelName= "Defense Attorney" onChange={this._setDataState} checked={this.state.data.DEFENSEATTORNEY}  />
+																			<CheckboxInput width= "200px" name="coDefenseAttorney" labelName= "Co-Defense Attorney" onChange={this._setDataState} checked={this.state.data.CODEFENSEATTORNEY} />
+																			<CheckboxInput width= "200px" name="refPhysician" labelName= "Ref Physician" onChange={this._setDataState} checked={this.state.data.REFPHYSICIAN}  />
+																			<CheckboxInput width= "200px" name="employer" labelName= "Employer" onChange={this._setDataState} checked={this.state.data.EMPLOYER}  />
+																			<CheckboxInput width= "200px" name="patient" labelName= "Patient" onChange={this._setDataState} checked={this.state.data.PATIENT}  />
+																	</fieldset>
+			                            <fieldset className="scheduler-border">
+			                              <legend className="scheduler-border text-info">The following documents are included</legend>
+																		<div>
+																			<CheckboxInput width="200px" name="reviewOfRecords" labelName= "Review of Records" onChange={this._setDataState} checked={this.state.data.REVIEWOFRECORDS}  />
+																			<CheckboxInput width="150px" name="itemizedStatement" labelName= "Itemized Statement" onChange={this._setDataState} checked={this.state.data.ITEMIZEDSTATEMENT}  />
+																			<Lbl labelFor="itemizedStatementDate" width="170px" text="Itemized Statement Date :&nbsp;" />
+																			<DateInput name="itemizedStatementDate" value={this.state.data.ITEMIZEDSTATEMENTDATE}  onChange={this._setDataState}    />
+																	 </div>
+																		<div>
+																			<CheckboxInput width="250px" name="medication" labelName= "Office Dispensed Medication Prescription" onChange={this._setDataState} checked={this.state.data.MEDICATION}  />
+																			<Lbl labelFor="dispenseDate" width="124px" text="Dispense Date :&nbsp;" />
+																			<DateInput name="dispenseDate" value={this.state.data.DISPENSEDATE}  onChange={this._setDataState}    />
+																		</div>
+																		<div>
+																			<Lbl labelFor="medicalReport" width="90px" text="Medical Report :&nbsp;" />
+																			<DropdownPlugin ref="medicalReport" id="medicalReport"  name="medicalReport" value={this.state.data.MEDICALREPORT} dropdownOptions={this.state.medicalReport}  onChange={this._setDataState} error={""} />
+																			<Lbl labelFor="initialReportDate" width="120px" text="Initial Report Date :&nbsp;" />
+																			<DateInput name="initialReportDate" value={this.state.data.INITIALREPORTDATE}  onChange={this._setDataState}    />
+																		</div>
+																		<div>
+																				<Lbl labelFor="other" width="90px" text="Other :&nbsp;" textVerticalAlign="top"  />
+																				<TextAreaPlugin name="other" value={this.state.data.OTHER}   onChange={this._setDataState} width="630px" rows="3" />
+																		</div>
+																		<div>
+																				<Lbl labelFor="deuOffice" width="90px" text="DEU Office :&nbsp;" textVerticalAlign="top"  />
+																				<ClsSearch  clsCat={"POSEDU"} clsDesc={this.state.data.DEUOFFICE} onSelect={this._updateClsData} isRequired={false}  />
+																		</div>
+																	</fieldset>
+																	<fieldset className="scheduler-border">
+																			<legend className="scheduler-border text-info">Name of Serving Person</legend>
+																			<TxtInput width="300px" id="personServing" name="personServing" value={this.state.data.PERSONSERVING} onChange={this._setDataState} onBlur={this._validate} maxLength="50" />
+																	</fieldset>
+			                          </form>
+			                      </div>
+												</div>
+											</div>
+
+	                );
+            },
+						componentDidMount : function() {
+
+								//For testing
+								//_mainFolder =  "C:/Calmed/";
+
+								$(document.body).on('keydown', this._keyDown);
+								var self = this;
+
+								fs.readdir(_mainFolder + "rpt/PROOFOFSERV/", function(err, fileNames) {
+
+									 if (err) {
+										 console.log(err);
+										 return;
+									 }
+									 var _template = [];
+									 for(var i = 0; i<fileNames.length; i++) {
+										 		var fName = fileNames[i].replace('.rpt', '').toUpperCase();
+											 var option = {value:fName, text:fName}
+											 _template.push(option);
+									 }
+									 self.setState({template : _template});
+
+								});
+								this._loadParam();
+						}
+        });
+
+        ReactDOM.render(
+
+            <ProofOfService  />,
+            document.getElementById('proofOfServiceEditor')
+        );
+
+      </script>
+
+  </head>
+  <body>
+    <div id="proofOfServiceEditor"></div>
+  </body>
+</html>

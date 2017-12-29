@@ -1,0 +1,51 @@
+<html>
+	<head>
+
+		<link rel="stylesheet" type="text/css" href="../../../public/font-awesome-4.5.0/css/font-awesome.min.css">
+		<link rel="stylesheet" type="text/css" href="../../../node_modules/fixed-data-table/dist/fixed-data-table-base.min.css">
+		<link rel="stylesheet" type="text/css" href="../../../node_modules/fixed-data-table/dist/fixed-data-table-style.min.css">
+		<link rel="stylesheet" type="text/css" href="../../../node_modules/fixed-data-table/dist/fixed-data-table.min.css">
+		<link rel="stylesheet" type="text/css" href="../../../public/bootstrap/css/bootstrap.min.css">
+		<link rel="stylesheet" type="text/css" href="../../../public/stylesheets/calmed.css">
+
+		<script type="text/javascript">
+            var remote = require('electron').remote;
+            var nodeModulesPath = remote.getGlobal('nodeModulesPath');
+            var $ = jQuery = require(nodeModulesPath + "jquery");
+		</script>
+		<script src="../../../public/bootstrap/js/bootstrap.min.js"></script>
+    <script src="../../../public/javascripts/JSXTransformer.js"></script>
+		<script type="text/jsx" src="../../../common/user_controls/sortHeaderCell.jsx"></script>
+		<script type="text/jsx" src="../../../common/user_controls/searchInput.jsx"></script>
+		<script type="text/jsx" src="../scripts/list.jsx"></script>
+    <script type="text/javascript" src="../scripts/list.js"></script>
+
+        <meta charset="utf-8" />
+				<title>Serialized Inventory</title>
+
+        <style type="text/css">
+
+        </style>
+
+</head>
+	<body>
+
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-xs-16">
+                    <h3 class="col-xs-16"><strong>Serialized Inventory</strong></h3>
+                </div>
+                <div align="right" class="col-xs-8">
+                    <a href="../../xrxTransaction/views/list.html">Go to transactions</a>
+                </div>
+            </div>
+
+           <div class="row">
+                <div id="divTable">
+                </div>
+           </div>
+
+        </div>
+
+</body>
+</html>

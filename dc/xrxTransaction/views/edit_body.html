@@ -1,0 +1,171 @@
+
+<div class="container-fluid">
+ {{#with record}}
+  <input type="hidden" id="inputRecno" > 
+  <div class="formcontainer">
+    <form class="form-vertical" role="form" id="formEdit">
+    <fieldset>
+      <!-- <legend><%= record.RECNO === '' ? 'ADD' : 'EDIT'  %></legend> -->
+        
+      <div class="row form-group col-sm-12 btn-group" >
+        <a href="list.html" class="btn btn-default btn-lg"><span class="glyphicon glyphicon-circle-arrow-left"></span>Back</a>
+        <button type="button" id="btnsave" class="btn btn-success btn-lg" onclick="clickSave()">
+          <span class="glyphicon glyphicon-floppy-save" ></span>Save</button>
+        <button type="button" id="btnDelete" class="btn btn-danger btn-lg" onclick="clickDelete('{{edithelper_getValue RECNO RECNO.value}}')" 
+          style="{{edithelper_deleteVisibility RECNO}}" >
+          <span class="glyphicon glyphicon-minus-sign" ></span>Delete</button>
+      </div>
+
+      <div class="row form-group hidden col-sm-12">
+        <label id="labelValidationError" class="label label-danger"></label>
+      </div>
+
+      <div class="panel panel-primary row form-group col-sm-12">
+          <div class="panel-heading">
+              <h3 class="panel-title">
+                      <strong>Assigned To</strong>
+              </h3>
+          </div>
+
+          <div class="panel-body">
+
+            <div  class="row form-group"  id="divDoctor">
+              <label for="record" class="col-sm-2 control-label">Doctor:</label>
+              <div class="col-sm-10">
+                <xrx-dc-dct dctid="{{edithelper_getValue RECNO DCTID.value}}" selected-info-visibility="visible" is-required-field="required"></xrx-dc-dct>
+              </div>
+              <div class="col-sm-5">
+                <span id="errDct" class="text-danger"></span>
+              </div>
+            </div>
+
+            <div  class="row form-group" id="divFacility">
+              <label for="record" class="col-sm-2 control-label">Facility:</label>
+              <div class="col-sm-10">
+                <xrx-dc-fcl fclid="{{edithelper_getValue RECNO FCLID.value}}" selected-info-visibility="visible" is-required-field="required"></xrx-dc-fcl>
+              </div>
+              <div class="col-sm-5">
+                <span id="errFcl" class="text-danger"></span>
+              </div>
+            </div>
+
+          </div>  
+      </div>
+
+      <div class="panel panel-primary row form-group col-sm-12">
+          <div class="panel-heading">
+              <h3 class="panel-title">
+                <strong>Inventory</strong>
+              </h3>
+          </div>
+
+          <div class="panel-body">
+            <div  class="row form-group" id="divInventoryItem">
+              <label for="record" class="col-sm-2 control-label">Search Part No.:</label>
+              <div class="col-sm-10">
+                <xrx-dc-inventory partnumber="{{edithelper_getValue RECNO PARTNUMBER.value}}" 
+                  description="{{edithelper_getValue RECNO DESCRIPTION.value}}" 
+                  serialnumber="{{edithelper_getValue RECNO SERIALNUMBER.value}}"
+                  cptcode="{{edithelper_getValue RECNO CPTCODE.value}}"  
+                  recno="{{edithelper_getValue RECNO INVRECNO.value}}" 
+                  selected-info-visibility="visible" is-required-field="required">
+                </xrx-dc-inventory>
+              </div>
+              <div class="col-sm-5">
+                <span id="errInventoryItem" class="text-danger"></span>
+              </div>
+            </div>
+
+            <div  class="row form-group">
+              <label for="record" class="col-sm-2 control-label">Transaction Date:</label>
+              <div class="col-sm-5">
+                <input id="inputTransactionDate" type="date" value="{{edithelper_datetimeFormat RECNO TRANSACTIONDATE.value}}" class="form-control input-sm" required>
+              </div>
+              <div class="help-block with-errors col-sm-5">
+                <span id="errTransactionDate" class="text-danger"></span>
+              </div>
+            </div>
+
+          </div>  
+      </div>
+
+      <div class="panel panel-primary row form-group col-sm-12">
+          <div class="panel-heading">
+              <h3 class="panel-title">
+                <strong>Patient</strong>
+              </h3>
+          </div>
+
+          <div class="panel-body">
+
+            <div  class="row form-group" id="divPatient">
+              <label for="record" class="col-sm-2 control-label">Patient:</label>
+              <div class="col-sm-10">
+                <xrx-pt-pat patid="{{edithelper_getValue RECNO PATID.value}}"  
+                lastname="{{edithelper_getValue RECNO LASTNAME.value}}"  
+                firstname="{{edithelper_getValue RECNO FIRSTNAME.value}}" 
+                selected-info-visibility="visible" is-required-field="required"></xrx-pt-pat>
+              </div>
+              <div class="col-sm-5">
+                <span id="errPat" class="text-danger"></span>
+              </div>
+            </div>
+
+            <div  class="row form-group" id="divFromDate">
+              <label for="record" class="col-sm-2 control-label">From Date:</label>
+              <div class="col-sm-5">
+                <input id="inputFromDate" type="date" value="{{edithelper_datetimeFormat RECNO FROMDATE.value}}" class="form-control input-sm" onblur="checkFromToDate()">
+              </div>
+              <div class="help-block with-errors col-sm-5">
+                <span id="errFromDate" class="text-danger"></span>
+              </div>
+            </div>
+
+            <div  class="row form-group" id="divToDate">
+              <label for="record" class="col-sm-2 control-label">To Date:</label>
+              <div class="col-sm-5">
+                <input id="inputToDate" type="date" value="{{edithelper_datetimeFormat RECNO TODATE.value}}" class="form-control input-sm" onblur="checkFromToDate()">
+              </div>
+              <div class="help-block with-errors col-sm-5">
+                <span id="errToDate" class="text-danger"></span>
+              </div>
+            </div>
+
+            <div  class="row form-group">
+              <label for="record" class="col-sm-2 control-label">Pick up Date:</label>
+              <div class="col-sm-5">
+                <input id="inputPickupDate" type="date" value="{{edithelper_datetimeFormat RECNO PICKUPDATE.value}}" class="form-control input-sm">
+              </div>
+              <div class="help-block with-errors col-sm-5">
+                <span id="errPickupDate" class="text-danger"></span>
+              </div>
+            </div>
+
+            <div  class="row form-group">
+              <label for="record" class="col-sm-2 control-label">Status:</label>
+              <div class="col-sm-5">
+                <select id="inputStatus" class="dropdown form-control input-sm">
+                  <option value="Available" {{edithelper_isStatusSelected RECNO STATUS.value "Available"}}>Available</option>
+                  <option value="Rented" {{edithelper_isStatusSelected RECNO STATUS.value "Rented"}}>Rented</option>
+                  <option value="Transit" {{edithelper_isStatusSelected RECNO STATUS.value "Transit"}}>Transit</option>
+                  <option value="PT Direct Inv" {{edithelper_isStatusSelected RECNO STATUS.value "PT Direct Inv"}}>PT Direct Inv</option>
+                  <option value="Repair" {{edithelper_isStatusSelected RECNO STATUS.value "Repair"}}>Repair</option>
+                  <option value="Disposed" {{edithelper_isStatusSelected RECNO STATUS.value "Disposed"}}>Disposed</option>
+                </select>
+              </div>
+              <div class="col-sm-5">
+                <span id="errStatus" class="text-danger"></span>
+              </div>
+            </div>
+
+          </div>  
+      </div>
+      
+    </fieldset>
+    </form>
+  </div>
+  {{/with}}
+</div>
+
+
+

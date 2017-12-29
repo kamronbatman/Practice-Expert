@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Implantable Devices Add/Edit</title>
+    <link rel="stylesheet" type="text/css" href="../../public/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="../../public/font-awesome-4.5.0/css/font-awesome.min.css">
+
+  </head>
+  <body>
+    <div style="margin: 30px 30px;">
+      <form class="form-horizontal">
+        <fieldset>
+          <legend>Add/Edit Device</legend>
+          <div>
+             <label for="inputUDI" style="width: 130px;">UDI : </label>
+             <input type="text"  id="inputUDI" placeholder="UDI" style="width: 500px;"/>
+          </div>
+          <div>
+             <label for="inputIMDDesc" style="width: 130px;">Device Description : </label>
+             <input type="text"  id="inputIMDDesc" style="width: 500px;" disabled />
+          </div>
+          <div>
+             <label for="inputIMDDate" style="width: 130px;">Implant Date : </label>
+             <input type="date"  id="inputIMDDate" placeholder="Implant Date" style="width: 150px;"/>
+          </div>
+          <div style="margin-top: 20px">
+            <button type="button" class="btn btn-primary" id="btnSubmit">Submit <i class="fa fa-spinner fa-pulse fa-fw" id="iconLoader"></i></button>
+          </div>
+        </fieldset>
+      </form>
+    </div>
+
+    <script>
+
+        var remote = require('electron').remote;
+        var nodeModulesPath = remote.getGlobal('nodeModulesPath');
+        var appPath = remote.getGlobal('appPath');
+
+          var $ = jQuery = require(nodeModulesPath + "jquery");
+          var moment = require(nodeModulesPath + 'moment');
+          var cmGlb = remote.getGlobal('cmGlb');
+
+          var encodeUrl = require('encodeurl');
+          //Sql
+          var impMedDevSql = require(appPath + "/ehr/ehrImpMedDev/impMedDevSql.js");
+
+          //Test UDI : "(01)10884521062856(11)141231(17)150707(10)A213B1(21)1234";
+          var _recNo = cmGlb.recno;
+          var _patId = cmGlb.patId;
+          var _dctId = cmGlb.dctId;
+          var _fclId = cmGlb.fclId;
+          var _userId = cmGlb.userId;
+
+
+          var _exsistingRecord = {};
+
+
+          $(document).ready(function () {
+
+                $("#iconLoader").hide();
+
+                document.getElementById("inputIMDDate").valueAsDate = new Date();
+
+                function loadData(){
+
+                  console.log("Load Data.");
+
+                  if(_recNo)
+                  {
+                      impMedDevSql.getImpMedDev(_recNo, function(err, record) {
+
+                            if(err)
+                            {
+                              console.log(err);
+                              alert("Error: While loading record.")
+                            }
+                            else
+                            {
+
+                              if(record && record.length > 0)
+                              {
+                                _exsistingRecord = record[0];
+                                //Assign Values to fields.
+                                $( "#inputUDI" ).val(_exsistingRecord.IMDCODE.value);
+                                $( "#inputIMDDesc" ).val(_exsistingRecord.IMDDESC.value);
+                                if(_exsistingRecord.IMDDATE.value)
+                                {
+                                  $( "#inputIMDDate" ).val(formatDateTimeHTML(_exsistingRecord.IMDDATE.value));
+                                }
+
+                                $('#inputUDI').css('background-color','#D3D3D3');
+
+                              }
+
+                            }
+
+                      });
+                  }
+
+                }
+
+                loadData();
+
+                function submit() {
+
+
+                    console.log( "clicked" );
+                    $("#iconLoader").show();
+
+
+                    /*
+                      Viral :
+                      Before submit check if !recno || !json || inputUDI != exsistingRecordIMDCOde
+
+                    */
+                    var txtUDI = $('#inputUDI').val();
+                    var _udi =   txtUDI.trim();
+                    var saveRecord = {};
+
+                    console.log(_udi);
+
+                    if(!_recNo)
+                    {
+                      //console.log(0);
+                      fetchAndSave();
+
+                    }
+                    else if((_exsistingRecord && (_udi != _exsistingRecord.IMDCODE.value || !_exsistingRecord.JSON.value)))
+                    {
+                      //console.log(1);
+                      fetchAndSave();
+                    }
+                    else if((_exsistingRecord && (_udi == _exsistingRecord.IMDCODE.value || _exsistingRecord.JSON.value)))
+                    {
+                      //console.log(2);
+                      //Just Save Info.
+
+                      //Save Data.
+                      saveRecord.patId = _patId;
+                      saveRecord.imdDate = formatDateTimeSQL($( "#inputIMDDate" ).val());
+                      saveRecord.imdCode = _udi;
+                      saveRecord.imdDesc = _exsistingRecord.IMDDESC.value;
+                      saveRecord.json = _exsistingRecord.JSON.value;
+                      saveRecord.dctId = _dctId;
+                      saveRecord.fclId = _fclId;
+                      saveRecord.SNOMED = "";
+                      saveRecord.userId = _userId;
+
+                      save(saveRecord);
+
+                    }
+
+
+
+                    function fetchAndSave() {
+
+                      var _udiEncoded = encodeURIComponent(_udi);
+
+                      var _urlParseUDI = "https://accessgudid.nlm.nih.gov/api/v1/parse_udi.json?udi="+ _udiEncoded;
+                      var _urlDeviceLookup = "https://accessgudid.nlm.nih.gov/api/v1/devices/lookup.json?udi="+ _udiEncoded;
+
+                      $.ajax({
+
+                          url: _urlParseUDI,
+                          success: function(result1, textStatus1, request1){
+
+                            console.log("UDI Parse Information");
+                            //console.log(result1);
+
+                            if(!result1)
+                            {
+                              $("#iconLoader").hide();
+                              alert("No results found with provided UDI, please verify UDI.");
+                              return;
+                            }
+
+
+                            var infoObj = {};
+                            infoObj.parseUDIInfo = result1;
+
+
+
+                              $.ajax({
+
+                                    url: _urlDeviceLookup,
+                                    success: function(result2, textStatus2, request2){
+
+                                      console.log("Device Information");
+                                      //console.log(result2);
+
+                                      infoObj.deviceInfo = result2;
+
+
+                                      var device = result2.gudid.device;
+
+                                      if(device.gmdnTerms && device.gmdnTerms.gmdn &&  device.gmdnTerms.gmdn.gmdnPTName)
+                                      {
+                                        $('#inputIMDDesc').val(device.gmdnTerms.gmdn.gmdnPTName);
+                                      }
+                                      else
+                                      {
+                                        $('#inputIMDDesc').val(device.deviceDescription);
+                                      }
+
+                                      //Save Data.
+                                      saveRecord.patId = _patId;
+                                      saveRecord.imdDate = formatDateTimeSQL($( "#inputIMDDate" ).val());
+                                      saveRecord.imdCode = _udi;
+                                      saveRecord.imdDesc = $('#inputIMDDesc').val();
+                                      saveRecord.json = JSON.stringify(infoObj);
+                                      saveRecord.dctId = _dctId;
+                                      saveRecord.fclId = _fclId;
+                                      saveRecord.SNOMED = "";
+                                      saveRecord.userId = _userId;
+
+                                      save(saveRecord);
+
+
+
+                                    },
+                                    error: function (request2, textStatus2, errorThrown2) {
+                                        alert("Error API Call Device Information : " + request2.getResponseHeader('some_header'));
+                                        $("#iconLoader").hide();
+                                    }
+
+                                });
+
+
+
+
+                          },
+                          error: function (request1, textStatus1, errorThrown1) {
+                              alert("Error API Call UDI Parse Inforamtion : " + request1.getResponseHeader('some_header'));
+                              $("#iconLoader").hide();
+                          }
+
+                      });
+
+
+
+                    }
+
+
+                    function save(impRecord)
+                    {
+                        console.log("Save Record!");
+                        console.log(impRecord);
+
+                        impMedDevSql.saveImpMedDev(_recNo, impRecord,  function(err, record){
+
+                            $("#iconLoader").hide();
+
+                            if(err)
+                            {
+                              alert("Error : While saving data to database.");
+                              console.log(err);
+                            }
+                            else
+                            {
+                              $('#inputUDI').css('background-color','#D5F5E3');
+                              setTimeout(function () { window.close();}, 2000);
+                            }
+
+                        });
+                    }
+
+
+                }
+
+                $( "#btnSubmit" ).on( "click", submit );
+
+
+                $('#inputUDI').on('input',function(e){
+                    $('#inputUDI').css('background-color', '');
+                  });
+
+
+
+
+                function formatDateTimeHTML(datetime){
+                      if(datetime)
+                      {
+                        return  moment.utc(datetime).format("YYYY-MM-DD");
+                      }
+                      else
+                      {
+                        return "";
+                      }
+                }
+
+                function formatDateTimeSQL(datetime){
+                      if(datetime)
+                		  {
+                        return  moment.utc(datetime).format("MM/DD/YYYY");
+                	   	}
+                	    else
+                	    {
+                	    	return "";
+                	    }
+                }
+
+
+            });
+
+    </script>
+
+
+  </body>
+</html>

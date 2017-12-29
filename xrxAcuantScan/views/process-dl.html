@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Driver's License Scan</title>
+    <link href="../acuant/css/bootstrap.css" rel="stylesheet" />
+    <link href="../acuant/css/custom.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="../../public/font-awesome-4.5.0/css/font-awesome.min.css">
+
+    <style type="text/css">
+
+        input.btn {
+            width: 150px;
+        }
+
+        div.bigImg {
+            float: left;
+            width: 336px;
+            height: 212px;
+            padding: 15px 0 0 20px;
+            margin: 0px 0 0 0px;
+        }
+
+        div.bigImg img {
+            width: 336px;
+            height: 212px;
+            border-radius: 2px 2px 2px 2px;
+            box-shadow: 0 0 5px 5px #888;
+        }
+
+        div.FaceImg {
+            float: left;
+            width: 140px;
+            height: 170px;
+        }
+
+        div.FaceImg img {
+            width: 140px;
+            height: 170px;
+        }
+
+        div.SigImg {
+            width: 160px;
+            height: 50px;
+        }
+
+        div.SigImg img {
+            width: 160px;
+            height: 50px;
+        }
+
+        table.mytable {
+            padding-left: 50px;
+        }
+
+        div.StateSelection {
+            float: left;
+            padding-left: 50px;
+            width: 250px;
+        }
+
+        div.ScanExtract {
+            float: left;
+            padding-left: 20px;
+            width: 800px;
+        }
+
+        label.labels {
+            display: block;
+            width: 50px;
+            float: left;
+        }
+
+        select.dropdown {
+            width: 150px;
+            visibility: hidden;
+        }
+    </style>
+
+</head>
+
+
+<body style="padding-top: 20px; background-color:  #ededed;">
+
+  <div class="col-md-offset-1 col-md-10">
+
+    <div class="row">
+        <div>
+          <div>
+             <button type="button" id="btn-rescan-dlduplex" class="btn btn-info btn-sm"><i class="fa fa-barcode"></i>&nbsp;Re-Scan</button>
+             <input class="btn btn-primary" type="button" value="Process" id="btn-process-dlduplex" style="display:none;"/>
+             <button type="button" id="btn-save-dlduplex" class="btn btn-success btn-sm" disabled><i class="fa fa-floppy-o"></i>&nbsp;Save <i id="saveWaitSign" class="fa fa-circle-o-notch fa-spin" style="display:none;"></i></button>
+          </div>
+           <!-- &nbsp; &nbsp;&nbsp;  <input type="button" value="Reset" id="btn-reset-medduplex" /> -->
+           <hr  style ='border-style: inset; border: 1px solid #27314C; margin-top:3px; margin-bottom:0px;'/>
+           <div>
+            <div id="scanImage" class="bigImg">
+                <img id="image" src="../../xrxAcuantScan/temp/imgFront_dl.jpg" alt="front-img" />
+            </div>
+            <div id="scanBackImage" class="bigImg">
+                <img id="backimage" src="../../xrxAcuantScan/temp/imgBack_dl.jpg" alt="back-img"/>
+            </div>
+          </div>
+        </div>
+    </div>
+    <br />
+
+    <div id="loading" class="row" style="text-align: center;"></div>
+
+    <div class="row">
+        <div id="errorDiv" style="text-align: center; color: red;">
+        </div>
+        <div id="extractedData" style="display: none;">
+            <div class="panel panel-default">
+                <div class="panel-heading text-center">
+                    <strong>Extracted Data</strong>
+                </div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-xs-24">
+                            <div id="dl-data" class="form-horizontal">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+  </div>
+
+<div id="dwtcontrolContainer" style="visibility:hidden;"></div> <!-- Controller needs to be displayed if used in IE -->
+<script type="text/javascript" src="Resources/dynamsoft.webtwain.initiate.js"></script>
+<script type="text/javascript" src="Resources/dynamsoft.webtwain.config.js"></script>
+
+<script src="../scripts/js/MiscJS/base.js"></script>
+<script>
+    goog.require('goog.crypt.base64');
+</script>
+<script src="../scripts/js/MiscJS/jquery-2.0.3.js"></script>
+<script src="../scripts/js/MiscJS/bootstrap.js"></script>
+<script src="../scripts/js/MiscJS/jquery.base64.js"></script>
+<script src="../scripts/js/MiscJS/binaryajax.js"></script>
+<script src="../scripts/js/CSSNWebServiceJS/process-dl.js"></script>
+<script src="../scripts/js/CSSNWebServiceJS/licensekey.js"></script>
+</body>
+</html>
